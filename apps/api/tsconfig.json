@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@domain/*": ["domain/*"],
+      "@application/*": ["application/*"],
+      "@infrastructure/*": ["infrastructure/*"],
+      "@presentation/*": ["presentation/*"]
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "test"]
+}

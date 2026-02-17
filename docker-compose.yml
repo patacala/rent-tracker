@@ -1,0 +1,47 @@
+version: '3.9'
+
+# ─────────────────────────────────────────────
+# Relocation Intelligence — Docker Compose
+# Usage: docker-compose up
+# ─────────────────────────────────────────────
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+      target: development
+    container_name: rent-tracker-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+    volumes:
+      # Hot-reload: mount source, exclude node_modules
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    restart: unless-stopped
+    networks:
+      - relocation-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  relocation-network:
+    driver: bridge
+
+# ─────────────────────────────────────────────
+# Note: PostgreSQL is hosted on Supabase.
+# For local dev without Supabase, add a postgres
+# service here and set DATABASE_URL accordingly.
+# ─────────────────────────────────────────────

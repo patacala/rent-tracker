@@ -1,0 +1,24 @@
+{
+  "name": "rent-tracker",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Relocation Intelligence - Find your ideal neighborhood based on lifestyle",
+  "packageManager": "pnpm@10.6.1",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "turbo": "^2.8.9",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "eslint": "^10.0.0"
+  }
+}

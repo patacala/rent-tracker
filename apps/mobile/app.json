@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Rent Tracker",
+    "slug": "rent-tracker",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "rent-tracker",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.relocationai.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Used to show your current location on the map"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0f172a"
+      },
+      "package": "com.relocationai.mobile",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Show your location on the map"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

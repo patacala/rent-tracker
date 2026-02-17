@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-native",
+    "baseUrl": ".",
+    "paths": {
+      "@features/*": [
+        "src/features/*"
+      ],
+      "@shared/*": [
+        "src/shared/*"
+      ],
+      "@navigation/*": [
+        "src/app/navigation/*"
+      ]
+    },
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.d.ts",
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
