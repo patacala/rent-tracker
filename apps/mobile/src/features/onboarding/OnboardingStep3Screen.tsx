@@ -1,16 +1,11 @@
 import React, { JSX, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { Button, HeaderBackButton, StepIndicator, ToggleGroup } from '@shared/components';
+import { useOnboarding } from './context/OnboardingContext';
 
 type ChildAgeGroup = '0-5' | '6-12' | '13-18';
 type LifestylePreference = 'suburban' | 'urban';
@@ -19,10 +14,12 @@ const AGE_GROUPS: ChildAgeGroup[] = ['0-5', '6-12', '13-18'];
 
 export function OnboardingStep3Screen(): JSX.Element {
   const router = useRouter();
-  const [hasChildren, setHasChildren] = useState<'yes' | 'no'>('no');
-  const [childAgeGroups, setChildAgeGroups] = useState<ChildAgeGroup[]>([]);
-  const [hasPets, setHasPets] = useState<'yes' | 'no'>('no');
-  const [lifestyle, setLifestyle] = useState<LifestylePreference | null>(null);
+  const { data, setStep3 } = useOnboarding();
+
+  const [hasChildren, setHasChildren] = useState<'yes' | 'no'>(data.hasChildren);
+  const [childAgeGroups, setChildAgeGroups] = useState<ChildAgeGroup[]>(data.childAgeGroups);
+  const [hasPets, setHasPets] = useState<'yes' | 'no'>(data.hasPets);
+  const [lifestyle, setLifestyle] = useState<LifestylePreference | null>(data.lifestyle);
 
   const toggleAgeGroup = (group: ChildAgeGroup) => {
     setChildAgeGroups((prev) =>
@@ -30,24 +27,37 @@ export function OnboardingStep3Screen(): JSX.Element {
     );
   };
 
+  const onNext = () => {
+    setStep3({ hasChildren, childAgeGroups, hasPets, lifestyle });
+    
+    const finalData = {
+      ...data,
+      hasChildren,
+      childAgeGroups,
+      hasPets,
+      lifestyle,
+    };
+    console.log('Resultado consola', JSON.stringify(finalData, null, 2));
+    
+    router.push('/analysis');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <HeaderBackButton onPress={() => router.back()} />
+        <Text style={styles.brandName}>ONBOARDING</Text>
+      </View>
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <HeaderBackButton onPress={() => router.back()} />
-          <Text style={styles.stepBadge}>ONBOARDING</Text>
-        </View>
-
         <StepIndicator current={3} total={3} label="Family Profile" />
 
         <Text style={styles.title}>Tell us about your household</Text>
 
-        {/* Children section */}
         <View style={styles.section}>
           <Text style={styles.question}>Are you moving with children?</Text>
           <ToggleGroup value={hasChildren} onChange={(v) => setHasChildren(v as 'yes' | 'no')}>
@@ -65,17 +75,9 @@ export function OnboardingStep3Screen(): JSX.Element {
                   <TouchableOpacity
                     key={group}
                     onPress={() => toggleAgeGroup(group)}
-                    style={[
-                      styles.ageChip,
-                      childAgeGroups.includes(group) && styles.ageChipActive,
-                    ]}
+                    style={[styles.ageChip, childAgeGroups.includes(group) && styles.ageChipActive]}
                   >
-                    <Text
-                      style={[
-                        styles.ageChipText,
-                        childAgeGroups.includes(group) && styles.ageChipTextActive,
-                      ]}
-                    >
+                    <Text style={[styles.ageChipText, childAgeGroups.includes(group) && styles.ageChipTextActive]}>
                       {group}
                     </Text>
                   </TouchableOpacity>
@@ -85,7 +87,6 @@ export function OnboardingStep3Screen(): JSX.Element {
           ) : null}
         </View>
 
-        {/* Pets section */}
         <View style={styles.section}>
           <Text style={styles.question}>Any pets?</Text>
           <ToggleGroup value={hasPets} onChange={(v) => setHasPets(v as 'yes' | 'no')}>
@@ -94,75 +95,41 @@ export function OnboardingStep3Screen(): JSX.Element {
           </ToggleGroup>
         </View>
 
-        {/* Lifestyle preference */}
         <View style={styles.section}>
           <Text style={styles.question}>Do you prefer a suburban or urban feel?</Text>
           <View style={styles.lifestyleRow}>
-            <TouchableOpacity
-              onPress={() => setLifestyle('suburban')}
-              style={[
-                styles.lifestyleCard,
-                lifestyle === 'suburban' && styles.lifestyleCardActive,
-              ]}
-            >
-              {lifestyle === 'suburban' ? (
-                <View style={styles.lifestyleCheck}>
-                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                </View>
-              ) : null}
-              <Ionicons
-                name="home-outline"
-                size={28}
-                color={
-                  lifestyle === 'suburban' ? THEME.colors.primary : THEME.colors.textSecondary
-                }
-              />
-              <Text
-                style={[
-                  styles.lifestyleTitle,
-                  lifestyle === 'suburban' && styles.lifestyleTitleActive,
-                ]}
+            {(['suburban', 'urban'] as LifestylePreference[]).map((option) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => setLifestyle(option)}
+                style={[styles.lifestyleCard, lifestyle === option && styles.lifestyleCardActive]}
               >
-                Suburban
-              </Text>
-              <Text style={styles.lifestyleDesc}>Quiet streets, parks, and more space.</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setLifestyle('urban')}
-              style={[
-                styles.lifestyleCard,
-                lifestyle === 'urban' && styles.lifestyleCardActive,
-              ]}
-            >
-              {lifestyle === 'urban' ? (
-                <View style={styles.lifestyleCheck}>
-                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                </View>
-              ) : null}
-              <Ionicons
-                name="business-outline"
-                size={28}
-                color={
-                  lifestyle === 'urban' ? THEME.colors.primary : THEME.colors.textSecondary
-                }
-              />
-              <Text
-                style={[
-                  styles.lifestyleTitle,
-                  lifestyle === 'urban' && styles.lifestyleTitleActive,
-                ]}
-              >
-                Urban
-              </Text>
-              <Text style={styles.lifestyleDesc}>Walkable, vibrant, and close to action.</Text>
-            </TouchableOpacity>
+                {lifestyle === option ? (
+                  <View style={styles.lifestyleCheck}>
+                    <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                  </View>
+                ) : null}
+                <Ionicons
+                  name={option === 'suburban' ? 'home-outline' : 'business-outline'}
+                  size={28}
+                  color={lifestyle === option ? THEME.colors.primary : THEME.colors.textSecondary}
+                />
+                <Text style={[styles.lifestyleTitle, lifestyle === option && styles.lifestyleTitleActive]}>
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </Text>
+                <Text style={styles.lifestyleDesc}>
+                  {option === 'suburban'
+                    ? 'Quiet streets, parks, and more space.'
+                    : 'Walkable, vibrant, and close to action.'}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button onPress={() => router.push('/analysis')} style={styles.cta}>
+        <Button onPress={onNext} style={styles.cta}>
           <Button.Label>Next: Analyze My Life</Button.Label>
           <Button.Icon name="arrow-forward-outline" />
         </Button>
@@ -175,8 +142,13 @@ export function OnboardingStep3Screen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: THEME.colors.background },
-  scroll: { flex: 1 },
+  safe: {
+    flex: 1,
+    backgroundColor: THEME.colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
   content: {
     padding: THEME.spacing.lg,
     paddingBottom: THEME.spacing.xl,
@@ -186,6 +158,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.md,
+    marginLeft: 20
+  },
+  brandName: {
+    fontSize: THEME.fontSize.md,
+    fontWeight: THEME.fontWeight.bold,
+    color: THEME.colors.text,
   },
   stepBadge: {
     fontSize: THEME.fontSize.xs,

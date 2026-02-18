@@ -3,23 +3,27 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
-import { Button, MapPlaceholder, Tag } from '@shared/components';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { Button, Tag } from '@shared/components';
 
 export function WelcomeScreen(): JSX.Element {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <MapPlaceholder style={styles.map} />
+    <ImageBackground
+      source={require('@assets/family_01.png')}
+      style={styles.background}
+      resizeMode="cover"
+      imageStyle={{ left: -90 }}
+    >
+      <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.content} edges={['bottom']}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {/* Contenido fijado abajo */}
         <View style={styles.inner}>
           <View style={styles.brandRow}>
             <View style={styles.logoMark} />
@@ -45,35 +49,33 @@ export function WelcomeScreen(): JSX.Element {
           </View>
 
           <View style={styles.actions}>
-            <Button onPress={() => router.push('/auth')}>
+            <Button onPress={() => router.push('/onboarding/step1') }>
               <Button.Label>Find My Neighborhood</Button.Label>
               <Button.Icon name="arrow-forward-outline" />
-            </Button>
-            <Button variant="outline" onPress={() => router.push('/auth')} style={styles.secondaryBtn}>
-              <Button.Label>Browse Top Rated Areas</Button.Label>
             </Button>
           </View>
         </View>
       </SafeAreaView>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.colors.background,
+  background: {
+    flex: 1
   },
-  map: {
-    height: SCREEN_HEIGHT * 0.45,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    top: '40%',
+    backgroundColor: 'rgba(255, 255, 255, 0.27)',
   },
-  content: {
+  safe: {
     flex: 1,
+    justifyContent: 'flex-end',
   },
   inner: {
-    flex: 1,
     paddingHorizontal: THEME.spacing.lg,
-    paddingTop: THEME.spacing.lg,
+    paddingBottom: THEME.spacing.xl,
     gap: THEME.spacing.lg,
   },
   brandRow: {
@@ -107,7 +109,7 @@ const styles = StyleSheet.create({
     color: THEME.colors.primaryActive,
   },
   subheadline: {
-    fontSize: THEME.fontSize.base,
+    fontSize: THEME.fontSize.md,
     color: THEME.colors.textSecondary,
     lineHeight: 22,
   },
@@ -115,9 +117,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   actions: {
-    gap: THEME.spacing.sm,
-  },
-  secondaryBtn: {
-    backgroundColor: THEME.colors.background,
+    marginTop: THEME.spacing.sm,
   },
 });

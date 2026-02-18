@@ -1,16 +1,11 @@
 import React, { JSX, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { Button, CategoryCard, HeaderBackButton, StepIndicator } from '@shared/components';
+import { useOnboarding } from './context/OnboardingContext';
 
 const CATEGORIES: Array<{
   key: string;
@@ -31,7 +26,8 @@ const MIN_REQUIRED = 3;
 
 export function OnboardingStep2Screen(): JSX.Element {
   const router = useRouter();
-  const [selected, setSelected] = useState<string[]>([]);
+  const { data, setStep2 } = useOnboarding();
+  const [selected, setSelected] = useState<string[]>(data.priorities);
 
   const toggle = useCallback((key: string) => {
     setSelected((prev) =>
@@ -41,19 +37,23 @@ export function OnboardingStep2Screen(): JSX.Element {
 
   const canContinue = selected.length >= MIN_REQUIRED;
 
+  const onNext = () => {
+    setStep2({ priorities: selected });
+    router.push('/onboarding/step3');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <HeaderBackButton onPress={() => router.back()} />
+        <Text style={styles.brandName}>ONBOARDING</Text>
+      </View>
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <HeaderBackButton onPress={() => router.back()} />
-          <Text style={styles.brandName}>Relocation Intelligence</Text>
-        </View>
-
         <StepIndicator current={2} total={3} label="Personalization" />
 
         <View style={styles.titleBlock}>
@@ -63,41 +63,25 @@ export function OnboardingStep2Screen(): JSX.Element {
           </Text>
         </View>
 
-        {/* Grid */}
         <View style={styles.grid}>
-          {CATEGORIES.map((cat, idx) => {
-            const isOdd = idx % 2 !== 0;
-            return (
-              <View
-                key={cat.key}
-                style={[styles.cardWrapper, isOdd && styles.cardWrapperRight]}
-              >
-                <CategoryCard
-                  selected={selected.includes(cat.key)}
-                  onPress={() => toggle(cat.key)}
-                >
-                  <CategoryCard.Icon name={cat.icon} />
-                  <CategoryCard.Label>{cat.label}</CategoryCard.Label>
-                </CategoryCard>
-              </View>
-            );
-          })}
+          {CATEGORIES.map((cat, idx) => (
+            <View key={cat.key} style={[styles.cardWrapper, idx % 2 !== 0 && styles.cardWrapperRight]}>
+              <CategoryCard selected={selected.includes(cat.key)} onPress={() => toggle(cat.key)}>
+                <CategoryCard.Icon name={cat.icon} />
+                <CategoryCard.Label>{cat.label}</CategoryCard.Label>
+              </CategoryCard>
+            </View>
+          ))}
         </View>
 
-        {/* Counter */}
-        <Text
-          style={[
-            styles.counter,
-            canContinue ? styles.counterMet : styles.counterPending,
-          ]}
-        >
+        <Text style={[styles.counter, canContinue ? styles.counterMet : styles.counterPending]}>
           Selected: {selected.length} of {MIN_REQUIRED} required
         </Text>
       </ScrollView>
 
       <View style={styles.footer}>
         <Button
-          onPress={() => router.push('/onboarding/step3')}
+          onPress={onNext}
           disabled={!canContinue}
           variant={canContinue ? 'primary' : 'outline'}
           style={styles.cta}
@@ -111,8 +95,13 @@ export function OnboardingStep2Screen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: THEME.colors.background },
-  scroll: { flex: 1 },
+  safe: {
+    flex: 1,
+    backgroundColor: THEME.colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
   content: {
     padding: THEME.spacing.lg,
     paddingBottom: THEME.spacing.xl,
@@ -122,6 +111,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.md,
+    marginLeft: 20
   },
   brandName: {
     fontSize: THEME.fontSize.md,

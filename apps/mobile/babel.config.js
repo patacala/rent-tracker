@@ -8,6 +8,7 @@ module.exports = function (api) {
         {
           root: ['.'],
           alias: {
+            '@assets': './src/assets',
             '@features': './src/features',
             '@shared': './src/shared',
             '@navigation': './src/app/navigation',

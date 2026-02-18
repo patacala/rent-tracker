@@ -15,7 +15,7 @@ export const THEME = {
 
     // Text
     text: '#0F172A',           // slate-900  — primary body text
-    textSecondary: '#64748B',  // slate-500  — labels, captions
+    textSecondary: '#5b6068',  // slate-500  — labels, captions
     textMuted: '#94A3B8',      // slate-400  — placeholder, disabled
 
     // UI

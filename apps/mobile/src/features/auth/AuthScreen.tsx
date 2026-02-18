@@ -34,12 +34,6 @@ export function AuthScreen(): JSX.Element {
       >
         <HeaderBackButton onPress={() => router.back()} />
 
-        {/* Brand */}
-        <View style={styles.brand}>
-          <View style={styles.logoMark} />
-          <Text style={styles.brandName}>Relocation Intelligence</Text>
-        </View>
-
         {/* Mode toggle */}
         <ToggleGroup value={mode} onChange={(v) => setMode(v as AuthMode)} style={styles.modeToggle}>
           <ToggleGroup.Item value="signup" label="Sign Up" />
