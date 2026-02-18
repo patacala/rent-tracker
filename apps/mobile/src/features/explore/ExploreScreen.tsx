@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import React, { JSX, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,15 @@ import { Button, FilterChips, Input, NeighborhoodCard, Tag } from '@shared/compo
 import { APP_CONFIG } from '@rent-tracker/config';
 import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
 import { EXPLORE_FILTERS, type ExploreFilter } from './types';
+import { useAuth } from '@shared/context/AuthContext';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const { data: neighborhoods } = useExploreNeighborhoods();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
+  const hasClickedCard = useRef(false);
 
   const cityName =
     APP_CONFIG.defaultCity.charAt(0).toUpperCase() + APP_CONFIG.defaultCity.slice(1);
@@ -28,6 +31,20 @@ export function ExploreScreen(): JSX.Element {
     (item) =>
       search.trim() === '' || item.name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const handleCardPress = (id: string) => {
+    if (isLoggedIn) {
+      router.push(`/neighborhood/${id}`);
+      return;
+    }
+
+    if (!hasClickedCard.current) {
+      hasClickedCard.current = true;
+      router.push(`/neighborhood/${id}`);
+    } else {
+      router.push('/auth');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -65,7 +82,7 @@ export function ExploreScreen(): JSX.Element {
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <NeighborhoodCard
-            onPress={() => router.push(`/neighborhood/${item.id}`)}
+            onPress={() => handleCardPress(item.id)}
             style={styles.card}
           >
             <View style={styles.cardImageContainer}>
@@ -99,7 +116,7 @@ export function ExploreScreen(): JSX.Element {
                   </View>
                   <Text style={styles.matchText}>{item.matchCount} match your profile</Text>
                 </View>
-                <TouchableOpacity onPress={() => router.push(`/neighborhood/${item.id}`)}>
+                <TouchableOpacity onPress={() => handleCardPress(item.id)}>
                   <Text style={styles.detailsLink}>Details &rsaquo;</Text>
                 </TouchableOpacity>
               </NeighborhoodCard.Footer>

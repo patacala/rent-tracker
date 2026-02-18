@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { JSX } from 'react';
+import { useAuth } from '@shared/context/AuthContext';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -17,6 +18,8 @@ const TAB_CONFIG: Array<{
 ];
 
 export default function TabsLayout(): JSX.Element {
+  const { isLoggedIn } = useAuth();
+
   return (
     <Tabs
       backBehavior="none"
@@ -45,6 +48,10 @@ export default function TabsLayout(): JSX.Element {
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? iconActive : icon} size={22} color={color} />
             ),
+            tabBarItemStyle:
+              !isLoggedIn && name !== 'explore'
+                ? { display: 'none' }
+                : undefined,
           }}
         />
       ))}
