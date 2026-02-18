@@ -27,18 +27,12 @@ export function OnboardingStep3Screen(): JSX.Element {
     );
   };
 
-  const onNext = () => {
-    setStep3({ hasChildren, childAgeGroups, hasPets, lifestyle });
-    
-    const finalData = {
-      ...data,
-      hasChildren,
-      childAgeGroups,
-      hasPets,
-      lifestyle,
-    };
+  const onNext = async () => {
+    await setStep3({ hasChildren, childAgeGroups, hasPets, lifestyle });
+
+    const finalData = { ...data, hasChildren, childAgeGroups, hasPets, lifestyle };
     console.log('Resultado consola', JSON.stringify(finalData, null, 2));
-    
+
     router.replace('/analysis');
   };
 

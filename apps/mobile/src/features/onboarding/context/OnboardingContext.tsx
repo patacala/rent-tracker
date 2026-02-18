@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, JSX } from 'react';
+import React, { createContext, useContext, useState, useEffect, JSX } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ChildAgeGroup = '0-5' | '6-12' | '13-18';
 type LifestylePreference = 'suburban' | 'urban';
@@ -16,11 +17,14 @@ export interface OnboardingData {
 
 interface OnboardingContextValue {
   data: OnboardingData;
-  setStep1: (values: Pick<OnboardingData, 'workAddress' | 'commute'>) => void;
-  setStep2: (values: Pick<OnboardingData, 'priorities'>) => void;
-  setStep3: (values: Pick<OnboardingData, 'hasChildren' | 'childAgeGroups' | 'hasPets' | 'lifestyle'>) => void;
-  reset: () => void;
+  isLoading: boolean;
+  setStep1: (values: Pick<OnboardingData, 'workAddress' | 'commute'>) => Promise<void>;
+  setStep2: (values: Pick<OnboardingData, 'priorities'>) => Promise<void>;
+  setStep3: (values: Pick<OnboardingData, 'hasChildren' | 'childAgeGroups' | 'hasPets' | 'lifestyle'>) => Promise<void>;
+  reset: () => Promise<void>;
 }
+
+const STORAGE_KEY = '@onboarding:data';
 
 const DEFAULT: OnboardingData = {
   workAddress: '',
@@ -36,20 +40,47 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const [data, setData] = useState<OnboardingData>(DEFAULT);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const setStep1: OnboardingContextValue['setStep1'] = (values) =>
-    setData((prev) => ({ ...prev, ...values }));
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setData(JSON.parse(stored));
+        }
+      } catch {
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, []);
 
-  const setStep2: OnboardingContextValue['setStep2'] = (values) =>
-    setData((prev) => ({ ...prev, ...values }));
+  const save = async (updated: OnboardingData) => {
+    setData(updated);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
 
-  const setStep3: OnboardingContextValue['setStep3'] = (values) =>
-    setData((prev) => ({ ...prev, ...values }));
+  const setStep1: OnboardingContextValue['setStep1'] = async (values) => {
+    await save({ ...data, ...values });
+  };
 
-  const reset = () => setData(DEFAULT);
+  const setStep2: OnboardingContextValue['setStep2'] = async (values) => {
+    await save({ ...data, ...values });
+  };
+
+  const setStep3: OnboardingContextValue['setStep3'] = async (values) => {
+    await save({ ...data, ...values });
+  };
+
+  const reset = async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    setData(DEFAULT);
+  };
 
   return (
-    <OnboardingContext.Provider value={{ data, setStep1, setStep2, setStep3, reset }}>
+    <OnboardingContext.Provider value={{ data, isLoading, setStep1, setStep2, setStep3, reset }}>
       {children}
     </OnboardingContext.Provider>
   );

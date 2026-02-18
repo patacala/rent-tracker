@@ -1,4 +1,4 @@
-import React, { JSX, useRef, useState } from 'react';
+import React, { JSX, useState } from 'react';
 import {
   View,
   Text,
@@ -18,11 +18,10 @@ import { useAuth } from '@shared/context/AuthContext';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, hasClickedCard, markCardClicked } = useAuth();
   const { data: neighborhoods } = useExploreNeighborhoods();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
-  const hasClickedCard = useRef(false);
 
   const cityName =
     APP_CONFIG.defaultCity.charAt(0).toUpperCase() + APP_CONFIG.defaultCity.slice(1);
@@ -32,14 +31,14 @@ export function ExploreScreen(): JSX.Element {
       search.trim() === '' || item.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleCardPress = (id: string) => {
+  const handleCardPress = async (id: string) => {
     if (isLoggedIn) {
       router.push(`/neighborhood/${id}`);
       return;
     }
 
-    if (!hasClickedCard.current) {
-      hasClickedCard.current = true;
+    if (!hasClickedCard) {
+      await markCardClicked();
       router.push(`/neighborhood/${id}`);
     } else {
       router.push('/auth');

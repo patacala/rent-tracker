@@ -37,8 +37,8 @@ export function OnboardingStep2Screen(): JSX.Element {
 
   const canContinue = selected.length >= MIN_REQUIRED;
 
-  const onNext = () => {
-    setStep2({ priorities: selected });
+  const onNext = async () => {
+    await setStep2({ priorities: selected });
     router.push('/onboarding/step3');
   };
 

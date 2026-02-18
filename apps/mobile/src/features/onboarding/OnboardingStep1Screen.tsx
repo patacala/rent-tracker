@@ -36,8 +36,8 @@ export function OnboardingStep1Screen(): JSX.Element {
     },
   });
 
-  const onNext = (values: Step1FormData) => {
-    setStep1(values);
+  const onNext = async (values: Step1FormData) => {
+    await setStep1(values);
     router.push('/onboarding/step2');
   };
 
