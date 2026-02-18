@@ -15,7 +15,7 @@ export default function RootLayout(): JSX.Element {
         <Stack.Screen name="map" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="neighborhood/[id]" />
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       </Stack>
     </SafeAreaProvider>
   );

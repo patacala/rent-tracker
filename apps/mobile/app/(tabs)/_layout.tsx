@@ -19,6 +19,7 @@ const TAB_CONFIG: Array<{
 export default function TabsLayout(): JSX.Element {
   return (
     <Tabs
+      backBehavior="none"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: THEME.colors.primary,

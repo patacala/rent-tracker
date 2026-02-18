@@ -39,7 +39,7 @@ export function OnboardingStep3Screen(): JSX.Element {
     };
     console.log('Resultado consola', JSON.stringify(finalData, null, 2));
     
-    router.push('/analysis');
+    router.replace('/analysis');
   };
 
   return (
