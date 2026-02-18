@@ -18,7 +18,7 @@ async function post<T>(endpoint: string, body: unknown): Promise<ApiResponse<T>>
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(API_CONFIG.timeout),
+    signal: AbortSignal.timeout(API_CONFIG.timeout) as unknown as RequestInit['signal'],
   });
 
   if (!response.ok) {

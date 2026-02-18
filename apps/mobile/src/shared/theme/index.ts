@@ -1,34 +1,35 @@
 // ─── Design Tokens — Relocation Intelligence ─
-// Dark-first mobile theme
+// Light theme
 
 export const THEME = {
   colors: {
     // Brand
-    primary: '#6366f1',      // indigo-500
-    primaryDark: '#4f46e5',  // indigo-600
-    accent: '#22d3ee',       // cyan-400
+    primary: '#3730A3',        // indigo-800
+    primaryActive: '#4F46E5',  // indigo-600 — pressed/active states
+    primaryLight: '#EEF2FF',   // indigo-50  — tag backgrounds, tinted surfaces
 
     // Backgrounds
-    background: '#0f172a',   // slate-900
-    surface: '#1e293b',      // slate-800
-    surfaceElevated: '#334155', // slate-700
+    background: '#FFFFFF',      // pure white page background
+    surface: '#F8FAFC',         // slate-50   — cards, elevated surfaces
+    surfaceElevated: '#F1F5F9', // slate-100  — nested surfaces
 
     // Text
-    text: '#f1f5f9',         // slate-100
-    textSecondary: '#94a3b8', // slate-400
-    textMuted: '#64748b',    // slate-500
+    text: '#0F172A',           // slate-900  — primary body text
+    textSecondary: '#64748B',  // slate-500  — labels, captions
+    textMuted: '#94A3B8',      // slate-400  — placeholder, disabled
 
     // UI
-    border: '#334155',       // slate-700
-    error: '#ef4444',        // red-500
-    success: '#22c55e',      // green-500
-    warning: '#f59e0b',      // amber-500
+    border: '#E2E8F0',         // slate-200  — input borders, dividers
+    error: '#EF4444',          // red-500
+    success: '#22C55E',        // green-500
+    successLight: '#DCFCE7',   // green-100  — success tinted backgrounds
+    warning: '#F59E0B',        // amber-500
 
     // Score colors
-    scoreExcellent: '#22c55e',
-    scoreGood: '#84cc16',
-    scoreFair: '#f59e0b',
-    scorePoor: '#ef4444',
+    scoreExcellent: '#22C55E',
+    scoreGood: '#84CC16',
+    scoreFair: '#F59E0B',
+    scorePoor: '#EF4444',
   },
 
   spacing: {
@@ -48,6 +49,7 @@ export const THEME = {
   },
 
   fontSize: {
+    xxs: 9,
     xs: 11,
     sm: 13,
     base: 15,
@@ -63,6 +65,23 @@ export const THEME = {
     medium: '500' as const,
     semibold: '600' as const,
     bold: '700' as const,
+  },
+
+  shadow: {
+    sm: {
+      shadowColor: '#0F172A',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    md: {
+      shadowColor: '#0F172A',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 4,
+    },
   },
 } as const;
 

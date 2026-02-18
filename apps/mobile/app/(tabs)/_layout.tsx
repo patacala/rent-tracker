@@ -1,6 +1,20 @@
 import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { JSX } from 'react';
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TAB_CONFIG: Array<{
+  name: string;
+  label: string;
+  icon: IoniconName;
+  iconActive: IoniconName;
+}> = [
+  { name: 'explore', label: 'Explore', icon: 'search-outline', iconActive: 'search' },
+  { name: 'saved', label: 'Saved', icon: 'bookmark-outline', iconActive: 'bookmark' },
+  { name: 'profile', label: 'Profile', icon: 'person-outline', iconActive: 'person' },
+];
 
 export default function TabsLayout(): JSX.Element {
   return (
@@ -10,35 +24,29 @@ export default function TabsLayout(): JSX.Element {
         tabBarActiveTintColor: THEME.colors.primary,
         tabBarInactiveTintColor: THEME.colors.textMuted,
         tabBarStyle: {
-          backgroundColor: THEME.colors.surface,
+          backgroundColor: THEME.colors.background,
           borderTopColor: THEME.colors.border,
+          borderTopWidth: 1,
+        },
+        tabBarLabelStyle: {
+          fontSize: THEME.fontSize.xs,
+          fontWeight: THEME.fontWeight.medium,
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Onboarding',
-          tabBarLabel: 'Start',
-          tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: 'Lifestyle Map',
-          tabBarLabel: 'Explore',
-          tabBarIcon: ({ color }) => <TabIcon name="map" color={color} />,
-        }}
-      />
+      {TAB_CONFIG.map(({ name, label, icon, iconActive }) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{
+            title: label,
+            tabBarLabel: label,
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? iconActive : icon} size={22} color={color} />
+            ),
+          }}
+        />
+      ))}
     </Tabs>
   );
-}
-
-// ─── Simple Icon Placeholder ─────────────────
-// Replace with @expo/vector-icons or lucide-react-native
-function TabIcon({ name, color }: { name: string; color: string }): JSX.Element {
-  const { Text } = require('react-native') as typeof import('react-native');
-  const icons: Record<string, string> = { home: '🏠', map: '🗺️' };
-  return <Text style={{ fontSize: 20, color }}>{icons[name] ?? '●'}</Text>;
 }

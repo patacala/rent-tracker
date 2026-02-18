@@ -1,76 +1,149 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
   StyleSheet,
+  type StyleProp,
+  type ViewStyle,
+  type TextStyle,
   type TouchableOpacityProps,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '../theme';
 
-interface ButtonProps extends TouchableOpacityProps {
-  label: string;
-  loading?: boolean;
-  variant?: 'primary' | 'secondary' | 'outline';
+type ButtonVariant = 'primary' | 'outline' | 'ghost';
+type ButtonSize = 'sm' | 'md' | 'lg';
+
+const VARIANT_STYLES: Record<ButtonVariant, { bg: string; text: string; border?: string }> = {
+  primary: { bg: THEME.colors.primary, text: '#FFFFFF' },
+  outline: { bg: '#FFFFFF', text: THEME.colors.primary, border: THEME.colors.primary },
+  ghost: { bg: 'transparent', text: THEME.colors.primary },
+};
+
+const SIZE_STYLES: Record<ButtonSize, { paddingV: number; paddingH: number; fontSize: number }> = {
+  sm: { paddingV: THEME.spacing.sm, paddingH: THEME.spacing.md, fontSize: THEME.fontSize.sm },
+  md: { paddingV: 12, paddingH: 20, fontSize: THEME.fontSize.base },
+  lg: { paddingV: THEME.spacing.md, paddingH: THEME.spacing.lg, fontSize: THEME.fontSize.md },
+};
+
+interface ButtonContextValue {
+  textColor: string;
+  fontSize: number;
+  disabled: boolean;
 }
 
-export function Button({
-  label,
-  loading = false,
+const ButtonContext = React.createContext<ButtonContextValue | null>(null);
+
+function useButtonContext(): ButtonContextValue {
+  const ctx = React.useContext(ButtonContext);
+  if (!ctx) throw new Error('Button sub-components must be used within Button.Root');
+  return ctx;
+}
+
+interface ButtonRootProps extends Omit<TouchableOpacityProps, 'style'> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}
+
+function ButtonRoot({
   variant = 'primary',
+  size = 'md',
+  loading = false,
   disabled,
+  children,
   style,
   ...rest
-}: ButtonProps): JSX.Element {
+}: ButtonRootProps): JSX.Element {
   const isDisabled = disabled ?? loading;
+  const variantStyle = VARIANT_STYLES[variant];
+  const sizeStyle = SIZE_STYLES[size];
 
   return (
-    <TouchableOpacity
-      style={[styles.base, styles[variant], isDisabled && styles.disabled, style]}
-      disabled={isDisabled}
-      activeOpacity={0.8}
-      {...rest}
+    <ButtonContext.Provider
+      value={{ textColor: variantStyle.text, fontSize: sizeStyle.fontSize, disabled: isDisabled }}
     >
-      {loading ? (
-        <ActivityIndicator color={THEME.colors.text} size="small" />
-      ) : (
-        <Text style={[styles.label, variant === 'outline' && styles.labelOutline]}>
-          {label}
-        </Text>
-      )}
-    </TouchableOpacity>
+      <TouchableOpacity
+        disabled={isDisabled}
+        activeOpacity={0.8}
+        style={[
+          styles.base,
+          {
+            backgroundColor: variantStyle.bg,
+            paddingVertical: sizeStyle.paddingV,
+            paddingHorizontal: sizeStyle.paddingH,
+            borderWidth: variantStyle.border ? 1.5 : 0,
+            borderColor: variantStyle.border ?? 'transparent',
+          },
+          isDisabled && styles.disabled,
+          style,
+        ]}
+        {...rest}
+      >
+        {loading ? (
+          <ActivityIndicator color={variantStyle.text} size="small" />
+        ) : (
+          children
+        )}
+      </TouchableOpacity>
+    </ButtonContext.Provider>
   );
 }
 
+function ButtonLabel({
+  children,
+  style,
+}: {
+  children: string;
+  style?: StyleProp<TextStyle>;
+}): JSX.Element {
+  const { textColor, fontSize } = useButtonContext();
+  return (
+    <Text style={[styles.label, { color: textColor, fontSize }, style]}>{children}</Text>
+  );
+}
+
+function ButtonIcon({
+  name,
+  size,
+  style,
+}: {
+  name: React.ComponentProps<typeof Ionicons>['name'];
+  size?: number;
+  style?: StyleProp<TextStyle>;
+}): JSX.Element {
+  const { textColor, fontSize } = useButtonContext();
+  return (
+    <Ionicons
+      name={name}
+      size={size ?? fontSize + 2}
+      color={textColor}
+      style={style}
+    />
+  );
+}
+
+export const Button = Object.assign(ButtonRoot, {
+  Label: ButtonLabel,
+  Icon: ButtonIcon,
+});
+
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: THEME.spacing.md,
-    paddingHorizontal: THEME.spacing.xl,
-    borderRadius: THEME.borderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
-  },
-  primary: {
-    backgroundColor: THEME.colors.primary,
-  },
-  secondary: {
-    backgroundColor: THEME.colors.surface,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: THEME.colors.primary,
+    borderRadius: THEME.borderRadius.md,
+    gap: THEME.spacing.xs,
+    minHeight: 48,
   },
   disabled: {
     opacity: 0.5,
   },
   label: {
-    color: THEME.colors.text,
-    fontSize: THEME.fontSize.base,
     fontWeight: THEME.fontWeight.semibold,
-  },
-  labelOutline: {
-    color: THEME.colors.primary,
   },
 });
