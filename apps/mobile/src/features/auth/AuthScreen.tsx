@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
-import { Button, HeaderBackButton, Input, SocialAuthButton, ToggleGroup } from '@shared/components';
+import { Button, Input, SocialAuthButton, ToggleGroup } from '@shared/components';
 
 type AuthMode = 'signup' | 'login';
 
@@ -32,8 +32,6 @@ export function AuthScreen(): JSX.Element {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <HeaderBackButton onPress={() => router.back()} />
-
         {/* Mode toggle */}
         <ToggleGroup value={mode} onChange={(v) => setMode(v as AuthMode)} style={styles.modeToggle}>
           <ToggleGroup.Item value="signup" label="Sign Up" />
