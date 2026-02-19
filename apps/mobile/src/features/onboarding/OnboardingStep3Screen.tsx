@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import React, { JSX, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,12 +14,25 @@ const AGE_GROUPS: ChildAgeGroup[] = ['0-5', '6-12', '13-18'];
 
 export function OnboardingStep3Screen(): JSX.Element {
   const router = useRouter();
-  const { data, setStep3 } = useOnboarding();
+  const { data, setStep3, setCurrentStep } = useOnboarding();
+  const isMounted = useRef(false);
 
   const [hasChildren, setHasChildren] = useState<'yes' | 'no'>(data.hasChildren);
   const [childAgeGroups, setChildAgeGroups] = useState<ChildAgeGroup[]>(data.childAgeGroups);
   const [hasPets, setHasPets] = useState<'yes' | 'no'>(data.hasPets);
   const [lifestyle, setLifestyle] = useState<LifestylePreference | null>(data.lifestyle);
+
+  useEffect(() => {
+    setCurrentStep(3);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    setStep3({ hasChildren, childAgeGroups, hasPets, lifestyle });
+  }, [hasChildren, childAgeGroups, hasPets, lifestyle]);
 
   const toggleAgeGroup = (group: ChildAgeGroup) => {
     setChildAgeGroups((prev) =>
@@ -29,17 +42,16 @@ export function OnboardingStep3Screen(): JSX.Element {
 
   const onNext = async () => {
     await setStep3({ hasChildren, childAgeGroups, hasPets, lifestyle });
-
+    await setCurrentStep(0);
     const finalData = { ...data, hasChildren, childAgeGroups, hasPets, lifestyle };
     console.log('Resultado consola', JSON.stringify(finalData, null, 2));
-
     router.replace('/analysis');
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <HeaderBackButton onPress={() => router.back()} />
+        <HeaderBackButton onPress={() => router.navigate('/onboarding/step2')} />
         <Text style={styles.brandName}>ONBOARDING</Text>
       </View>
 
@@ -152,7 +164,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.md,
-    marginLeft: 20
+    marginLeft: 20,
   },
   brandName: {
     fontSize: THEME.fontSize.md,

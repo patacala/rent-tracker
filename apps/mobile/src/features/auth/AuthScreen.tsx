@@ -9,20 +9,68 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
-import { Button, Input, SocialAuthButton, ToggleGroup } from '@shared/components';
+import { Button, Input, ToggleGroup } from '@shared/components';
+import { useAuth } from '@shared/context/AuthContext';
 
-type AuthMode = 'signup' | 'login';
+type AuthMode = 'signup' | 'login' | 'confirm';
 
 export function AuthScreen(): JSX.Element {
   const router = useRouter();
+  const { login, signup } = useAuth();
   const [mode, setMode] = useState<AuthMode>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    router.push('/onboarding/step1');
+  const handleSubmit = async () => {
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      if (mode === 'signup') {
+        const result = await signup(email, password, name);
+        console.log(result);
+        
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+
+        setMode('confirm');
+      } else {
+        const result = await login(email, password);
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+
+        router.replace('/(tabs)/explore');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (mode === 'confirm') {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.confirmContainer}>
+          <Input.Icon name="mail-outline" size={50} />
+          <Text style={styles.confirmTitle}>Check your email</Text>
+          <Text style={styles.confirmSubtitle}>
+            We sent a confirmation link to{'\n'}
+            <Text style={styles.confirmEmail}>{email}</Text>
+          </Text>
+
+          <Button onPress={() => setMode('login')} style={styles.submitBtn}>
+            <Button.Label>Go to Login</Button.Label>
+          </Button>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -32,26 +80,11 @@ export function AuthScreen(): JSX.Element {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Mode toggle */}
-        <ToggleGroup value={mode} onChange={(v) => setMode(v as AuthMode)} style={styles.modeToggle}>
+        <ToggleGroup value={mode} onChange={(v) => { setMode(v as AuthMode); setError(null); }} style={styles.modeToggle}>
           <ToggleGroup.Item value="signup" label="Sign Up" />
           <ToggleGroup.Item value="login" label="Log In" />
         </ToggleGroup>
 
-        {/* Social auth */}
-        <View style={styles.socialAuth}>
-          <SocialAuthButton provider="google" onPress={() => {}} />
-          <SocialAuthButton provider="apple" onPress={() => {}} />
-        </View>
-
-        {/* Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with email</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Form fields */}
         <View style={styles.form}>
           {mode === 'signup' ? (
             <Input>
@@ -97,18 +130,23 @@ export function AuthScreen(): JSX.Element {
               />
             </Input.Field>
           </Input>
+
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
         </View>
 
-        <Button onPress={handleSubmit} style={styles.submitBtn}>
-          <Button.Label>{mode === 'signup' ? 'Create Account' : 'Sign In'}</Button.Label>
+        <Button onPress={handleSubmit} disabled={isSubmitting} style={styles.submitBtn}>
+          <Button.Label>
+            {isSubmitting ? 'Please wait...' : mode === 'signup' ? 'Create Account' : 'Sign In'}
+          </Button.Label>
         </Button>
 
-        {/* Footer link */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
           </Text>
-          <TouchableOpacity onPress={() => setMode(mode === 'signup' ? 'login' : 'signup')}>
+          <TouchableOpacity onPress={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError(null); }}>
             <Text style={styles.footerLink}>
               {mode === 'signup' ? 'Log In' : 'Sign Up'}
             </Text>
@@ -133,46 +171,16 @@ const styles = StyleSheet.create({
     paddingBottom: THEME.spacing.xxl,
     gap: THEME.spacing.lg,
   },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: THEME.spacing.sm,
-  },
-  logoMark: {
-    width: 24,
-    height: 24,
-    borderRadius: 5,
-    backgroundColor: THEME.colors.primary,
-  },
-  brandName: {
-    fontSize: THEME.fontSize.base,
-    fontWeight: THEME.fontWeight.semibold,
-    color: THEME.colors.primary,
-  },
   modeToggle: {
     marginTop: THEME.spacing.xs,
   },
-  socialAuth: {
-    gap: THEME.spacing.sm,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: THEME.spacing.sm,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: THEME.colors.border,
-  },
-  dividerText: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
   form: {
     gap: THEME.spacing.md,
+  },
+  errorText: {
+    fontSize: THEME.fontSize.sm,
+    color: THEME.colors.error,
+    textAlign: 'center',
   },
   submitBtn: {
     marginTop: THEME.spacing.xs,
@@ -199,5 +207,27 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     color: THEME.colors.primary,
+  },
+  confirmContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: THEME.spacing.lg,
+    gap: THEME.spacing.lg,
+  },
+  confirmTitle: {
+    fontSize: THEME.fontSize.xxl,
+    fontWeight: THEME.fontWeight.bold,
+    color: THEME.colors.text,
+  },
+  confirmSubtitle: {
+    fontSize: THEME.fontSize.base,
+    color: THEME.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  confirmEmail: {
+    color: THEME.colors.primary,
+    fontWeight: THEME.fontWeight.semibold,
   },
 });

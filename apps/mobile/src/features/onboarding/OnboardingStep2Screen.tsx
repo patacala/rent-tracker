@@ -1,4 +1,4 @@
-import React, { JSX, useState, useCallback } from 'react';
+import React, { JSX, useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,8 +26,21 @@ const MIN_REQUIRED = 3;
 
 export function OnboardingStep2Screen(): JSX.Element {
   const router = useRouter();
-  const { data, setStep2 } = useOnboarding();
+  const { data, setStep2, setCurrentStep } = useOnboarding();
   const [selected, setSelected] = useState<string[]>(data.priorities);
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    setCurrentStep(2);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    setStep2({ priorities: selected });
+  }, [selected]);
 
   const toggle = useCallback((key: string) => {
     setSelected((prev) =>
@@ -45,7 +58,7 @@ export function OnboardingStep2Screen(): JSX.Element {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <HeaderBackButton onPress={() => router.back()} />
+        <HeaderBackButton onPress={() => router.navigate('/onboarding/step1')} />
         <Text style={styles.brandName}>ONBOARDING</Text>
       </View>
 
@@ -111,7 +124,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.md,
-    marginLeft: 20
+    marginLeft: 20,
   },
   brandName: {
     fontSize: THEME.fontSize.md,

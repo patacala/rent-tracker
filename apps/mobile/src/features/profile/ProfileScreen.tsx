@@ -10,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { ImagePlaceholder } from '@shared/components';
+import { supabase } from '@shared/lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -81,7 +83,11 @@ export function ProfileScreen(): JSX.Element {
         </View>
 
         {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7} onPress={async () => {
+          await supabase.auth.signOut();
+          await AsyncStorage.clear();
+          console.log('✅ Storage limpio');
+        }}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 

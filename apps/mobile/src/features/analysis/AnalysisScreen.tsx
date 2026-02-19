@@ -60,7 +60,7 @@ export function AnalysisScreen(): JSX.Element {
     });
 
     timers.push(
-      setTimeout(() => {
+      setTimeout(async () => {
         router.replace('/(tabs)/explore');
       }, NAV_DELAY),
     );

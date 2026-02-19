@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import React, { JSX, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,13 +21,9 @@ type Step1FormData = z.infer<typeof step1Schema>;
 
 export function OnboardingStep1Screen(): JSX.Element {
   const router = useRouter();
-  const { data, setStep1 } = useOnboarding();
+  const { data, setStep1, setCurrentStep } = useOnboarding();
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isValid },
-  } = useForm<Step1FormData>({
+  const { control, handleSubmit, watch, formState: { errors, isValid } } = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
     mode: 'onChange',
     defaultValues: {
@@ -35,6 +31,19 @@ export function OnboardingStep1Screen(): JSX.Element {
       commute: data.commute,
     },
   });
+
+  useEffect(() => {
+    setCurrentStep(1);
+  }, []);
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      if (values.workAddress && values.workAddress.length >= 3) {
+        setStep1({ workAddress: values.workAddress, commute: values.commute as CommuteOption });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const onNext = async (values: Step1FormData) => {
     await setStep1(values);
@@ -44,7 +53,13 @@ export function OnboardingStep1Screen(): JSX.Element {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <HeaderBackButton onPress={() => router.back()} />
+        <HeaderBackButton
+          onPress={() => {
+            setCurrentStep(0);
+            router.replace('/welcome');
+          }}
+        />
+
         <Text style={styles.brandName}>ONBOARDING</Text>
       </View>
 
@@ -93,10 +108,7 @@ export function OnboardingStep1Screen(): JSX.Element {
             control={control}
             name="commute"
             render={({ field: { onChange, value } }) => (
-              <ToggleGroup
-                value={value}
-                onChange={(v) => onChange(v as CommuteOption)}
-              >
+              <ToggleGroup value={value} onChange={(v) => onChange(v as CommuteOption)}>
                 <ToggleGroup.Item value={15} label="15 min" sublabel="NEARBY" />
                 <ToggleGroup.Item value={30} label="30 min" sublabel="BALANCED" />
                 <ToggleGroup.Item value={45} label="45 min" sublabel="FLEXIBLE" />
@@ -121,11 +133,7 @@ export function OnboardingStep1Screen(): JSX.Element {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button
-          onPress={handleSubmit(onNext)}
-          disabled={!isValid}
-          style={styles.cta}
-        >
+        <Button onPress={handleSubmit(onNext)} disabled={!isValid} style={styles.cta}>
           <Button.Label>Next: My Priorities</Button.Label>
           <Button.Icon name="arrow-forward-outline" />
         </Button>
@@ -152,7 +160,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.md,
-    marginLeft: 20
+    marginLeft: 20,
   },
   brandName: {
     fontSize: THEME.fontSize.md,

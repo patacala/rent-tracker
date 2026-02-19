@@ -1,14 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, JSX } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '@shared/lib/supabase';
 
-const AUTH_KEY = '@auth:isLoggedIn';
 const CLICKED_KEY = '@auth:hasClickedCard';
 
 interface AuthContextValue {
   isLoggedIn: boolean;
   hasClickedCard: boolean;
   isLoading: boolean;
-  login: () => Promise<void>;
+  session: Session | null;
+  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  signup: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   markCardClicked: () => Promise<void>;
 }
@@ -16,35 +19,53 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }): JSX.Element {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [hasClickedCard, setHasClickedCard] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
+    const init = async () => {
       try {
-        const [loggedIn, clicked] = await Promise.all([
-          AsyncStorage.getItem(AUTH_KEY),
-          AsyncStorage.getItem(CLICKED_KEY),
-        ]);
-        setIsLoggedIn(loggedIn === 'true');
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+
+        const clicked = await AsyncStorage.getItem(CLICKED_KEY);
         setHasClickedCard(clicked === 'true');
       } catch {
       } finally {
         setIsLoading(false);
       }
     };
-    load();
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async () => {
-    await AsyncStorage.setItem(AUTH_KEY, 'true');
-    setIsLoggedIn(true);
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
+  };
+
+  const signup = async (email: string, password: string, name: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: 'rent-tracker://auth/confirm',
+      },
+    });
+    return { error: error?.message ?? null };
   };
 
   const logout = async () => {
-    await AsyncStorage.multiRemove([AUTH_KEY, CLICKED_KEY]);
-    setIsLoggedIn(false);
+    await supabase.auth.signOut();
+    await AsyncStorage.removeItem(CLICKED_KEY);
     setHasClickedCard(false);
   };
 
@@ -54,7 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, hasClickedCard, isLoading, login, logout, markCardClicked }}>
+    <AuthContext.Provider value={{
+      isLoggedIn: !!session,
+      hasClickedCard,
+      isLoading,
+      session,
+      login,
+      signup,
+      logout,
+      markCardClicked,
+    }}>
       {children}
     </AuthContext.Provider>
   );
