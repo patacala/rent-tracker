@@ -7,10 +7,16 @@ export class OnboardingService {
   constructor(private prisma: PrismaService) {}
 
   async save(userId: string, dto: SaveOnboardingDto) {
-    return this.prisma.onboardingProfile.upsert({
+    const existing = await this.prisma.onboardingProfile.findUnique({
       where: { userId },
-      update: { ...dto },
-      create: { userId, ...dto },
+    });
+
+    if (existing) {
+      return { skipped: true, message: 'Onboarding already exists' };
+    }
+
+    return this.prisma.onboardingProfile.create({
+      data: { userId, ...dto },
     });
   }
 

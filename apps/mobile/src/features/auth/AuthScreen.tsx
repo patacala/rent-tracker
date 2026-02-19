@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import React, { JSX, memo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +17,10 @@ import { z } from 'zod';
 import { THEME } from '@shared/theme';
 import { Button, Input, ToggleGroup } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { useSyncUserMutation } from './store/authApi';
+import { useSaveOnboardingMutation } from '@features/onboarding/store/onboardingApi';
+import { supabase } from '@shared/lib/supabase';
 
 type AuthMode = 'signup' | 'login' | 'confirm';
 
@@ -32,31 +38,219 @@ const loginSchema = z.object({
 type SignupFormData = z.infer<typeof signupSchema>;
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export function AuthScreen(): JSX.Element {
-  const router = useRouter();
-  const { login, signup } = useAuth();
-  const [mode, setMode] = useState<AuthMode>('login');
-  const [submittedEmail, setSubmittedEmail] = useState('');
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const signupForm = useForm<SignupFormData>({
+const SignupForm = memo(function SignupForm({
+  onSubmit,
+  serverError,
+  isSubmitting,
+}: {
+  onSubmit: (values: SignupFormData) => void;
+  serverError: string | null;
+  isSubmitting: boolean;
+}) {
+  const { control, handleSubmit, formState: { errors, isValid } } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
     defaultValues: { name: '', email: '', password: '' },
   });
 
-  const loginForm = useForm<LoginFormData>({
+  return (
+    <View style={styles.form}>
+      <Input>
+        <Input.Label>Full name</Input.Label>
+        <Input.Field>
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, value } }) => (
+              <Input.TextInput
+                placeholder="Your full name"
+                value={value}
+                onChangeText={onChange}
+                autoCapitalize="words"
+                returnKeyType="next"
+              />
+            )}
+          />
+        </Input.Field>
+        {errors.name ? <Text style={styles.errorText}>{errors.name.message}</Text> : null}
+      </Input>
+
+      <Input>
+        <Input.Label>Email address</Input.Label>
+        <Input.Field>
+          <Input.Icon name="mail-outline" />
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <Input.TextInput
+                placeholder="name@example.com"
+                value={value}
+                onChangeText={onChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                returnKeyType="next"
+              />
+            )}
+          />
+        </Input.Field>
+        {errors.email ? <Text style={styles.errorText}>{errors.email.message}</Text> : null}
+      </Input>
+
+      <Input>
+        <Input.Label>Password</Input.Label>
+        <Input.Field secureTextEntry>
+          <Input.Icon name="lock-closed-outline" />
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <Input.TextInput
+                placeholder="Min. 6 characters"
+                value={value}
+                onChangeText={onChange}
+                secureTextEntry
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit(onSubmit)}
+              />
+            )}
+          />
+        </Input.Field>
+        {errors.password ? <Text style={styles.errorText}>{errors.password.message}</Text> : null}
+      </Input>
+
+      {serverError ? <Text style={styles.errorText}>{serverError}</Text> : null}
+
+      <Button
+        onPress={handleSubmit(onSubmit)}
+        disabled={isSubmitting || !isValid}
+        style={styles.submitBtn}
+      >
+        <Button.Label>{isSubmitting ? 'Please wait...' : 'Create Account'}</Button.Label>
+      </Button>
+    </View>
+  );
+});
+
+const LoginForm = memo(function LoginForm({
+  onSubmit,
+  serverError,
+  isSubmitting,
+}: {
+  onSubmit: (values: LoginFormData) => void;
+  serverError: string | null;
+  isSubmitting: boolean;
+}) {
+  const { control, handleSubmit, formState: { errors, isValid } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: 'onChange',
     defaultValues: { email: '', password: '' },
   });
 
+  return (
+    <View style={styles.form}>
+      <Input>
+        <Input.Label>Email address</Input.Label>
+        <Input.Field>
+          <Input.Icon name="mail-outline" />
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <Input.TextInput
+                placeholder="name@example.com"
+                value={value}
+                onChangeText={onChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                returnKeyType="next"
+              />
+            )}
+          />
+        </Input.Field>
+        {errors.email ? <Text style={styles.errorText}>{errors.email.message}</Text> : null}
+      </Input>
+
+      <Input>
+        <Input.Label>Password</Input.Label>
+        <Input.Field secureTextEntry>
+          <Input.Icon name="lock-closed-outline" />
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <Input.TextInput
+                placeholder="Enter your password"
+                value={value}
+                onChangeText={onChange}
+                secureTextEntry
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit(onSubmit)}
+              />
+            )}
+          />
+        </Input.Field>
+        {errors.password ? <Text style={styles.errorText}>{errors.password.message}</Text> : null}
+      </Input>
+
+      {serverError ? <Text style={styles.errorText}>{serverError}</Text> : null}
+
+      <Button
+        onPress={handleSubmit(onSubmit)}
+        disabled={isSubmitting || !isValid}
+        style={styles.submitBtn}
+      >
+        <Button.Label>{isSubmitting ? 'Please wait...' : 'Sign In'}</Button.Label>
+      </Button>
+    </View>
+  );
+});
+
+export function AuthScreen(): JSX.Element {
+  const router = useRouter();
+  const { login, signup } = useAuth();
+  const { data: onboardingData } = useOnboarding();
+  const [syncUser] = useSyncUserMutation();
+  const [saveOnboarding] = useSaveOnboardingMutation();
+  const [mode, setMode] = useState<AuthMode>('login');
+  const [submittedEmail, setSubmittedEmail] = useState('');
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const syncToBackend = async (token: string) => {
+    try {
+      console.log('🔄 Syncing user with token:', token.slice(0, 30));
+      const syncResult = await syncUser({ token });
+      console.log('✅ Sync result:', JSON.stringify(syncResult));
+
+      if (onboardingData.workAddress.trim().length > 0) {
+        console.log('🔄 Saving onboarding...');
+        const onboardingResult = await saveOnboarding({
+          token,
+          workAddress: onboardingData.workAddress,
+          commute: onboardingData.commute,
+          priorities: onboardingData.priorities,
+          hasChildren: onboardingData.hasChildren,
+          childAgeGroups: onboardingData.childAgeGroups,
+          hasPets: onboardingData.hasPets,
+          lifestyle: onboardingData.lifestyle,
+        });
+        console.log('✅ Onboarding result:', JSON.stringify(onboardingResult));
+      } else {
+        console.log('⚠️ No onboarding data');
+      }
+    } catch (e) {
+      console.error('❌ Error:', e);
+    }
+  };
+
   const handleSignup = async (values: SignupFormData) => {
     setServerError(null);
     setIsSubmitting(true);
     try {
+      console.log('🔄 Signing up...');
       const result = await signup(values.email, values.password, values.name);
+      console.log('✅ Signup result:', JSON.stringify(result));
       if (result.error) {
         setServerError(result.error);
         return;
@@ -72,10 +266,18 @@ export function AuthScreen(): JSX.Element {
     setServerError(null);
     setIsSubmitting(true);
     try {
+      console.log('🔄 Logging in...');
       const result = await login(values.email, values.password);
+      console.log('✅ Login result:', JSON.stringify(result));
       if (result.error) {
         setServerError(result.error);
         return;
+      }
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      console.log('🔑 Token after login:', token?.slice(0, 30));
+      if (token) {
+        await syncToBackend(token);
       }
       router.replace('/(tabs)/explore');
     } finally {
@@ -86,32 +288,23 @@ export function AuthScreen(): JSX.Element {
   const handleModeChange = (newMode: AuthMode) => {
     setMode(newMode);
     setServerError(null);
-    signupForm.reset();
-    loginForm.reset();
   };
 
   if (mode === 'confirm') {
     return (
-      <ImageBackground
-        source={require('@assets/family_01.png')}
-        style={styles.background}
-        resizeMode="cover"
-        imageStyle={{ left: -90 }}
-      >
-        <SafeAreaView style={styles.safe}>
-          <View style={styles.confirmContainer}>
-            <Input.Icon name="mail-outline" size={50} />
-            <Text style={styles.confirmTitle}>Check your email</Text>
-            <Text style={styles.confirmSubtitle}>
-              We sent a confirmation link to{'\n'}
-              <Text style={styles.confirmEmail}>{submittedEmail}</Text>
-            </Text>
-            <Button onPress={() => handleModeChange('login')} style={styles.submitBtn}>
-              <Button.Label>Go to Login</Button.Label>
-            </Button>
-          </View>
-        </SafeAreaView>
-      </ImageBackground>
+      <SafeAreaView style={styles.confirmSafe}>
+        <View style={styles.confirmContainer}>
+          <Input.Icon name="mail-outline" size={50} />
+          <Text style={styles.confirmTitle}>Check your email</Text>
+          <Text style={styles.confirmSubtitle}>
+            We sent a confirmation link to{'\n'}
+            <Text style={styles.confirmEmail}>{submittedEmail}</Text>
+          </Text>
+          <Button onPress={() => handleModeChange('login')} style={styles.submitBtn}>
+            <Button.Label>Go to Login</Button.Label>
+          </Button>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -123,189 +316,65 @@ export function AuthScreen(): JSX.Element {
       imageStyle={{ left: -90 }}
     >
       <SafeAreaView style={styles.safe}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <View style={styles.card}>
-            <View style={styles.brandRow}>
-              <View style={styles.logoMark} />
-              <Text style={styles.brandName}>Relocation Intelligence</Text>
-            </View>
-
-            <ToggleGroup
-              value={mode}
-              onChange={(v) => handleModeChange(v as AuthMode)}
-              style={styles.modeToggle}
-            >
-              <ToggleGroup.Item value="signup" label="Sign Up" />
-              <ToggleGroup.Item value="login" label="Log In" />
-            </ToggleGroup>
-
-            {mode === 'signup' ? (
-              <View style={styles.form}>
-                <Controller
-                  control={signupForm.control}
-                  name="name"
-                  render={({ field: { onChange, value } }) => (
-                    <Input>
-                      <Input.Label>Full name</Input.Label>
-                      <Input.Field>
-                        <Input.TextInput
-                          placeholder="Your full name"
-                          value={value}
-                          onChangeText={onChange}
-                          autoCapitalize="words"
-                          returnKeyType="next"
-                        />
-                      </Input.Field>
-                      {signupForm.formState.errors.name ? (
-                        <Text style={styles.errorText}>{signupForm.formState.errors.name.message}</Text>
-                      ) : null}
-                    </Input>
-                  )}
-                />
-
-                <Controller
-                  control={signupForm.control}
-                  name="email"
-                  render={({ field: { onChange, value } }) => (
-                    <Input>
-                      <Input.Label>Email address</Input.Label>
-                      <Input.Field>
-                        <Input.Icon name="mail-outline" />
-                        <Input.TextInput
-                          placeholder="name@example.com"
-                          value={value}
-                          onChangeText={onChange}
-                          keyboardType="email-address"
-                          autoCapitalize="none"
-                          returnKeyType="next"
-                        />
-                      </Input.Field>
-                      {signupForm.formState.errors.email ? (
-                        <Text style={styles.errorText}>{signupForm.formState.errors.email.message}</Text>
-                      ) : null}
-                    </Input>
-                  )}
-                />
-
-                <Controller
-                  control={signupForm.control}
-                  name="password"
-                  render={({ field: { onChange, value } }) => (
-                    <Input>
-                      <Input.Label>Password</Input.Label>
-                      <Input.Field secureTextEntry>
-                        <Input.Icon name="lock-closed-outline" />
-                        <Input.TextInput
-                          placeholder="Min. 6 characters"
-                          value={value}
-                          onChangeText={onChange}
-                          secureTextEntry
-                          returnKeyType="done"
-                          onSubmitEditing={signupForm.handleSubmit(handleSignup)}
-                        />
-                      </Input.Field>
-                      {signupForm.formState.errors.password ? (
-                        <Text style={styles.errorText}>{signupForm.formState.errors.password.message}</Text>
-                      ) : null}
-                    </Input>
-                  )}
-                />
-
-                {serverError ? <Text style={styles.errorText}>{serverError}</Text> : null}
-
-                <Button
-                  onPress={signupForm.handleSubmit(handleSignup)}
-                  disabled={isSubmitting || !signupForm.formState.isValid}
-                  style={styles.submitBtn}
-                >
-                  <Button.Label>{isSubmitting ? 'Please wait...' : 'Create Account'}</Button.Label>
-                </Button>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.card}>
+              <View style={styles.brandRow}>
+                <View style={styles.logoMark} />
+                <Text style={styles.brandName}>Relocation Intelligence</Text>
               </View>
-            ) : (
-              <View style={styles.form}>
-                <Controller
-                  control={loginForm.control}
-                  name="email"
-                  render={({ field: { onChange, value } }) => (
-                    <Input>
-                      <Input.Label>Email address</Input.Label>
-                      <Input.Field>
-                        <Input.Icon name="mail-outline" />
-                        <Input.TextInput
-                          placeholder="name@example.com"
-                          value={value}
-                          onChangeText={onChange}
-                          keyboardType="email-address"
-                          autoCapitalize="none"
-                          returnKeyType="next"
-                        />
-                      </Input.Field>
-                      {loginForm.formState.errors.email ? (
-                        <Text style={styles.errorText}>{loginForm.formState.errors.email.message}</Text>
-                      ) : null}
-                    </Input>
-                  )}
+
+              <ToggleGroup
+                value={mode}
+                onChange={(v) => handleModeChange(v as AuthMode)}
+                style={styles.modeToggle}
+              >
+                <ToggleGroup.Item value="signup" label="Sign Up" />
+                <ToggleGroup.Item value="login" label="Log In" />
+              </ToggleGroup>
+
+              {mode === 'signup' ? (
+                <SignupForm
+                  onSubmit={handleSignup}
+                  serverError={serverError}
+                  isSubmitting={isSubmitting}
                 />
-
-                <Controller
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field: { onChange, value } }) => (
-                    <Input>
-                      <Input.Label>Password</Input.Label>
-                      <Input.Field secureTextEntry>
-                        <Input.Icon name="lock-closed-outline" />
-                        <Input.TextInput
-                          placeholder="Enter your password"
-                          value={value}
-                          onChangeText={onChange}
-                          secureTextEntry
-                          returnKeyType="done"
-                          onSubmitEditing={loginForm.handleSubmit(handleLogin)}
-                        />
-                      </Input.Field>
-                      {loginForm.formState.errors.password ? (
-                        <Text style={styles.errorText}>{loginForm.formState.errors.password.message}</Text>
-                      ) : null}
-                    </Input>
-                  )}
+              ) : (
+                <LoginForm
+                  onSubmit={handleLogin}
+                  serverError={serverError}
+                  isSubmitting={isSubmitting}
                 />
+              )}
 
-                {serverError ? <Text style={styles.errorText}>{serverError}</Text> : null}
-
-                <Button
-                  onPress={loginForm.handleSubmit(handleLogin)}
-                  disabled={isSubmitting || !loginForm.formState.isValid}
-                  style={styles.submitBtn}
-                >
-                  <Button.Label>{isSubmitting ? 'Please wait...' : 'Sign In'}</Button.Label>
-                </Button>
-              </View>
-            )}
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
-              </Text>
-              <TouchableOpacity onPress={() => handleModeChange(mode === 'signup' ? 'login' : 'signup')}>
-                <Text style={styles.footerLink}>
-                  {mode === 'signup' ? 'Log In' : 'Sign Up'}
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                  {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
                 </Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity onPress={() => handleModeChange(mode === 'signup' ? 'login' : 'signup')}>
+                  <Text style={styles.footerLink}>
+                    {mode === 'signup' ? 'Log In' : 'Sign Up'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-            <Text style={styles.legal}>
-              By continuing, you agree to our{' '}
-              <Text style={styles.legalLink}>Terms of Service</Text> and{' '}
-              <Text style={styles.legalLink}>Privacy Policy</Text>.
-            </Text>
-          </View>
-        </ScrollView>
+              <Text style={styles.legal}>
+                By continuing, you agree to our{' '}
+                <Text style={styles.legalLink}>Terms of Service</Text> and{' '}
+                <Text style={styles.legalLink}>Privacy Policy</Text>.
+              </Text>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -316,6 +385,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safe: {
+    flex: 1,
+  },
+  keyboardView: {
     flex: 1,
   },
   scroll: {
@@ -390,6 +462,10 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     color: THEME.colors.primary,
+  },
+  confirmSafe: {
+    flex: 1,
+    backgroundColor: THEME.colors.background,
   },
   confirmContainer: {
     flex: 1,

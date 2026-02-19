@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { JSX, useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Provider } from 'react-redux';
+import { store } from '@shared/store';
 import { AuthProvider, useAuth } from '@shared/context/AuthContext';
 import { OnboardingProvider, useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { THEME } from '@shared/theme';
@@ -75,8 +77,8 @@ function RootLayoutContent(): JSX.Element {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index"  options={{ gestureEnabled: false }}/>
-      <Stack.Screen name="welcome"  options={{ gestureEnabled: false }}/>
+      <Stack.Screen name="index" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="welcome" options={{ gestureEnabled: false }} />
       <Stack.Screen name="auth" />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="analysis" options={{ gestureEnabled: false }} />
@@ -89,13 +91,15 @@ function RootLayoutContent(): JSX.Element {
 
 export default function RootLayout(): JSX.Element {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <OnboardingProvider>
-          <StatusBar style="dark" />
-          <RootLayoutContent />
-        </OnboardingProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <Provider store={store}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <OnboardingProvider>
+            <StatusBar style="dark" />
+            <RootLayoutContent />
+          </OnboardingProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </Provider>
   );
 }

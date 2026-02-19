@@ -1,26 +1,40 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
+import { Strategy } from 'passport-custom';
+import { SupabaseService } from '../supabase/supabase.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
-    config: ConfigService,
-    private readonly prisma: PrismaService,
+    private supabase: SupabaseService,
+    private prisma: PrismaService,
   ) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.get('SUPABASE_JWT_SECRET')!,
-    });
+    super();
   }
 
-  async validate(payload: { sub: string; email: string }) {
-    const user = await this.prisma.user.findUnique({
-      where: { supabaseId: payload.sub },
+  async validate(req: any) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) throw new UnauthorizedException();
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUser = await this.supabase.verifyToken(token);
+    if (!supabaseUser) throw new UnauthorizedException();
+
+    let user = await this.prisma.user.findUnique({
+      where: { supabaseId: supabaseUser.id },
     });
-    if (!user) throw new UnauthorizedException();
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          supabaseId: supabaseUser.id,
+          email: supabaseUser.email ?? '',
+          name: supabaseUser.user_metadata?.full_name,
+        },
+      });
+    }
+
     return user;
   }
 }
