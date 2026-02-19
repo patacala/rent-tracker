@@ -40,6 +40,11 @@ function RootLayoutContent(): JSX.Element {
 
     const hasOnboardingData = onboardingData.workAddress.trim().length > 0;
 
+    if (isLoggedIn && (inWelcomeScreen || inAuthScreen)) {
+      router.replace('/(tabs)/explore');
+      return;
+    }
+
     if (!isLoggedIn && currentStep > 0 && currentStep < 4 && !inOnboardingScreen) {
       router.replace(`/onboarding/step${currentStep}` as any);
       return;
@@ -70,10 +75,10 @@ function RootLayoutContent(): JSX.Element {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="welcome" />
+      <Stack.Screen name="index"  options={{ gestureEnabled: false }}/>
+      <Stack.Screen name="welcome"  options={{ gestureEnabled: false }}/>
       <Stack.Screen name="auth" />
-      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="analysis" options={{ gestureEnabled: false }} />
       <Stack.Screen name="map" options={{ gestureEnabled: false }} />
       <Stack.Screen name="neighborhood/[id]" />

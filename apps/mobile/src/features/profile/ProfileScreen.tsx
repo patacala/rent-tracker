@@ -8,10 +8,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { THEME } from '@shared/theme';
 import { ImagePlaceholder } from '@shared/components';
-import { supabase } from '@shared/lib/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@shared/context/AuthContext';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -30,6 +31,15 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 export function ProfileScreen(): JSX.Element {
+  const { logout } = useAuth();
+  const { reset } = useOnboarding();
+
+  const handleSignOut = async () => {
+    await reset();
+    await logout();
+    router.replace('/welcome');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -37,10 +47,8 @@ export function ProfileScreen(): JSX.Element {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <Text style={styles.headerTitle}>Profile</Text>
 
-        {/* Avatar + Info */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
             <ImagePlaceholder
@@ -61,7 +69,6 @@ export function ProfileScreen(): JSX.Element {
           </View>
         </View>
 
-        {/* Settings Menu */}
         <View style={styles.menuCard}>
           {MENU_ITEMS.map((item, index) => (
             <TouchableOpacity
@@ -82,16 +89,10 @@ export function ProfileScreen(): JSX.Element {
           ))}
         </View>
 
-        {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7} onPress={async () => {
-          await supabase.auth.signOut();
-          await AsyncStorage.clear();
-          console.log('✅ Storage limpio');
-        }}>
+        <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        {/* Version */}
         <Text style={styles.version}>VERSION 2.4.0</Text>
       </ScrollView>
     </SafeAreaView>
@@ -111,8 +112,6 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.bold,
     color: THEME.colors.text,
   },
-
-  // Avatar section
   avatarSection: {
     alignItems: 'center',
     gap: THEME.spacing.xs,
@@ -159,8 +158,6 @@ const styles = StyleSheet.create({
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.textSecondary,
   },
-
-  // Menu card
   menuCard: {
     backgroundColor: THEME.colors.surface,
     borderRadius: THEME.borderRadius.md,
@@ -193,8 +190,6 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.medium,
     color: THEME.colors.text,
   },
-
-  // Sign out
   signOutBtn: {
     alignItems: 'center',
     paddingVertical: THEME.spacing.sm,
@@ -204,8 +199,6 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.medium,
     color: THEME.colors.error,
   },
-
-  // Version
   version: {
     fontSize: THEME.fontSize.xs,
     color: THEME.colors.textMuted,

@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ImageBackground,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,7 +24,6 @@ export function WelcomeScreen(): JSX.Element {
       <View style={styles.overlay} />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        {/* Contenido fijado abajo */}
         <View style={styles.inner}>
           <View style={styles.brandRow}>
             <View style={styles.logoMark} />
@@ -49,10 +49,17 @@ export function WelcomeScreen(): JSX.Element {
           </View>
 
           <View style={styles.actions}>
-            <Button onPress={() => router.push('/onboarding/step1') }>
+            <Button onPress={() => router.push('/onboarding/step1')}>
               <Button.Label>Find My Neighborhood</Button.Label>
               <Button.Icon name="arrow-forward-outline" />
             </Button>
+
+            <View style={styles.loginRow}>
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/auth')}>
+                <Text style={styles.loginLink}>Log In</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -62,7 +69,7 @@ export function WelcomeScreen(): JSX.Element {
 
 const styles = StyleSheet.create({
   background: {
-    flex: 1
+    flex: 1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -118,5 +125,20 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: THEME.spacing.sm,
+    gap: THEME.spacing.md,
+  },
+  loginRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginText: {
+    fontSize: THEME.fontSize.sm,
+    color: THEME.colors.textSecondary,
+  },
+  loginLink: {
+    fontSize: THEME.fontSize.sm,
+    color: THEME.colors.primary,
+    fontWeight: THEME.fontWeight.semibold,
   },
 });
