@@ -218,39 +218,37 @@ export function AuthScreen(): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const syncToBackend = async (token: string) => {
-    try {
-      console.log('🔄 Syncing user with token:', token.slice(0, 30));
-      const syncResult = await syncUser({ token });
-      console.log('✅ Sync result:', JSON.stringify(syncResult));
+    const syncResult = await syncUser({ token });
 
-      if (onboardingData.workAddress.trim().length > 0) {
-        console.log('🔄 Saving onboarding...');
-        const onboardingResult = await saveOnboarding({
-          token,
-          workAddress: onboardingData.workAddress,
-          commute: onboardingData.commute,
-          priorities: onboardingData.priorities,
-          hasChildren: onboardingData.hasChildren,
-          childAgeGroups: onboardingData.childAgeGroups,
-          hasPets: onboardingData.hasPets,
-          lifestyle: onboardingData.lifestyle,
-        });
-        console.log('✅ Onboarding result:', JSON.stringify(onboardingResult));
-      } else {
-        console.log('⚠️ No onboarding data');
+    if ('error' in syncResult) {
+      throw new Error('User sync failed');
+    }
+
+    if (onboardingData.workAddress.trim().length > 0) {
+      const onboardingResult = await saveOnboarding({
+        token,
+        workAddress: onboardingData.workAddress,
+        commute: onboardingData.commute,
+        priorities: onboardingData.priorities,
+        hasChildren: onboardingData.hasChildren,
+        childAgeGroups: onboardingData.childAgeGroups,
+        hasPets: onboardingData.hasPets,
+        lifestyle: onboardingData.lifestyle,
+      });
+
+      if ('error' in onboardingResult) {
+        throw new Error('Onboarding save failed');
       }
-    } catch (e) {
-      console.error('❌ Error:', e);
     }
   };
 
   const handleSignup = async (values: SignupFormData) => {
     setServerError(null);
     setIsSubmitting(true);
+
     try {
-      console.log('🔄 Signing up...');
       const result = await signup(values.email, values.password, values.name);
-      console.log('✅ Signup result:', JSON.stringify(result));
+
       if (result.error) {
         setServerError(result.error);
         return;
@@ -265,21 +263,33 @@ export function AuthScreen(): JSX.Element {
   const handleLogin = async (values: LoginFormData) => {
     setServerError(null);
     setIsSubmitting(true);
+
     try {
-      console.log('🔄 Logging in...');
       const result = await login(values.email, values.password);
-      console.log('✅ Login result:', JSON.stringify(result));
+
       if (result.error) {
         setServerError(result.error);
         return;
       }
+
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-      console.log('🔑 Token after login:', token?.slice(0, 30));
-      if (token) {
-        await syncToBackend(token);
+
+      if (!token) {
+        setServerError('Authentication error. Please try again.');
+        return;
       }
+
+      try {
+        await syncToBackend(token);
+      } catch (error) {
+        setServerError('Something went wrong while syncing your account.');
+        return;
+      }
+
       router.replace('/(tabs)/explore');
+    } catch (error) {
+      setServerError('Unexpected error. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
