@@ -1,56 +1,34 @@
-// ─────────────────────────────────────────────
-// Relocation Intelligence — Prisma Schema
-// Database: PostgreSQL via Supabase
-// ─────────────────────────────────────────────
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client"
+  output          = "../src/generated/"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  preferences    UserPreferences?
-  searchSessions SearchSession[]
-
-  @@map("users")
+  id          String             @id @default(cuid())
+  supabaseId  String             @unique
+  email       String             @unique
+  name        String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  onboarding  OnboardingProfile?
 }
 
-model UserPreferences {
-  id                 String   @id @default(cuid())
-  userId             String   @unique @map("user_id")
-  workLat            Float    @map("work_lat")
-  workLng            Float    @map("work_lng")
-  maxCommuteMinutes  Int      @map("max_commute_minutes")
-  amenities          String[] // JSON array of AmenityType values
-  hasFamily          Boolean  @default(false) @map("has_family")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_preferences")
-}
-
-model SearchSession {
-  id                  String   @id @default(cuid())
-  userId              String   @map("user_id")
-  city                String   @default("miami")
-  preferencesSnapshot Json     @map("preferences_snapshot")
-  results             Json     // Array of NeighborhoodScore
-  createdAt           DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("search_sessions")
+model OnboardingProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  workAddress    String
+  commute        Int
+  priorities     String[]
+  hasChildren    String
+  childAgeGroups String[]
+  hasPets        String
+  lifestyle      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

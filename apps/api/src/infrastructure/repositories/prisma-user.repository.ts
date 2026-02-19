@@ -17,8 +17,14 @@ export class PrismaUserRepository implements IUserRepository {
     return user ? this.toEntity(user) : null;
   }
 
-  async create(params: { email: string; name?: string }): Promise<UserEntity> {
-    const user = await this.prisma.user.create({ data: params });
+  async create(params: { email: string; name?: string; supabaseId: string }): Promise<UserEntity> {
+    const user = await this.prisma.user.create({
+      data: {
+        email: params.email,
+        name: params.name,
+        supabaseId: params.supabaseId,
+      },
+    });
     return this.toEntity(user);
   }
 
