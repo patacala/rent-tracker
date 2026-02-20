@@ -2,9 +2,7 @@ import React, { JSX, ReactNode } from 'react';
 import { StyleProp, ViewStyle, View } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 
-const { MapView, Camera, MarkerView } = Mapbox;
-
-// ─── Types ────────────────────────────────────────
+const { MapView, Camera, MarkerView, ShapeSource, FillLayer, LineLayer, UserLocation } = Mapbox as any;
 
 export interface Coordinate {
   latitude: number;
@@ -60,7 +58,27 @@ export interface MapUserLocationProps {
   minDisplacement?: number;
 }
 
-// ─── Root Component ───────────────────────────────
+function createCircleGeoJSON(
+  center: [number, number],
+  radiusInMeters: number,
+  points = 64,
+): GeoJSON.Feature {
+  const distanceX = radiusInMeters / (111320 * Math.cos((center[1] * Math.PI) / 180));
+  const distanceY = radiusInMeters / 110574;
+  const coords: number[][] = [];
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    coords.push([center[0] + distanceX * Math.cos(theta), center[1] + distanceY * Math.sin(theta)]);
+  }
+  coords.push(coords[0]);
+
+  return {
+    type: 'Feature',
+    properties: {},
+    geometry: { type: 'Polygon', coordinates: [coords] },
+  };
+}
 
 function MapRoot({ children, style, styleURL, onPress, onLongPress }: MapRootProps): JSX.Element {
   const MapViewComponent = MapView as any;
@@ -80,8 +98,6 @@ function MapRoot({ children, style, styleURL, onPress, onLongPress }: MapRootPro
   );
 }
 
-// ─── Camera Component ─────────────────────────────
-
 function MapCamera({
   centerCoordinate,
   zoomLevel,
@@ -89,7 +105,6 @@ function MapCamera({
   minZoomLevel,
   maxZoomLevel,
 }: MapCameraProps): JSX.Element {
-  // Use defaultSettings if provided, otherwise use direct props
   const finalCenter = defaultSettings?.centerCoordinate || centerCoordinate;
   const finalZoom = defaultSettings?.zoomLevel || zoomLevel;
 
@@ -103,8 +118,6 @@ function MapCamera({
   );
 }
 
-// ─── Marker Component ─────────────────────────────
-
 function MapMarker({ id, coordinate, children, onPress }: MapMarkerProps): JSX.Element {
   const MarkerViewComponent = MarkerView as any;
 
@@ -115,28 +128,53 @@ function MapMarker({ id, coordinate, children, onPress }: MapMarkerProps): JSX.E
   );
 }
 
-// ─── Circle Component ─────────────────────────────
+function MapCircle({
+  id,
+  centerCoordinate,
+  radiusInMeters,
+  fillColor = 'rgba(0, 122, 255, 0.2)',
+  fillOpacity = 1,
+  strokeColor = '#007AFF',
+  strokeWidth = 2,
+  strokeOpacity = 1,
+}: MapCircleProps): JSX.Element {
+  const shape = createCircleGeoJSON(centerCoordinate, radiusInMeters);
 
-function MapCircle(props: MapCircleProps): JSX.Element {
-  // TODO: Implement circle using correct Mapbox API
-  // Currently not rendering due to ShapeSource/FillLayer/LineLayer import issues
-  console.warn('Map.Circle not yet fully implemented', props.id);
-  return <View />;
+  return (
+    <ShapeSource id={`${id}-source`} shape={shape}>
+      <FillLayer
+        id={`${id}-fill`}
+        style={{ fillColor, fillOpacity }}
+      />
+      <LineLayer
+        id={`${id}-stroke`}
+        style={{ lineColor: strokeColor, lineWidth: strokeWidth, lineOpacity: strokeOpacity }}
+      />
+    </ShapeSource>
+  );
 }
-
-// ─── User Location Component ──────────────────────
 
 function MapUserLocation({
   visible = true,
+  animated = true,
+  renderMode,
+  androidRenderMode,
+  showsUserHeadingIndicator,
+  minDisplacement,
 }: MapUserLocationProps): JSX.Element | null {
   if (!visible) return null;
 
-  // TODO: Implement user location using correct Mapbox API
-  console.warn('Map.UserLocation not yet fully implemented');
-  return null;
+  return (
+    <UserLocation
+      visible={visible}
+      animated={animated}
+      renderMode={renderMode}
+      androidRenderMode={androidRenderMode}
+      showsUserHeadingIndicator={showsUserHeadingIndicator}
+      minDisplacement={minDisplacement}
+    />
+  );
 }
-
-// ─── Exports ──────────────────────────────────────
 
 export const Map = Object.assign(MapRoot, {
   Camera: MapCamera,
