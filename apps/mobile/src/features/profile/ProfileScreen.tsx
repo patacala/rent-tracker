@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,10 +35,24 @@ export function ProfileScreen(): JSX.Element {
   const { logout } = useAuth();
   const { reset } = useOnboarding();
 
-  const handleSignOut = async () => {
-    await reset();
-    await logout();
-    router.replace('/welcome');
+  const handleSignOut = () => {
+    Alert.alert(
+      'Confirm Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await reset();
+            await logout();
+            router.replace('/welcome');
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -51,11 +66,7 @@ export function ProfileScreen(): JSX.Element {
 
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
-            <ImagePlaceholder
-              height={88}
-              style={styles.avatar}
-              label=""
-            />
+            <ImagePlaceholder height={88} style={styles.avatar} label="" />
             <View style={styles.verifiedBadge}>
               <Ionicons name="checkmark" size={10} color="#FFFFFF" />
             </View>
@@ -73,10 +84,7 @@ export function ProfileScreen(): JSX.Element {
           {MENU_ITEMS.map((item, index) => (
             <TouchableOpacity
               key={item.label}
-              style={[
-                styles.menuRow,
-                index < MENU_ITEMS.length - 1 && styles.menuRowBorder,
-              ]}
+              style={[styles.menuRow, index < MENU_ITEMS.length - 1 && styles.menuRowBorder]}
               onPress={item.onPress}
               activeOpacity={0.7}
             >
