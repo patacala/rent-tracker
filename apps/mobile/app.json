@@ -2,6 +2,7 @@
   "expo": {
     "name": "Rent Tracker",
     "slug": "rent-tracker",
+    "owner": "runtimelab",
     "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,7 +17,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.relocationai.mobile",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Used to show your current location on the map"
+        "NSLocationWhenInUseUsageDescription": "Used to show your current location on the map",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -25,7 +27,12 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.relocationai.mobile",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -34,7 +41,12 @@
     },
     "plugins": [
       "expo-router",
-      "@rnmapbox/maps",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsImpl": "mapbox"
+        }
+      ],
       [
         "expo-location",
         {
@@ -44,6 +56,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bb446db1-3d0a-4a35-9d56-f90ce5c37fca"
+      }
     }
   }
 }
