@@ -5,11 +5,15 @@ import { JSX, useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
+import Mapbox from '@rnmapbox/maps';
 import { store } from '@shared/store';
 import { AuthProvider, useAuth } from '@shared/context/AuthContext';
 import { OnboardingProvider, useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { THEME } from '@shared/theme';
 import { supabase } from '@shared/lib/supabase';
+
+// Configure Mapbox access token
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '');
 
 function RootLayoutContent(): JSX.Element {
   const { isLoading: authLoading, isLoggedIn } = useAuth();

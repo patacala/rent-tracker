@@ -16,3 +16,17 @@ export { StatCard } from './StatCard';
 export { NeighborhoodCard } from './NeighborhoodCard';
 export { InsightItem } from './InsightItem';
 export { AmenityRow } from './AmenityRow';
+export { Map } from './Map';
+export type { Coordinate } from './Map';
+export {
+  NeighborhoodMarker,
+  IconMarker,
+  PriceMarker,
+  SchoolMarker,
+  StoreMarker,
+  RestaurantMarker,
+  ParkMarker,
+  GymMarker,
+  HospitalMarker,
+  TransitMarker,
+} from './MapMarkers';

@@ -51,6 +51,8 @@ export function NeighborhoodDetailScreen(): JSX.Element {
           medianPrice={detail.medianPrice}
           walkScore={detail.walkScore}
           walkScoreLabel={detail.walkScoreLabel}
+          lat={detail.lat}
+          lng={detail.lng}
         />
         <SafetySection
           grade={detail.safetyGrade}

@@ -7,8 +7,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { THEME } from '@shared/theme';
-import { Button, HeaderBackButton, Input, MapPlaceholder, StepIndicator, ToggleGroup } from '@shared/components';
+import { Button, HeaderBackButton, Input, Map, StepIndicator, ToggleGroup } from '@shared/components';
 import { useOnboarding } from './context/OnboardingContext';
+import { MIAMI_CONFIG } from '@rent-tracker/config';
 
 type CommuteOption = 15 | 30 | 45;
 
@@ -18,6 +19,13 @@ const step1Schema = z.object({
 });
 
 type Step1FormData = z.infer<typeof step1Schema>;
+
+// Convert commute minutes to approximate meters (avg speed: 40km/h)
+function commuteMinutesToMeters(minutes: number): number {
+  const kmPerHour = 40;
+  const metersPerMinute = (kmPerHour * 1000) / 60;
+  return minutes * metersPerMinute;
+}
 
 export function OnboardingStep1Screen(): JSX.Element {
   const router = useRouter();
@@ -124,11 +132,30 @@ export function OnboardingStep1Screen(): JSX.Element {
           </View>
         </View>
 
-        <MapPlaceholder style={styles.mapPreview} />
+        <Map style={styles.mapPreview}>
+          <Map.Camera
+            defaultSettings={{
+              centerCoordinate: [MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat],
+              zoomLevel: 11,
+            }}
+          />
+          <Map.Circle
+            id="commute-radius"
+            centerCoordinate={[MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat]}
+            radiusInMeters={commuteMinutesToMeters(watch('commute') || 30)}
+            fillColor={THEME.colors.primary}
+            fillOpacity={0.15}
+            strokeColor={THEME.colors.primary}
+            strokeWidth={2}
+            strokeOpacity={0.5}
+          />
+        </Map>
 
         <View style={styles.mapPreviewLabel}>
           <Ionicons name="navigate-outline" size={14} color={THEME.colors.primary} />
-          <Text style={styles.mapPreviewText}>Interactive Map Preview</Text>
+          <Text style={styles.mapPreviewText}>
+            {watch('commute') || 30} min commute radius preview
+          </Text>
         </View>
       </ScrollView>
 

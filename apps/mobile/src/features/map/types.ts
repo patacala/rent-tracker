@@ -5,6 +5,8 @@ export interface NeighborhoodPreview {
   score: number;
   tags: string[];
   commuteMinutes: number;
+  lat: number;
+  lng: number;
 }
 
 export const MAP_FILTERS = ['Commute', 'Safety', 'Schools', 'Budget'] as const;

@@ -8,17 +8,16 @@ const MOCK_PREVIEWS: NeighborhoodPreview[] = MIAMI_CONFIG.neighborhoods.slice(0,
     name: n.name,
     city: 'Miami, FL',
     score: 94 - idx * 3,
-    tags:
-      (
-        [
-          ['Excellent Nightlife', 'Creative Hub'],
-          ['Safe for Families', 'Top Schools'],
-          ['Walkable', 'Financial Hub'],
-          ['Lush Greenery', 'Bohemian'],
-          ['Diverse', 'Affordable'],
-        ] as const
-      )[idx] ?? [],
+    tags: [
+      ['Excellent Nightlife', 'Creative Hub'],
+      ['Safe for Families', 'Top Schools'],
+      ['Walkable', 'Financial Hub'],
+      ['Lush Greenery', 'Bohemian'],
+      ['Diverse', 'Affordable'],
+    ][idx] ?? [],
     commuteMinutes: 15 + idx * 3,
+    lat: n.lat,
+    lng: n.lng,
   }),
 );
 

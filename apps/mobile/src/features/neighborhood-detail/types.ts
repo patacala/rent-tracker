@@ -52,4 +52,6 @@ export interface NeighborhoodDetail {
   crimeComparison: string;
   crimeYoY: string;
   crimeYoYValue: number;
+  lat: number;
+  lng: number;
 }
