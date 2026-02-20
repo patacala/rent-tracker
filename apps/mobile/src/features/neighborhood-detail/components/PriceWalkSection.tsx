@@ -2,18 +2,22 @@ import React, { JSX } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
-import { MapPlaceholder } from '@shared/components';
+import { Map, PriceMarker } from '@shared/components';
 
 interface PriceWalkSectionProps {
   medianPrice: string;
   walkScore: number;
   walkScoreLabel: string;
+  lat?: number;
+  lng?: number;
 }
 
 export function PriceWalkSection({
   medianPrice,
   walkScore,
   walkScoreLabel,
+  lat,
+  lng,
 }: PriceWalkSectionProps): JSX.Element {
   return (
     <View style={styles.section}>
@@ -33,12 +37,21 @@ export function PriceWalkSection({
           </View>
         </View>
       </View>
-      <View style={styles.mapPriceContainer}>
-        <MapPlaceholder style={styles.miniMap} />
-        <View style={styles.priceBubble}>
-          <Text style={styles.priceBubbleText}>{medianPrice}</Text>
+      {lat && lng ? (
+        <View style={styles.mapPriceContainer}>
+          <Map style={styles.miniMap}>
+            <Map.Camera
+              defaultSettings={{
+                centerCoordinate: [lng, lat],
+                zoomLevel: 13,
+              }}
+            />
+            <Map.Marker id="neighborhood-price" coordinate={[lng, lat]}>
+              <PriceMarker price={medianPrice} highlighted />
+            </Map.Marker>
+          </Map>
         </View>
-      </View>
+      ) : null}
     </View>
   );
 }

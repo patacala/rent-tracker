@@ -59,6 +59,8 @@ const NEIGHBORHOOD_DATA: Record<string, NeighborhoodDetail> = {
     crimeComparison: 'Crime rate is 64% lower than national average.',
     crimeYoY: '-2% incidents',
     crimeYoYValue: 15,
+    lat: 25.7215,
+    lng: -80.2684,
   },
 };
 
@@ -111,6 +113,8 @@ const DEFAULT_DETAIL: Omit<NeighborhoodDetail, 'id' | 'name'> = {
   crimeComparison: 'Crime rate is 48% lower than national average.',
   crimeYoY: '-1.5% incidents',
   crimeYoYValue: 20,
+  lat: MIAMI_CONFIG.center.lat,
+  lng: MIAMI_CONFIG.center.lng,
 };
 
 export function getNeighborhoodDetail(id: string): NeighborhoodDetail {
@@ -118,6 +122,8 @@ export function getNeighborhoodDetail(id: string): NeighborhoodDetail {
 
   const found = MIAMI_CONFIG.neighborhoods.find((n) => n.id === id);
   const name = found?.name ?? 'Neighborhood';
+  const lat = found?.lat ?? DEFAULT_DETAIL.lat;
+  const lng = found?.lng ?? DEFAULT_DETAIL.lng;
 
-  return { id, name, ...DEFAULT_DETAIL };
+  return { ...DEFAULT_DETAIL, id, name, lat, lng };
 }

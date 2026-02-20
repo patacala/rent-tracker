@@ -233,7 +233,7 @@ export function AuthScreen(): JSX.Element {
         hasChildren: onboardingData.hasChildren,
         childAgeGroups: onboardingData.childAgeGroups,
         hasPets: onboardingData.hasPets,
-        lifestyle: onboardingData.lifestyle,
+        lifestyle: onboardingData.lifestyle ?? undefined,
       });
 
       if ('error' in onboardingResult) {

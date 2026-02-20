@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { BASE_URL } from '@shared/api/baseUrl';
 
 export interface SaveOnboardingRequest {
+  token: string;
   workAddress: string;
   commute: number;
   priorities: string[];

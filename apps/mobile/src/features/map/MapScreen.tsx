@@ -10,9 +10,10 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
-import { Button, FilterChips, HeaderBackButton, ImagePlaceholder, MapPlaceholder, ScoreBadge, Tag } from '@shared/components';
+import { Button, FilterChips, HeaderBackButton, ImagePlaceholder, Map, NeighborhoodMarker, ScoreBadge, Tag } from '@shared/components';
 import { useMapNeighborhoods } from './hooks/useMapNeighborhoods';
 import { MAP_FILTERS, type MapFilter, type NeighborhoodPreview } from './types';
+import { MIAMI_CONFIG } from '@rent-tracker/config';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.42;
@@ -45,19 +46,25 @@ export function MapScreen(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <MapPlaceholder style={styles.map} />
+      <Map style={styles.map}>
+        <Map.Camera
+          defaultSettings={{
+            centerCoordinate: [MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat],
+            zoomLevel: 11,
+          }}
+        />
 
-      <View style={styles.mockPins}>
         {neighborhoods.map((item) => (
-          <TouchableOpacity
+          <Map.Marker
             key={item.id}
+            id={item.id}
+            coordinate={[item.lng, item.lat]}
             onPress={() => openSheet(item)}
-            style={styles.mockPin}
           >
-            <ScoreBadge score={item.score} size="sm" />
-          </TouchableOpacity>
+            <NeighborhoodMarker score={item.score} size="sm" />
+          </Map.Marker>
         ))}
-      </View>
+      </Map>
 
       <SafeAreaView style={styles.topOverlay} edges={['top']}>
         <View style={styles.topRow}>
@@ -138,16 +145,6 @@ export function MapScreen(): JSX.Element {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-  mockPins: {
-    position: 'absolute',
-    top: '30%',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: THEME.spacing.xxl,
-  },
-  mockPin: { ...THEME.shadow.md },
   topOverlay: {
     position: 'absolute',
     top: 0,
