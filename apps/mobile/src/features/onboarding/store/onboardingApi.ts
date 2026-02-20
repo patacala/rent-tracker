@@ -1,40 +1,28 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { BASE_URL } from '@shared/api/baseUrl';
 
-const BASE_URL = 'http://192.168.1.173:3000';
-
-export interface OnboardingPayload {
+export interface SaveOnboardingRequest {
   workAddress: string;
   commute: number;
   priorities: string[];
   hasChildren: string;
   childAgeGroups: string[];
   hasPets: string;
-  lifestyle: string | null;
-}
-
-export interface OnboardingWithToken extends OnboardingPayload {
-  token: string;
+  lifestyle?: string;
 }
 
 export const onboardingApi = createApi({
   reducerPath: 'onboardingApi',
   baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
   endpoints: (builder) => ({
-    saveOnboarding: builder.mutation<void, OnboardingWithToken>({
-      query: ({ token, ...body }) => ({
+    saveOnboarding: builder.mutation<void, SaveOnboardingRequest>({
+      query: (body) => ({
         url: '/onboarding',
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
         body,
-      }),
-    }),
-    getOnboarding: builder.query<OnboardingPayload, { token: string }>({
-      query: ({ token }) => ({
-        url: '/onboarding',
-        headers: { Authorization: `Bearer ${token}` },
       }),
     }),
   }),
 });
 
-export const { useSaveOnboardingMutation, useGetOnboardingQuery } = onboardingApi;
+export const { useSaveOnboardingMutation } = onboardingApi;
