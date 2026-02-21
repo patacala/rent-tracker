@@ -9,7 +9,11 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
-import { MapPlaceholder, ProgressBar } from '@shared/components';
+import { Button, MapPlaceholder, ProgressBar } from '@shared/components';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { useAuth } from '@shared/context/AuthContext';
+import { useAnalysis } from './context/AnalysisContext';
+import { apiClient } from '@shared/api/apiClient';
 
 const STEPS = [
   'Calculating commute efficiencies...',
@@ -17,58 +21,103 @@ const STEPS = [
   'Identifying nearby amenities...',
 ];
 
-const STEP_DELAY = 900;
-const NAV_DELAY = STEPS.length * STEP_DELAY + 800;
-
 export function AnalysisScreen(): JSX.Element {
   const router = useRouter();
+  const { data } = useOnboarding();
+  const { setAnalysisResult, analysisResult } = useAnalysis();
+
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  // Navigate only after the context state has been committed (avoids race condition)
+  const [readyToNavigate, setReadyToNavigate] = useState(false);
 
   const fadeAnims = useRef(STEPS.map(() => new Animated.Value(0))).current;
   const translateAnims = useRef(STEPS.map(() => new Animated.Value(16))).current;
 
+  const animateStep = (idx: number) => {
+    Animated.parallel([
+      Animated.timing(fadeAnims[idx], {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateAnims[idx], {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    setTimeout(() => {
+      setCompletedSteps((prev) => [...prev, idx]);
+    }, 400);
+  };
+
+  const performAnalysis = async () => {
+    setError(null);
+    setCompletedSteps([]);
+    setProgress(0);
+    
+    fadeAnims.forEach(anim => anim.setValue(0));
+    translateAnims.forEach(anim => anim.setValue(16));
+
+    if (!data.workCoordinates) {
+      setError('Work location not found. Please go back and enter a valid address.');
+      return;
+    }
+
+    try {
+      animateStep(0);
+      setProgress(33);
+
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      animateStep(1);
+      setProgress(66);
+
+      const result = await apiClient.analyzeLocation({
+        longitude: data.workCoordinates.longitude,
+        latitude: data.workCoordinates.latitude,
+        timeMinutes: data.commute,
+        mode: 'driving',
+      });
+
+      animateStep(2);
+      setProgress(100);
+
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      // Set context state first; navigation is handled by the useEffect below
+      // to guarantee the context is committed before ExploreScreen renders.
+      setAnalysisResult(result);
+      setReadyToNavigate(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Analysis failed. Please try again.';
+      setError(message);
+      setProgress(0);
+    }
+  };
+
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    performAnalysis();
+  }, []);
 
-    STEPS.forEach((_, idx) => {
-      const delay = idx * STEP_DELAY;
+  // Navigate only after analysisResult is confirmed in context (avoids race condition
+  // where router.replace fired before React committed the setState batch).
+  useEffect(() => {
+    if (readyToNavigate && analysisResult) {
+      router.replace('/(tabs)/explore');
+    }
+  }, [readyToNavigate, analysisResult]);
 
-      timers.push(
-        setTimeout(() => {
-          Animated.parallel([
-            Animated.timing(fadeAnims[idx], {
-              toValue: 1,
-              duration: 400,
-              useNativeDriver: true,
-            }),
-            Animated.timing(translateAnims[idx], {
-              toValue: 0,
-              duration: 400,
-              useNativeDriver: true,
-            }),
-          ]).start();
-        }, delay),
-      );
-
-      timers.push(
-        setTimeout(() => {
-          setCompletedSteps((prev) => [...prev, idx]);
-          setProgress(Math.round(((idx + 1) / STEPS.length) * 100));
-        }, delay + 600),
-      );
-    });
-
-    timers.push(
-      setTimeout(async () => {
-        router.replace('/(tabs)/explore');
-      }, NAV_DELAY),
-    );
-
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [fadeAnims, translateAnims, router]);
+  const handleRetry = async () => {
+    setReadyToNavigate(false);
+    setIsRetrying(true);
+    await performAnalysis();
+    setIsRetrying(false);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -127,18 +176,27 @@ export function AnalysisScreen(): JSX.Element {
           })}
         </View>
 
-        {/* Pro tip card */}
-        <View style={styles.proTipCard}>
-          <View style={styles.proTipBadge}>
-            <Ionicons name="star" size={10} color={THEME.colors.primary} />
-            <Text style={styles.proTipBadgeText}>PRO TIP</Text>
+        {error ? (
+          <View style={styles.errorCard}>
+            <Ionicons name="alert-circle-outline" size={24} color={THEME.colors.error} />
+            <Text style={styles.errorText}>{error}</Text>
+            <Button onPress={handleRetry} disabled={isRetrying} style={styles.retryButton}>
+              <Button.Label>{isRetrying ? 'Retrying...' : 'Retry Analysis'}</Button.Label>
+            </Button>
           </View>
-          <Text style={styles.proTipText}>
-            Most families choose{' '}
-            <Text style={styles.proTipHighlight}>Coral Gables</Text> for its exceptional safety
-            ratings and high walkability scores.
-          </Text>
-        </View>
+        ) : (
+          <View style={styles.proTipCard}>
+            <View style={styles.proTipBadge}>
+              <Ionicons name="star" size={10} color={THEME.colors.primary} />
+              <Text style={styles.proTipBadgeText}>PRO TIP</Text>
+            </View>
+            <Text style={styles.proTipText}>
+              Most families choose{' '}
+              <Text style={styles.proTipHighlight}>Coral Gables</Text> for its exceptional safety
+              ratings and high walkability scores.
+            </Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -276,5 +334,23 @@ const styles = StyleSheet.create({
   proTipHighlight: {
     color: THEME.colors.primary,
     fontWeight: THEME.fontWeight.semibold,
+  },
+  errorCard: {
+    backgroundColor: THEME.colors.surface,
+    borderRadius: THEME.borderRadius.md,
+    padding: THEME.spacing.lg,
+    gap: THEME.spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: THEME.colors.error,
+  },
+  errorText: {
+    fontSize: THEME.fontSize.sm,
+    color: THEME.colors.error,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+  retryButton: {
+    marginTop: THEME.spacing.sm,
   },
 });
