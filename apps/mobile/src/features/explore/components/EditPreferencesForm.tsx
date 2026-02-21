@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
 import { THEME } from '@shared/theme';
 import { Button } from '@shared/components';
 import { SaveOnboardingRequest, useGetOnboardingQuery } from '@features/onboarding/store/onboardingApi';
@@ -23,8 +24,6 @@ const PRIORITIES = [
   { id: 'commute', label: 'Commute' },
   { id: 'healthcare', label: 'Healthcare' },
 ];
-
-const COMMUTE_OPTIONS = [15, 30, 45, 60] as const;
 
 type LifestylePreference = 'suburban' | 'urban';
 
@@ -165,20 +164,26 @@ export function EditPreferencesForm({
         <View style={styles.section}>
           <View style={styles.sectionRow}>
             <Text style={styles.sectionLabel}>MAX COMMUTE</Text>
-            <Text style={styles.commuteValue}>{commute} min</Text>
+            <Text style={styles.commuteValue}>
+              {commute === 60 ? '60m+' : `${commute} min`}
+            </Text>
           </View>
-          <View style={styles.commuteOptions}>
-            {COMMUTE_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt}
-                onPress={() => setCommute(opt)}
-                style={[styles.commuteChip, commute === opt && styles.commuteChipActive]}
-              >
-                <Text style={[styles.commuteChipText, commute === opt && styles.commuteChipTextActive]}>
-                  {opt === 60 ? '60m+' : `${opt}m`}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={3}
+            step={1}
+            value={[15, 30, 45, 60].indexOf(commute)}
+            onValueChange={(index) => setCommute([15, 30, 45, 60][index])}
+            minimumTrackTintColor={THEME.colors.primary}
+            maximumTrackTintColor={THEME.colors.border}
+            thumbTintColor={THEME.colors.primary}
+          />
+          <View style={styles.sliderLabels}>
+            <Text style={styles.sliderLabel}>15m</Text>
+            <Text style={styles.sliderLabel}>30m</Text>
+            <Text style={styles.sliderLabel}>45m</Text>
+            <Text style={styles.sliderLabel}>60m+</Text>
           </View>
         </View>
 
@@ -469,5 +474,19 @@ const styles = StyleSheet.create({
     color: THEME.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: -THEME.spacing.sm,
+  },
+  sliderLabel: {
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.textMuted,
+    fontWeight: THEME.fontWeight.medium,
   },
 });
