@@ -10,11 +10,12 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
-import { Button, FilterChips, Input, NeighborhoodCard, Tag } from '@shared/components';
+import { FilterChips, Input, NeighborhoodCard, Tag } from '@shared/components';
 import { APP_CONFIG } from '@rent-tracker/config';
 import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
 import { EXPLORE_FILTERS, type ExploreFilter } from './types';
 import { useAuth } from '@shared/context/AuthContext';
+import { BottomSheet } from '@shared/components/BottomSheet';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function ExploreScreen(): JSX.Element {
   const { data: neighborhoods } = useExploreNeighborhoods();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
+  const [prefsOpen, setPrefsOpen] = useState(false);
 
   const cityName =
     APP_CONFIG.defaultCity.charAt(0).toUpperCase() + APP_CONFIG.defaultCity.slice(1);
@@ -54,6 +56,13 @@ export function ExploreScreen(): JSX.Element {
             <Ionicons name="notifications-outline" size={22} color={THEME.colors.text} />
           </TouchableOpacity>
         </View>
+
+        {isLoggedIn ? (
+          <TouchableOpacity style={styles.editPrefsBtn} onPress={() => setPrefsOpen(true)}>
+            <Ionicons name="options-outline" size={14} color={THEME.colors.primary} />
+            <Text style={styles.editPrefsLabel}>Edit Onboarding Preferences</Text>
+          </TouchableOpacity>
+        ) : null}
 
         <Input>
           <Input.Field>
@@ -129,21 +138,32 @@ export function ExploreScreen(): JSX.Element {
         }
       />
 
-      <Button onPress={() => router.push('/map')} style={styles.fab}>
+      {/* <Button onPress={() => router.push('/map')} style={styles.fab}>
         <Button.Icon name="map-outline" />
         <Button.Label>View on Map</Button.Label>
-      </Button>
+      </Button> */}
+
+      <BottomSheet 
+        visible={prefsOpen} 
+        onClose={() => setPrefsOpen(false)} 
+        title="Edit Preferences" 
+        blur 
+        blurIntensity={12} 
+        snapHeight="60%"
+      >
+        <Text>Contenido del onboarding aquí</Text>
+      </BottomSheet>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: THEME.colors.background },
-  header: {
+    header: {
     paddingHorizontal: THEME.spacing.lg,
     paddingTop: THEME.spacing.md,
-    paddingBottom: THEME.spacing.sm,
-    gap: THEME.spacing.sm,
+    paddingBottom: THEME.spacing.md,
+    gap: THEME.spacing.md,
     backgroundColor: THEME.colors.background,
     borderBottomWidth: 1,
     borderBottomColor: THEME.colors.border,
@@ -152,6 +172,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: THEME.spacing.xs,
   },
   headerTitle: {
     fontSize: THEME.fontSize.xl,
@@ -229,5 +250,29 @@ const styles = StyleSheet.create({
     borderRadius: THEME.borderRadius.full,
     paddingHorizontal: THEME.spacing.lg,
     ...THEME.shadow.md,
+  },
+  editPrefsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: THEME.spacing.sm,
+    backgroundColor: THEME.colors.primaryLight,
+    borderWidth: 1,
+    borderColor: THEME.colors.primary + '40',
+    borderRadius: THEME.borderRadius.md,
+    paddingHorizontal: THEME.spacing.md,
+    paddingVertical: THEME.spacing.sm,
+    borderStyle: 'dashed',
+  },
+  editPrefsBtnLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: THEME.spacing.xs,
+  },
+  editPrefsLabel: {
+    fontSize: THEME.fontSize.xs,
+    fontWeight: THEME.fontWeight.semibold,
+    color: THEME.colors.primary,
+    letterSpacing: 0.3,
   },
 });
