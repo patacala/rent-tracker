@@ -7,7 +7,7 @@ export const APP_CONFIG = {
     defaultCity: 'miami',
 };
 export const API_CONFIG = {
-    baseUrl: process.env['API_BASE_URL'] ?? 'http://localhost:3000',
+    baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
     version: 'v1',
     timeout: 10000,
 };

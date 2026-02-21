@@ -4,7 +4,7 @@ export declare const APP_CONFIG: {
     readonly defaultCity: "miami";
 };
 export declare const API_CONFIG: {
-    readonly baseUrl: string;
+    readonly baseUrl: string | undefined;
     readonly version: "v1";
     readonly timeout: 10000;
 };

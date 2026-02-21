@@ -155,6 +155,8 @@ export function ExploreScreen(): JSX.Element {
         visible={prefsOpen}
         onClose={() => setPrefsOpen(false)}
         title="Edit Preferences"
+        blur
+        blurIntensity={12}
         snapHeight="81%"
       >
         <EditPreferencesForm
