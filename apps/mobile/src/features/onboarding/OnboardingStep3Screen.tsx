@@ -1,11 +1,12 @@
 import React, { JSX, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { Button, HeaderBackButton, StepIndicator, ToggleGroup } from '@shared/components';
 import { useOnboarding } from './context/OnboardingContext';
+import { useSaveOnboardingMutation } from '@features/onboarding/store/onboardingApi';
 
 type ChildAgeGroup = '0-5' | '6-12' | '13-18';
 type LifestylePreference = 'suburban' | 'urban';
@@ -14,7 +15,10 @@ const AGE_GROUPS: ChildAgeGroup[] = ['0-5', '6-12', '13-18'];
 
 export function OnboardingStep3Screen(): JSX.Element {
   const router = useRouter();
-  const { data, setStep3, setCurrentStep } = useOnboarding();
+  const { fromAuth } = useLocalSearchParams<{ fromAuth?: string }>();
+  const isFromAuth = fromAuth === 'true';
+  const { data, setStep3, setCurrentStep, clearData } = useOnboarding();
+  const [saveOnboarding] = useSaveOnboardingMutation();
   const isMounted = useRef(false);
 
   const [hasChildren, setHasChildren] = useState<'yes' | 'no'>(data.hasChildren);
@@ -43,15 +47,32 @@ export function OnboardingStep3Screen(): JSX.Element {
   const onNext = async () => {
     await setStep3({ hasChildren, childAgeGroups, hasPets, lifestyle });
     await setCurrentStep(0);
-    const finalData = { ...data, hasChildren, childAgeGroups, hasPets, lifestyle };
-    console.log('Resultado consola', JSON.stringify(finalData, null, 2));
+
+    if (isFromAuth) {
+      const finalData = { ...data, hasChildren, childAgeGroups, hasPets, lifestyle };
+      try {
+        await saveOnboarding({
+          workAddress: finalData.workAddress,
+          commute: finalData.commute,
+          priorities: finalData.priorities,
+          hasChildren: finalData.hasChildren,
+          childAgeGroups: finalData.childAgeGroups,
+          hasPets: finalData.hasPets,
+          lifestyle: finalData.lifestyle ?? undefined,
+        });
+        await clearData();
+      } catch (e) {
+        console.warn('Onboarding save failed:', e);
+      }
+    }
+
     router.replace('/analysis');
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <HeaderBackButton onPress={() => router.navigate('/onboarding/step2')} />
+        <HeaderBackButton onPress={() => router.navigate(`/onboarding/step2?fromAuth=${isFromAuth}`)} />
         <Text style={styles.brandName}>ONBOARDING</Text>
       </View>
 
@@ -148,49 +169,15 @@ export function OnboardingStep3Screen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: THEME.colors.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    padding: THEME.spacing.lg,
-    paddingBottom: THEME.spacing.xl,
-    gap: THEME.spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: THEME.spacing.md,
-    marginLeft: 20,
-  },
-  brandName: {
-    fontSize: THEME.fontSize.md,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
-  },
-  stepBadge: {
-    fontSize: THEME.fontSize.xs,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.primary,
-    letterSpacing: 1,
-  },
-  title: {
-    fontSize: THEME.fontSize.xxl,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
-    lineHeight: 36,
-  },
-  section: {
-    gap: THEME.spacing.md,
-  },
-  question: {
-    fontSize: THEME.fontSize.md,
-    fontWeight: THEME.fontWeight.semibold,
-    color: THEME.colors.text,
-  },
+  safe: { flex: 1, backgroundColor: THEME.colors.background },
+  scroll: { flex: 1 },
+  content: { padding: THEME.spacing.lg, paddingBottom: THEME.spacing.xl, gap: THEME.spacing.xl },
+  header: { flexDirection: 'row', alignItems: 'center', gap: THEME.spacing.md, marginLeft: 20 },
+  brandName: { fontSize: THEME.fontSize.md, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text },
+  stepBadge: { fontSize: THEME.fontSize.xs, fontWeight: THEME.fontWeight.bold, color: THEME.colors.primary, letterSpacing: 1 },
+  title: { fontSize: THEME.fontSize.xxl, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text, lineHeight: 36 },
+  section: { gap: THEME.spacing.md },
+  question: { fontSize: THEME.fontSize.md, fontWeight: THEME.fontWeight.semibold, color: THEME.colors.text },
   ageGroups: {
     gap: THEME.spacing.sm,
     padding: THEME.spacing.md,
@@ -199,19 +186,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: THEME.colors.border,
   },
-  ageGroupLabel: {
-    fontSize: THEME.fontSize.sm,
-    fontWeight: THEME.fontWeight.medium,
-    color: THEME.colors.primary,
-  },
-  optional: {
-    color: THEME.colors.textMuted,
-    fontWeight: THEME.fontWeight.regular,
-  },
-  ageGroupRow: {
-    flexDirection: 'row',
-    gap: THEME.spacing.sm,
-  },
+  ageGroupLabel: { fontSize: THEME.fontSize.sm, fontWeight: THEME.fontWeight.medium, color: THEME.colors.primary },
+  optional: { color: THEME.colors.textMuted, fontWeight: THEME.fontWeight.regular },
+  ageGroupRow: { flexDirection: 'row', gap: THEME.spacing.sm },
   ageChip: {
     paddingHorizontal: THEME.spacing.md,
     paddingVertical: THEME.spacing.sm,
@@ -220,22 +197,10 @@ const styles = StyleSheet.create({
     borderColor: THEME.colors.border,
     backgroundColor: THEME.colors.background,
   },
-  ageChipActive: {
-    borderColor: THEME.colors.primary,
-    backgroundColor: THEME.colors.primaryLight,
-  },
-  ageChipText: {
-    fontSize: THEME.fontSize.sm,
-    fontWeight: THEME.fontWeight.medium,
-    color: THEME.colors.textSecondary,
-  },
-  ageChipTextActive: {
-    color: THEME.colors.primary,
-  },
-  lifestyleRow: {
-    flexDirection: 'row',
-    gap: THEME.spacing.md,
-  },
+  ageChipActive: { borderColor: THEME.colors.primary, backgroundColor: THEME.colors.primaryLight },
+  ageChipText: { fontSize: THEME.fontSize.sm, fontWeight: THEME.fontWeight.medium, color: THEME.colors.textSecondary },
+  ageChipTextActive: { color: THEME.colors.primary },
+  lifestyleRow: { flexDirection: 'row', gap: THEME.spacing.md },
   lifestyleCard: {
     flex: 1,
     padding: THEME.spacing.md,
@@ -247,10 +212,7 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.xs,
     position: 'relative',
   },
-  lifestyleCardActive: {
-    borderColor: THEME.colors.primary,
-    backgroundColor: THEME.colors.primaryLight,
-  },
+  lifestyleCardActive: { borderColor: THEME.colors.primary, backgroundColor: THEME.colors.primaryLight },
   lifestyleCheck: {
     position: 'absolute',
     top: THEME.spacing.xs,
@@ -262,20 +224,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  lifestyleTitle: {
-    fontSize: THEME.fontSize.base,
-    fontWeight: THEME.fontWeight.semibold,
-    color: THEME.colors.text,
-  },
-  lifestyleTitleActive: {
-    color: THEME.colors.primary,
-  },
-  lifestyleDesc: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
+  lifestyleTitle: { fontSize: THEME.fontSize.base, fontWeight: THEME.fontWeight.semibold, color: THEME.colors.text },
+  lifestyleTitleActive: { color: THEME.colors.primary },
+  lifestyleDesc: { fontSize: THEME.fontSize.xs, color: THEME.colors.textSecondary, textAlign: 'center', lineHeight: 16 },
   footer: {
     padding: THEME.spacing.lg,
     paddingBottom: THEME.spacing.md,
@@ -284,13 +235,6 @@ const styles = StyleSheet.create({
     borderTopColor: THEME.colors.border,
     backgroundColor: THEME.colors.background,
   },
-  cta: {
-    width: '100%',
-  },
-  disclaimer: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
+  cta: { width: '100%' },
+  disclaimer: { fontSize: THEME.fontSize.xs, color: THEME.colors.textMuted, textAlign: 'center', lineHeight: 16 },
 });

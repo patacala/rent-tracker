@@ -1,6 +1,6 @@
 import React, { JSX, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
@@ -20,7 +20,6 @@ const step1Schema = z.object({
 
 type Step1FormData = z.infer<typeof step1Schema>;
 
-// Convert commute minutes to approximate meters (avg speed: 40km/h)
 function commuteMinutesToMeters(minutes: number): number {
   const kmPerHour = 40;
   const metersPerMinute = (kmPerHour * 1000) / 60;
@@ -29,6 +28,8 @@ function commuteMinutesToMeters(minutes: number): number {
 
 export function OnboardingStep1Screen(): JSX.Element {
   const router = useRouter();
+  const { fromAuth } = useLocalSearchParams<{ fromAuth?: string }>();
+  const isFromAuth = fromAuth === 'true';
   const { data, setStep1, setCurrentStep } = useOnboarding();
 
   const { control, handleSubmit, watch, formState: { errors, isValid } } = useForm<Step1FormData>({
@@ -55,19 +56,20 @@ export function OnboardingStep1Screen(): JSX.Element {
 
   const onNext = async (values: Step1FormData) => {
     await setStep1(values);
-    router.push('/onboarding/step2');
+    router.push(`/onboarding/step2?fromAuth=${isFromAuth}`);
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <HeaderBackButton
-          onPress={() => {
-            setCurrentStep(0);
-            router.replace('/welcome');
-          }}
-        />
-
+        {!isFromAuth ? (
+          <HeaderBackButton
+            onPress={() => {
+              setCurrentStep(0);
+              router.replace('/welcome');
+            }}
+          />
+        ) : null}
         <Text style={styles.brandName}>ONBOARDING</Text>
       </View>
 
@@ -171,47 +173,15 @@ export function OnboardingStep1Screen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: THEME.colors.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    padding: THEME.spacing.lg,
-    paddingBottom: THEME.spacing.xl,
-    gap: THEME.spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: THEME.spacing.md,
-    marginLeft: 20,
-  },
-  brandName: {
-    fontSize: THEME.fontSize.md,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
-  },
-  section: {
-    gap: THEME.spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: THEME.fontSize.lg,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
-  },
-  sectionSubtitle: {
-    fontSize: THEME.fontSize.sm,
-    color: THEME.colors.textSecondary,
-    lineHeight: 19,
-  },
-  errorText: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.error,
-    marginTop: 2,
-  },
+  safe: { flex: 1, backgroundColor: THEME.colors.background },
+  scroll: { flex: 1 },
+  content: { padding: THEME.spacing.lg, paddingBottom: THEME.spacing.xl, gap: THEME.spacing.xl },
+  header: { flexDirection: 'row', alignItems: 'center', gap: THEME.spacing.md, marginLeft: 20 },
+  brandName: { fontSize: THEME.fontSize.md, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text },
+  section: { gap: THEME.spacing.sm },
+  sectionTitle: { fontSize: THEME.fontSize.lg, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text },
+  sectionSubtitle: { fontSize: THEME.fontSize.sm, color: THEME.colors.textSecondary, lineHeight: 19 },
+  errorText: { fontSize: THEME.fontSize.xs, color: THEME.colors.error, marginTop: 2 },
   commuteHint: {
     flexDirection: 'row',
     gap: THEME.spacing.xs,
@@ -220,16 +190,8 @@ const styles = StyleSheet.create({
     borderRadius: THEME.borderRadius.sm,
     marginTop: THEME.spacing.xs,
   },
-  commuteHintText: {
-    flex: 1,
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.primary,
-    lineHeight: 17,
-  },
-  mapPreview: {
-    height: 140,
-    borderRadius: THEME.borderRadius.lg,
-  },
+  commuteHintText: { flex: 1, fontSize: THEME.fontSize.xs, color: THEME.colors.primary, lineHeight: 17 },
+  mapPreview: { height: 140, borderRadius: THEME.borderRadius.lg },
   mapPreviewLabel: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -237,11 +199,7 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.xs,
     marginTop: -THEME.spacing.md,
   },
-  mapPreviewText: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.primary,
-    fontWeight: THEME.fontWeight.medium,
-  },
+  mapPreviewText: { fontSize: THEME.fontSize.xs, color: THEME.colors.primary, fontWeight: THEME.fontWeight.medium },
   footer: {
     padding: THEME.spacing.lg,
     paddingBottom: THEME.spacing.md,
@@ -250,12 +208,6 @@ const styles = StyleSheet.create({
     borderTopColor: THEME.colors.border,
     backgroundColor: THEME.colors.background,
   },
-  cta: {
-    width: '100%',
-  },
-  stepLabel: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.textMuted,
-    textAlign: 'center',
-  },
+  cta: { width: '100%' },
+  stepLabel: { fontSize: THEME.fontSize.xs, color: THEME.colors.textMuted, textAlign: 'center' },
 });

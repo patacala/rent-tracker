@@ -24,6 +24,7 @@ interface OnboardingContextValue {
   setStep3: (values: Pick<OnboardingData, 'hasChildren' | 'childAgeGroups' | 'hasPets' | 'lifestyle'>) => Promise<void>;
   setCurrentStep: (step: number) => Promise<void>;
   reset: () => Promise<void>;
+  clearData: () => Promise<void>;
 }
 
 const STORAGE_KEY = '@onboarding:data';
@@ -91,8 +92,24 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }):
     setCurrentStepState(0);
   };
 
+  const clearData = async () => {
+    await AsyncStorage.multiRemove([STORAGE_KEY, STEP_KEY]);
+    setData(DEFAULT);
+    setCurrentStepState(0);
+  };
+
   return (
-    <OnboardingContext.Provider value={{ data, currentStep, isLoading, setStep1, setStep2, setStep3, setCurrentStep, reset }}>
+    <OnboardingContext.Provider value={{
+      data,
+      currentStep,
+      isLoading,
+      setStep1,
+      setStep2,
+      setStep3,
+      setCurrentStep,
+      reset,
+      clearData,
+    }}>
       {children}
     </OnboardingContext.Provider>
   );

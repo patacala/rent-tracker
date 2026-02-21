@@ -56,7 +56,7 @@ export function WelcomeScreen(): JSX.Element {
 
             <View style={styles.loginRow}>
               <Text style={styles.loginText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/auth')}>
+              <TouchableOpacity onPress={() => router.push('/auth?mode=login')}>
                 <Text style={styles.loginLink}>Log In</Text>
               </TouchableOpacity>
             </View>

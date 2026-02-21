@@ -25,6 +25,7 @@ import {
   useUpdateOnboardingMutation,
   useLazyGetOnboardingQuery,
 } from '@features/onboarding/store/onboardingApi';
+import { useLocalSearchParams } from 'expo-router';
 
 type AuthMode = 'signup' | 'login' | 'confirm';
 
@@ -51,6 +52,7 @@ const SignupForm = memo(function SignupForm({
   serverError: string | null;
   isSubmitting: boolean;
 }) {
+
   const { control, handleSubmit, formState: { errors, isValid } } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
@@ -220,7 +222,9 @@ export function AuthScreen(): JSX.Element {
   const [saveOnboarding] = useSaveOnboardingMutation();
   const [updateOnboarding] = useUpdateOnboardingMutation();
 
-  const [mode, setMode] = useState<AuthMode>('signup');
+  const { mode: initialMode } = useLocalSearchParams<{ mode?: string }>();
+  const [mode, setMode] = useState<AuthMode>((initialMode as AuthMode) ?? 'signup');
+
   const [submittedEmail, setSubmittedEmail] = useState('');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -281,49 +285,42 @@ export function AuthScreen(): JSX.Element {
     setIsSubmitting(true);
     try {
       const result = await login(values.email, values.password);
-      if (result.error) {
-        setServerError(result.error);
-        return;
-      }
+      if (result.error) { setServerError(result.error); return; }
 
       const existingResult = await fetchOnboarding();
       const hasOnboarding = existingResult.data?.id;
       const hasLocalOnboarding = onboardingData.workAddress.trim().length > 0;
 
-      if (hasOnboarding && hasLocalOnboarding) {
-        Alert.alert(
-          'Update your Onboarding?',
-          'You already have a relocation profile. Would you like to update it with your new preferences?',
-          [
-            {
-              text: 'No, keep existing',
-              style: 'cancel',
-              onPress: () => router.replace('/(tabs)/explore'),
-            },
-            {
-              text: 'Yes, update',
-              onPress: async () => {
-                try {
-                  await updateToBackend();
-                } catch (e) {
-                  console.warn('Update failed:', e);
-                }
-                router.replace('/(tabs)/explore');
-              },
-            },
-          ]
-        );
+      if (!hasOnboarding && !hasLocalOnboarding) {
+        router.replace('/onboarding/step1?fromAuth=true');
         return;
       }
 
-      try {
-        await syncToBackend();
-      } catch (error) {
-        setServerError('Something went wrong while syncing your account.');
+      if (!hasOnboarding && hasLocalOnboarding) {
+        try { await syncToBackend(); } catch (error) {
+          setServerError('Something went wrong while syncing your account.');
+          return;
+        }
+        router.replace('/(tabs)/explore');
         return;
       }
 
-      router.replace('/(tabs)/explore');
+      if (hasOnboarding && !hasLocalOnboarding) {
+        router.replace('/(tabs)/explore');
+        return;
+      }
+
+      Alert.alert(
+        'Update your Onboarding?',
+        'You already have Onboarding Preferences. Would you like to update it?',
+        [
+          { text: 'No, keep existing', style: 'cancel', onPress: () => router.replace('/(tabs)/explore') },
+          { text: 'Yes, update', onPress: async () => {
+            try { await updateToBackend(); } catch (e) { console.warn('Update failed:', e); }
+            router.replace('/(tabs)/explore');
+          }},
+        ]
+      );
     } catch (error) {
       setServerError('Unexpected error. Please try again.');
     } finally {

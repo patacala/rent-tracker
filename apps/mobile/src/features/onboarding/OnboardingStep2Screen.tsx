@@ -1,6 +1,6 @@
 import React, { JSX, useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
@@ -26,6 +26,8 @@ const MIN_REQUIRED = 3;
 
 export function OnboardingStep2Screen(): JSX.Element {
   const router = useRouter();
+  const { fromAuth } = useLocalSearchParams<{ fromAuth?: string }>();
+  const isFromAuth = fromAuth === 'true';
   const { data, setStep2, setCurrentStep } = useOnboarding();
   const [selected, setSelected] = useState<string[]>(data.priorities);
   const isMounted = useRef(false);
@@ -52,13 +54,13 @@ export function OnboardingStep2Screen(): JSX.Element {
 
   const onNext = async () => {
     await setStep2({ priorities: selected });
-    router.push('/onboarding/step3');
+    router.push(`/onboarding/step3?fromAuth=${isFromAuth}`);
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <HeaderBackButton onPress={() => router.navigate('/onboarding/step1')} />
+        <HeaderBackButton onPress={() => router.navigate(`/onboarding/step1?fromAuth=${isFromAuth}`)} />
         <Text style={styles.brandName}>ONBOARDING</Text>
       </View>
 
@@ -108,66 +110,20 @@ export function OnboardingStep2Screen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: THEME.colors.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    padding: THEME.spacing.lg,
-    paddingBottom: THEME.spacing.xl,
-    gap: THEME.spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: THEME.spacing.md,
-    marginLeft: 20,
-  },
-  brandName: {
-    fontSize: THEME.fontSize.md,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
-  },
-  titleBlock: {
-    gap: THEME.spacing.sm,
-  },
-  title: {
-    fontSize: THEME.fontSize.xxl,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
-    lineHeight: 36,
-  },
-  subtitle: {
-    fontSize: THEME.fontSize.sm,
-    color: THEME.colors.textSecondary,
-    lineHeight: 19,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: THEME.spacing.sm,
-  },
-  cardWrapper: {
-    width: '47%',
-  },
-  cardWrapperRight: {
-    marginLeft: 'auto',
-  },
-  counter: {
-    fontSize: THEME.fontSize.sm,
-    textAlign: 'center',
-    marginTop: -THEME.spacing.sm,
-  },
-  counterMet: {
-    color: THEME.colors.success,
-    fontWeight: THEME.fontWeight.semibold,
-  },
-  counterPending: {
-    color: THEME.colors.textMuted,
-  },
+  safe: { flex: 1, backgroundColor: THEME.colors.background },
+  scroll: { flex: 1 },
+  content: { padding: THEME.spacing.lg, paddingBottom: THEME.spacing.xl, gap: THEME.spacing.xl },
+  header: { flexDirection: 'row', alignItems: 'center', gap: THEME.spacing.md, marginLeft: 20 },
+  brandName: { fontSize: THEME.fontSize.md, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text },
+  titleBlock: { gap: THEME.spacing.sm },
+  title: { fontSize: THEME.fontSize.xxl, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text, lineHeight: 36 },
+  subtitle: { fontSize: THEME.fontSize.sm, color: THEME.colors.textSecondary, lineHeight: 19 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: THEME.spacing.sm },
+  cardWrapper: { width: '47%' },
+  cardWrapperRight: { marginLeft: 'auto' },
+  counter: { fontSize: THEME.fontSize.sm, textAlign: 'center', marginTop: -THEME.spacing.sm },
+  counterMet: { color: THEME.colors.success, fontWeight: THEME.fontWeight.semibold },
+  counterPending: { color: THEME.colors.textMuted },
   footer: {
     padding: THEME.spacing.lg,
     paddingBottom: THEME.spacing.md,
@@ -175,7 +131,5 @@ const styles = StyleSheet.create({
     borderTopColor: THEME.colors.border,
     backgroundColor: THEME.colors.background,
   },
-  cta: {
-    width: '100%',
-  },
+  cta: { width: '100%' },
 });
