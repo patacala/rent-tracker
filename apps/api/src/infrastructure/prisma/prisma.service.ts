@@ -26,4 +26,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   get user() { return this.prisma.user; }
   get onboardingProfile() { return this.prisma.onboardingProfile; }
+  get neighborhood() { return this.prisma.neighborhood; }
+  get pOI() { return this.prisma.pOI; }
+  get searchSession() { return this.prisma.searchSession; }
 }

@@ -52,7 +52,10 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
-  OnboardingProfile: 'OnboardingProfile'
+  SearchSession: 'SearchSession',
+  OnboardingProfile: 'OnboardingProfile',
+  Neighborhood: 'Neighborhood',
+  POI: 'POI'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -83,6 +86,20 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const SearchSessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  longitude: 'longitude',
+  latitude: 'latitude',
+  timeMinutes: 'timeMinutes',
+  mode: 'mode',
+  neighborhoodIds: 'neighborhoodIds',
+  createdAt: 'createdAt'
+} as const
+
+export type SearchSessionScalarFieldEnum = (typeof SearchSessionScalarFieldEnum)[keyof typeof SearchSessionScalarFieldEnum]
+
+
 export const OnboardingProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -100,12 +117,59 @@ export const OnboardingProfileScalarFieldEnum = {
 export type OnboardingProfileScalarFieldEnum = (typeof OnboardingProfileScalarFieldEnum)[keyof typeof OnboardingProfileScalarFieldEnum]
 
 
+export const NeighborhoodScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  boundary: 'boundary',
+  source: 'source',
+  centerLat: 'centerLat',
+  centerLng: 'centerLng',
+  cachedAt: 'cachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NeighborhoodScalarFieldEnum = (typeof NeighborhoodScalarFieldEnum)[keyof typeof NeighborhoodScalarFieldEnum]
+
+
+export const POIScalarFieldEnum = {
+  id: 'id',
+  neighborhoodId: 'neighborhoodId',
+  category: 'category',
+  name: 'name',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  metadata: 'metadata',
+  mapboxId: 'mapboxId',
+  cachedAt: 'cachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type POIScalarFieldEnum = (typeof POIScalarFieldEnum)[keyof typeof POIScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -122,4 +186,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
