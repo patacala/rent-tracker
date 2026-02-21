@@ -9,5 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/SearchSession'
 export type * from './models/OnboardingProfile'
+export type * from './models/Neighborhood'
+export type * from './models/POI'
 export type * from './commonInputTypes'

@@ -9,13 +9,33 @@ datasource db {
 }
 
 model User {
-  id          String             @id @default(cuid())
-  supabaseId  String             @unique
-  email       String             @unique
-  name        String?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  onboarding  OnboardingProfile?
+  id              String             @id @default(cuid())
+  supabaseId      String             @unique
+  email           String             @unique
+  name            String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  onboarding      OnboardingProfile?
+  searchSessions  SearchSession[]
+}
+
+model SearchSession {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Parameters used for the analysis
+  longitude       Float
+  latitude        Float
+  timeMinutes     Int
+  mode            String
+
+  // Neighborhood IDs found (references the shared geo cache)
+  neighborhoodIds String[]
+
+  createdAt       DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model OnboardingProfile {
@@ -31,4 +51,58 @@ model OnboardingProfile {
   lifestyle      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model Neighborhood {
+  id        String   @id @default(cuid())
+  name      String
+  boundary  Json     // GeoJSON Polygon: { type: "Polygon", coordinates: [...] }
+  source    String   // 'mapbox_tilequery' | 'mapbox_boundaries' | 'manual'
+
+  // Geospatial metadata
+  centerLat Float
+  centerLng Float
+
+  // Caching (TTL: 7 days)
+  cachedAt DateTime @default(now())
+
+  // Relations
+  pois POI[]
+
+  // Indexes for performance
+  @@index([centerLat, centerLng])
+  @@index([cachedAt])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model POI {
+  id             String       @id @default(cuid())
+  neighborhoodId String
+  neighborhood   Neighborhood @relation(fields: [neighborhoodId], references: [id], onDelete: Cascade)
+
+  // POI Details
+  category String // 'school' | 'park' | 'shop' | 'transit' | 'gym' | 'hospital' | 'restaurant' | 'bar'
+  name     String
+
+  // Location
+  latitude  Float
+  longitude Float
+
+  // Metadata from Mapbox (flexible JSON storage)
+  metadata Json? // { address, rating, amenities, etc. }
+  mapboxId String? @unique
+
+  // Caching (TTL: 24 hours)
+  cachedAt DateTime @default(now())
+
+  // Indexes for performance
+  @@index([neighborhoodId, category])
+  @@index([category])
+  @@index([cachedAt])
+  @@index([latitude, longitude])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

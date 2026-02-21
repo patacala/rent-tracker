@@ -385,7 +385,10 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
-  OnboardingProfile: 'OnboardingProfile'
+  SearchSession: 'SearchSession',
+  OnboardingProfile: 'OnboardingProfile',
+  Neighborhood: 'Neighborhood',
+  POI: 'POI'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -401,7 +404,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "onboardingProfile"
+    modelProps: "user" | "searchSession" | "onboardingProfile" | "neighborhood" | "pOI"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -479,6 +482,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SearchSession: {
+      payload: Prisma.$SearchSessionPayload<ExtArgs>
+      fields: Prisma.SearchSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SearchSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SearchSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.SearchSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SearchSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>
+        }
+        findMany: {
+          args: Prisma.SearchSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>[]
+        }
+        create: {
+          args: Prisma.SearchSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>
+        }
+        createMany: {
+          args: Prisma.SearchSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SearchSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.SearchSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>
+        }
+        update: {
+          args: Prisma.SearchSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.SearchSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SearchSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SearchSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.SearchSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SearchSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.SearchSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSearchSession>
+        }
+        groupBy: {
+          args: Prisma.SearchSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SearchSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SearchSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SearchSessionCountAggregateOutputType> | number
+        }
+      }
+    }
     OnboardingProfile: {
       payload: Prisma.$OnboardingProfilePayload<ExtArgs>
       fields: Prisma.OnboardingProfileFieldRefs
@@ -553,6 +630,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Neighborhood: {
+      payload: Prisma.$NeighborhoodPayload<ExtArgs>
+      fields: Prisma.NeighborhoodFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NeighborhoodFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NeighborhoodFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>
+        }
+        findFirst: {
+          args: Prisma.NeighborhoodFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NeighborhoodFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>
+        }
+        findMany: {
+          args: Prisma.NeighborhoodFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>[]
+        }
+        create: {
+          args: Prisma.NeighborhoodCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>
+        }
+        createMany: {
+          args: Prisma.NeighborhoodCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NeighborhoodCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>[]
+        }
+        delete: {
+          args: Prisma.NeighborhoodDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>
+        }
+        update: {
+          args: Prisma.NeighborhoodUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>
+        }
+        deleteMany: {
+          args: Prisma.NeighborhoodDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NeighborhoodUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NeighborhoodUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>[]
+        }
+        upsert: {
+          args: Prisma.NeighborhoodUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodPayload>
+        }
+        aggregate: {
+          args: Prisma.NeighborhoodAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNeighborhood>
+        }
+        groupBy: {
+          args: Prisma.NeighborhoodGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NeighborhoodGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NeighborhoodCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NeighborhoodCountAggregateOutputType> | number
+        }
+      }
+    }
+    POI: {
+      payload: Prisma.$POIPayload<ExtArgs>
+      fields: Prisma.POIFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.POIFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.POIFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>
+        }
+        findFirst: {
+          args: Prisma.POIFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.POIFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>
+        }
+        findMany: {
+          args: Prisma.POIFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>[]
+        }
+        create: {
+          args: Prisma.POICreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>
+        }
+        createMany: {
+          args: Prisma.POICreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.POICreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>[]
+        }
+        delete: {
+          args: Prisma.POIDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>
+        }
+        update: {
+          args: Prisma.POIUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>
+        }
+        deleteMany: {
+          args: Prisma.POIDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.POIUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.POIUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>[]
+        }
+        upsert: {
+          args: Prisma.POIUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$POIPayload>
+        }
+        aggregate: {
+          args: Prisma.POIAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePOI>
+        }
+        groupBy: {
+          args: Prisma.POIGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.POIGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.POICountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.POICountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -604,6 +829,20 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const SearchSessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  longitude: 'longitude',
+  latitude: 'latitude',
+  timeMinutes: 'timeMinutes',
+  mode: 'mode',
+  neighborhoodIds: 'neighborhoodIds',
+  createdAt: 'createdAt'
+} as const
+
+export type SearchSessionScalarFieldEnum = (typeof SearchSessionScalarFieldEnum)[keyof typeof SearchSessionScalarFieldEnum]
+
+
 export const OnboardingProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -621,12 +860,59 @@ export const OnboardingProfileScalarFieldEnum = {
 export type OnboardingProfileScalarFieldEnum = (typeof OnboardingProfileScalarFieldEnum)[keyof typeof OnboardingProfileScalarFieldEnum]
 
 
+export const NeighborhoodScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  boundary: 'boundary',
+  source: 'source',
+  centerLat: 'centerLat',
+  centerLng: 'centerLng',
+  cachedAt: 'cachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NeighborhoodScalarFieldEnum = (typeof NeighborhoodScalarFieldEnum)[keyof typeof NeighborhoodScalarFieldEnum]
+
+
+export const POIScalarFieldEnum = {
+  id: 'id',
+  neighborhoodId: 'neighborhoodId',
+  category: 'category',
+  name: 'name',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  metadata: 'metadata',
+  mapboxId: 'mapboxId',
+  cachedAt: 'cachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type POIScalarFieldEnum = (typeof POIScalarFieldEnum)[keyof typeof POIScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -643,6 +929,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -680,6 +975,20 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -694,16 +1003,16 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'Float'
+ * Reference to a field of type 'Json'
  */
-export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
 /**
- * Reference to a field of type 'Float[]'
+ * Reference to a field of type 'QueryMode'
  */
-export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 /**
@@ -802,7 +1111,10 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  searchSession?: Prisma.SearchSessionOmit
   onboardingProfile?: Prisma.OnboardingProfileOmit
+  neighborhood?: Prisma.NeighborhoodOmit
+  pOI?: Prisma.POIOmit
 }
 
 /* Types for Logging */
