@@ -25,4 +25,11 @@ export class OnboardingService {
       where: { userId },
     });
   }
+
+  async update(userId: string, dto: SaveOnboardingDto) {
+    return this.prisma.onboardingProfile.update({
+      where: { userId },
+      data: { ...dto },
+    });
+  }
 }

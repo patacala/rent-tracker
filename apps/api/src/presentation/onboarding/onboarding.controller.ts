@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { OnboardingService } from '../../application/onboarding/onboarding.service';
 import { SaveOnboardingDto } from './dto/save-onboarding.dto';
@@ -11,6 +11,11 @@ export class OnboardingController {
   @Post()
   async save(@Request() req: any, @Body() dto: SaveOnboardingDto) {
     return this.onboardingService.save(req.user.id, dto);
+  }
+
+  @Patch()
+  async update(@Request() req: any, @Body() dto: SaveOnboardingDto) {
+    return this.onboardingService.update(req.user.id, dto);
   }
 
   @Get()

@@ -18,8 +18,11 @@ import { THEME } from '@shared/theme';
 import { Button, Input, ToggleGroup } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
-import { useSyncUserMutation } from './store/authApi';
-import { useSaveOnboardingMutation } from '@features/onboarding/store/onboardingApi';
+import { useCheckEmailMutation, useSyncUserMutation } from './store/authApi';
+import { useFetchOnboardingMutation, useSaveOnboardingMutation, useUpdateOnboardingMutation } from '@features/onboarding/store/onboardingApi';
+import { Alert } from 'react-native';
+import { onboardingApi } from '@features/onboarding/store/onboardingApi';
+
 import { supabase } from '@shared/lib/supabase';
 
 type AuthMode = 'signup' | 'login' | 'confirm';
@@ -211,8 +214,12 @@ export function AuthScreen(): JSX.Element {
   const { login, signup } = useAuth();
   const { data: onboardingData } = useOnboarding();
   const [syncUser] = useSyncUserMutation();
+  const [checkEmail] = useCheckEmailMutation();
   const [saveOnboarding] = useSaveOnboardingMutation();
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [fetchOnboarding] = useFetchOnboardingMutation();
+  const [updateOnboarding] = useUpdateOnboardingMutation();
+  
+  const [mode, setMode] = useState<AuthMode>('signup');
   const [submittedEmail, setSubmittedEmail] = useState('');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -242,17 +249,36 @@ export function AuthScreen(): JSX.Element {
     }
   };
 
+  const updateToBackend = async (token: string) => {
+    await updateOnboarding({
+      token,
+      workAddress: onboardingData.workAddress,
+      commute: onboardingData.commute,
+      priorities: onboardingData.priorities,
+      hasChildren: onboardingData.hasChildren,
+      childAgeGroups: onboardingData.childAgeGroups,
+      hasPets: onboardingData.hasPets,
+      lifestyle: onboardingData.lifestyle ?? undefined,
+    });
+  };
+
   const handleSignup = async (values: SignupFormData) => {
     setServerError(null);
     setIsSubmitting(true);
 
     try {
-      const result = await signup(values.email, values.password, values.name);
+      const checkResult = await checkEmail({ email: values.email });
+      if ('data' in checkResult && checkResult?.data?.exists) {
+        setServerError('An account with this email already exists. Please Log In.');
+        return;
+      }
 
+      const result = await signup(values.email, values.password, values.name);
       if (result.error) {
         setServerError(result.error);
         return;
       }
+
       setSubmittedEmail(values.email);
       setMode('confirm');
     } finally {
@@ -266,7 +292,6 @@ export function AuthScreen(): JSX.Element {
 
     try {
       const result = await login(values.email, values.password);
-
       if (result.error) {
         setServerError(result.error);
         return;
@@ -277,6 +302,36 @@ export function AuthScreen(): JSX.Element {
 
       if (!token) {
         setServerError('Authentication error. Please try again.');
+        return;
+      }
+
+      const existingResult = await fetchOnboarding({ token });
+      const hasOnboarding = 'data' in existingResult && existingResult.data?.id;
+      const hasLocalOnboarding = onboardingData.workAddress.trim().length > 0;
+
+      if (hasOnboarding && hasLocalOnboarding) {
+        Alert.alert(
+          'Update your Onboarding?',
+          'You already have a relocation Onboarding. Would you like to update it with your new preferences?',
+          [
+            {
+              text: 'No, keep existing',
+              style: 'cancel',
+              onPress: () => router.replace('/(tabs)/explore'),
+            },
+            {
+              text: 'Yes, update',
+              onPress: async () => {
+                try {
+                  await updateToBackend(token);
+                } catch (e) {
+                  console.warn('Update failed:', e);
+                }
+                router.replace('/(tabs)/explore');
+              },
+            },
+          ]
+        );
         return;
       }
 

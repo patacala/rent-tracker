@@ -12,7 +12,14 @@ export const authApi = createApi({
         headers: { Authorization: `Bearer ${token}` },
       }),
     }),
+    checkEmail: builder.mutation<{ exists: boolean }, { email: string }>({
+      query: (body) => ({
+        url: '/auth/check-email',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
-export const { useSyncUserMutation } = authApi;
+export const { useSyncUserMutation, useCheckEmailMutation } = authApi;

@@ -24,4 +24,11 @@ export class AuthService {
       },
     });
   }
+  
+  async emailExists(email: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    return !!user;
+  }
 }

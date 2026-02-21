@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../../application/auth/auth.service';
 import { SupabaseService } from '../../infrastructure/supabase/supabase.service';
@@ -21,5 +21,11 @@ export class AuthController {
     }
     const user = await this.authService.syncUser(supabaseUser);
     return { user };
+  }
+
+  @Post('check-email')
+  async checkEmail(@Body() body: { email: string }) {
+    const exists = await this.authService.emailExists(body.email);
+    return { exists };
   }
 }

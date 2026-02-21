@@ -12,18 +12,43 @@ export interface SaveOnboardingRequest {
   lifestyle?: string;
 }
 
+export interface OnboardingProfile extends Omit<SaveOnboardingRequest, 'token'> {
+  id: string;
+  userId: string;
+}
+
 export const onboardingApi = createApi({
   reducerPath: 'onboardingApi',
   baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
   endpoints: (builder) => ({
     saveOnboarding: builder.mutation<void, SaveOnboardingRequest>({
-      query: (body) => ({
+      query: ({ token, ...body }) => ({
         url: '/onboarding',
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body,
+      }),
+    }),
+    updateOnboarding: builder.mutation<void, SaveOnboardingRequest>({
+      query: ({ token, ...body }) => ({
+        url: '/onboarding',
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      }),
+    }),
+    fetchOnboarding: builder.mutation<OnboardingProfile | null, { token: string }>({
+      query: ({ token }) => ({
+        url: '/onboarding',
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
       }),
     }),
   }),
 });
 
-export const { useSaveOnboardingMutation } = onboardingApi;
+export const {
+  useSaveOnboardingMutation,
+  useUpdateOnboardingMutation,
+  useFetchOnboardingMutation,
+} = onboardingApi;

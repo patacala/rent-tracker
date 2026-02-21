@@ -21,19 +21,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const supabaseUser = await this.supabase.verifyToken(token);
     if (!supabaseUser) throw new UnauthorizedException();
 
-    let user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.upsert({
       where: { supabaseId: supabaseUser.id },
+      update: { email: supabaseUser.email ?? '' },
+      create: {
+        supabaseId: supabaseUser.id,
+        email: supabaseUser.email ?? '',
+        name: supabaseUser.user_metadata?.full_name,
+      },
     });
-
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          supabaseId: supabaseUser.id,
-          email: supabaseUser.email ?? '',
-          name: supabaseUser.user_metadata?.full_name,
-        },
-      });
-    }
 
     return user;
   }
