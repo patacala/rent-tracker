@@ -23,7 +23,22 @@ export * from './enums';
  */
 export type User = Prisma.UserModel
 /**
+ * Model SearchSession
+ * 
+ */
+export type SearchSession = Prisma.SearchSessionModel
+/**
  * Model OnboardingProfile
  * 
  */
 export type OnboardingProfile = Prisma.OnboardingProfileModel
+/**
+ * Model Neighborhood
+ * 
+ */
+export type Neighborhood = Prisma.NeighborhoodModel
+/**
+ * Model POI
+ * 
+ */
+export type POI = Prisma.POIModel

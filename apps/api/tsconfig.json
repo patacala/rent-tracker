@@ -16,7 +16,8 @@
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "noUnusedLocals": false
   },
   "include": ["src", "prisma.config.ts"],
   "exclude": ["node_modules", "dist", "test"]
