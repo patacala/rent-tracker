@@ -1,15 +1,14 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { BASE_URL } from '@shared/api/baseUrl';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { authenticatedBaseQuery } from '@shared/api/baseQuery';
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
+  baseQuery: authenticatedBaseQuery,
   endpoints: (builder) => ({
-    syncUser: builder.mutation<void, { token: string }>({
-      query: ({ token }) => ({
+    syncUser: builder.mutation<void, void>({
+      query: () => ({
         url: '/auth/sync',
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
       }),
     }),
     checkEmail: builder.mutation<{ exists: boolean }, { email: string }>({

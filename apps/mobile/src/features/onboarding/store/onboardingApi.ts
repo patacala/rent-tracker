@@ -1,8 +1,7 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { BASE_URL } from '@shared/api/baseUrl';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { authenticatedBaseQuery } from '@shared/api/baseQuery';
 
 export interface SaveOnboardingRequest {
-  token: string;
   workAddress: string;
   commute: number;
   priorities: string[];
@@ -12,36 +11,33 @@ export interface SaveOnboardingRequest {
   lifestyle?: string;
 }
 
-export interface OnboardingProfile extends Omit<SaveOnboardingRequest, 'token'> {
+export interface OnboardingProfile extends SaveOnboardingRequest {
   id: string;
   userId: string;
 }
 
 export const onboardingApi = createApi({
   reducerPath: 'onboardingApi',
-  baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
+  baseQuery: authenticatedBaseQuery,
   endpoints: (builder) => ({
     saveOnboarding: builder.mutation<void, SaveOnboardingRequest>({
-      query: ({ token, ...body }) => ({
+      query: (body) => ({
         url: '/onboarding',
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
         body,
       }),
     }),
     updateOnboarding: builder.mutation<void, SaveOnboardingRequest>({
-      query: ({ token, ...body }) => ({
+      query: (body) => ({
         url: '/onboarding',
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
         body,
       }),
     }),
-    fetchOnboarding: builder.mutation<OnboardingProfile | null, { token: string }>({
-      query: ({ token }) => ({
+    getOnboarding: builder.query<OnboardingProfile | null, void>({
+      query: () => ({
         url: '/onboarding',
         method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
       }),
     }),
   }),
@@ -50,5 +46,6 @@ export const onboardingApi = createApi({
 export const {
   useSaveOnboardingMutation,
   useUpdateOnboardingMutation,
-  useFetchOnboardingMutation,
+  useGetOnboardingQuery,
+  useLazyGetOnboardingQuery,
 } = onboardingApi;

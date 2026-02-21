@@ -16,6 +16,8 @@ import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
 import { EXPLORE_FILTERS, type ExploreFilter } from './types';
 import { useAuth } from '@shared/context/AuthContext';
 import { BottomSheet } from '@shared/components/BottomSheet';
+import { EditPreferencesForm } from './components/EditPreferencesForm';
+import { SaveOnboardingRequest, useUpdateOnboardingMutation } from '@features/onboarding/store/onboardingApi';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
@@ -24,6 +26,8 @@ export function ExploreScreen(): JSX.Element {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
   const [prefsOpen, setPrefsOpen] = useState(false);
+
+  const [updateOnboarding] = useUpdateOnboardingMutation();
 
   const cityName =
     APP_CONFIG.defaultCity.charAt(0).toUpperCase() + APP_CONFIG.defaultCity.slice(1);
@@ -45,6 +49,10 @@ export function ExploreScreen(): JSX.Element {
     } else {
       router.push('/auth');
     }
+  };
+
+  const handleUpdate = async (payload: SaveOnboardingRequest) => {
+    await updateOnboarding(payload);
   };
 
   return (
@@ -143,15 +151,16 @@ export function ExploreScreen(): JSX.Element {
         <Button.Label>View on Map</Button.Label>
       </Button> */}
 
-      <BottomSheet 
-        visible={prefsOpen} 
-        onClose={() => setPrefsOpen(false)} 
-        title="Edit Preferences" 
-        blur 
-        blurIntensity={12} 
-        snapHeight="60%"
+      <BottomSheet
+        visible={prefsOpen}
+        onClose={() => setPrefsOpen(false)}
+        title="Edit Preferences"
+        snapHeight="81%"
       >
-        <Text>Contenido del onboarding aquí</Text>
+        <EditPreferencesForm
+          onSave={() => setPrefsOpen(false)}
+          onUpdate={handleUpdate}
+        />
       </BottomSheet>
     </SafeAreaView>
   );

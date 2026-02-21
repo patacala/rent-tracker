@@ -8,6 +8,7 @@ import {
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,11 +20,11 @@ import { Button, Input, ToggleGroup } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { useCheckEmailMutation, useSyncUserMutation } from './store/authApi';
-import { useFetchOnboardingMutation, useSaveOnboardingMutation, useUpdateOnboardingMutation } from '@features/onboarding/store/onboardingApi';
-import { Alert } from 'react-native';
-import { onboardingApi } from '@features/onboarding/store/onboardingApi';
-
-import { supabase } from '@shared/lib/supabase';
+import {
+  useSaveOnboardingMutation,
+  useUpdateOnboardingMutation,
+  useLazyGetOnboardingQuery,
+} from '@features/onboarding/store/onboardingApi';
 
 type AuthMode = 'signup' | 'login' | 'confirm';
 
@@ -215,25 +216,21 @@ export function AuthScreen(): JSX.Element {
   const { data: onboardingData } = useOnboarding();
   const [syncUser] = useSyncUserMutation();
   const [checkEmail] = useCheckEmailMutation();
+  const [fetchOnboarding] = useLazyGetOnboardingQuery();
   const [saveOnboarding] = useSaveOnboardingMutation();
-  const [fetchOnboarding] = useFetchOnboardingMutation();
   const [updateOnboarding] = useUpdateOnboardingMutation();
-  
+
   const [mode, setMode] = useState<AuthMode>('signup');
   const [submittedEmail, setSubmittedEmail] = useState('');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const syncToBackend = async (token: string) => {
-    const syncResult = await syncUser({ token });
-
-    if ('error' in syncResult) {
-      throw new Error('User sync failed');
-    }
+  const syncToBackend = async () => {
+    const syncResult = await syncUser();
+    if ('error' in syncResult) throw new Error('User sync failed');
 
     if (onboardingData.workAddress.trim().length > 0) {
       const onboardingResult = await saveOnboarding({
-        token,
         workAddress: onboardingData.workAddress,
         commute: onboardingData.commute,
         priorities: onboardingData.priorities,
@@ -242,16 +239,12 @@ export function AuthScreen(): JSX.Element {
         hasPets: onboardingData.hasPets,
         lifestyle: onboardingData.lifestyle ?? undefined,
       });
-
-      if ('error' in onboardingResult) {
-        throw new Error('Onboarding save failed');
-      }
+      if ('error' in onboardingResult) throw new Error('Onboarding save failed');
     }
   };
 
-  const updateToBackend = async (token: string) => {
+  const updateToBackend = async () => {
     await updateOnboarding({
-      token,
       workAddress: onboardingData.workAddress,
       commute: onboardingData.commute,
       priorities: onboardingData.priorities,
@@ -265,20 +258,17 @@ export function AuthScreen(): JSX.Element {
   const handleSignup = async (values: SignupFormData) => {
     setServerError(null);
     setIsSubmitting(true);
-
     try {
       const checkResult = await checkEmail({ email: values.email });
       if ('data' in checkResult && checkResult?.data?.exists) {
         setServerError('An account with this email already exists. Please Log In.');
         return;
       }
-
       const result = await signup(values.email, values.password, values.name);
       if (result.error) {
         setServerError(result.error);
         return;
       }
-
       setSubmittedEmail(values.email);
       setMode('confirm');
     } finally {
@@ -289,7 +279,6 @@ export function AuthScreen(): JSX.Element {
   const handleLogin = async (values: LoginFormData) => {
     setServerError(null);
     setIsSubmitting(true);
-
     try {
       const result = await login(values.email, values.password);
       if (result.error) {
@@ -297,22 +286,14 @@ export function AuthScreen(): JSX.Element {
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-
-      if (!token) {
-        setServerError('Authentication error. Please try again.');
-        return;
-      }
-
-      const existingResult = await fetchOnboarding({ token });
-      const hasOnboarding = 'data' in existingResult && existingResult.data?.id;
+      const existingResult = await fetchOnboarding();
+      const hasOnboarding = existingResult.data?.id;
       const hasLocalOnboarding = onboardingData.workAddress.trim().length > 0;
 
       if (hasOnboarding && hasLocalOnboarding) {
         Alert.alert(
           'Update your Onboarding?',
-          'You already have a relocation Onboarding. Would you like to update it with your new preferences?',
+          'You already have a relocation profile. Would you like to update it with your new preferences?',
           [
             {
               text: 'No, keep existing',
@@ -323,7 +304,7 @@ export function AuthScreen(): JSX.Element {
               text: 'Yes, update',
               onPress: async () => {
                 try {
-                  await updateToBackend(token);
+                  await updateToBackend();
                 } catch (e) {
                   console.warn('Update failed:', e);
                 }
@@ -336,7 +317,7 @@ export function AuthScreen(): JSX.Element {
       }
 
       try {
-        await syncToBackend(token);
+        await syncToBackend();
       } catch (error) {
         setServerError('Something went wrong while syncing your account.');
         return;
@@ -446,18 +427,10 @@ export function AuthScreen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-  },
-  safe: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
+  background: { flex: 1 },
+  safe: { flex: 1 },
+  keyboardView: { flex: 1 },
+  scroll: { flex: 1 },
   content: {
     flexGrow: 1,
     justifyContent: 'flex-end',
@@ -492,19 +465,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  modeToggle: {
-    marginTop: THEME.spacing.xs,
-  },
-  form: {
-    gap: THEME.spacing.md,
-  },
+  modeToggle: { marginTop: THEME.spacing.xs },
+  form: { gap: THEME.spacing.md },
   errorText: {
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.error,
   },
-  submitBtn: {
-    marginTop: THEME.spacing.xs,
-  },
+  submitBtn: { marginTop: THEME.spacing.xs },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -525,9 +492,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 17,
   },
-  legalLink: {
-    color: THEME.colors.primary,
-  },
+  legalLink: { color: THEME.colors.primary },
   confirmSafe: {
     flex: 1,
     backgroundColor: THEME.colors.background,
