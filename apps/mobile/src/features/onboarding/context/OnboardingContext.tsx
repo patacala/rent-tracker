@@ -7,6 +7,7 @@ type CommuteOption = 15 | 30 | 45;
 
 export interface OnboardingData {
   workAddress: string;
+  workCoordinates: { latitude: number; longitude: number } | null;
   commute: CommuteOption;
   priorities: string[];
   hasChildren: 'yes' | 'no';
@@ -19,7 +20,7 @@ interface OnboardingContextValue {
   data: OnboardingData;
   currentStep: number;
   isLoading: boolean;
-  setStep1: (values: Pick<OnboardingData, 'workAddress' | 'commute'>) => Promise<void>;
+  setStep1: (values: Pick<OnboardingData, 'workAddress' | 'commute' | 'workCoordinates'>) => Promise<void>;
   setStep2: (values: Pick<OnboardingData, 'priorities'>) => Promise<void>;
   setStep3: (values: Pick<OnboardingData, 'hasChildren' | 'childAgeGroups' | 'hasPets' | 'lifestyle'>) => Promise<void>;
   setCurrentStep: (step: number) => Promise<void>;
@@ -31,6 +32,7 @@ const STEP_KEY = '@onboarding:step';
 
 const DEFAULT: OnboardingData = {
   workAddress: '',
+  workCoordinates: null,
   commute: 30,
   priorities: [],
   hasChildren: 'no',

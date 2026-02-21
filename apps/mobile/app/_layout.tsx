@@ -9,6 +9,7 @@ import Mapbox from '@rnmapbox/maps';
 import { store } from '@shared/store';
 import { AuthProvider, useAuth } from '@shared/context/AuthContext';
 import { OnboardingProvider, useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { AnalysisProvider } from '@features/analysis/context/AnalysisContext';
 import { THEME } from '@shared/theme';
 import { supabase } from '@shared/lib/supabase';
 
@@ -99,8 +100,10 @@ export default function RootLayout(): JSX.Element {
       <SafeAreaProvider>
         <AuthProvider>
           <OnboardingProvider>
-            <StatusBar style="dark" />
-            <RootLayoutContent />
+            <AnalysisProvider>
+              <StatusBar style="dark" />
+              <RootLayoutContent />
+            </AnalysisProvider>
           </OnboardingProvider>
         </AuthProvider>
       </SafeAreaProvider>

@@ -18,8 +18,10 @@ import { THEME } from '@shared/theme';
 import { Button, Input, ToggleGroup } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 import { useSyncUserMutation } from './store/authApi';
 import { useSaveOnboardingMutation } from '@features/onboarding/store/onboardingApi';
+import { apiClient } from '@shared/api/apiClient';
 import { supabase } from '@shared/lib/supabase';
 
 type AuthMode = 'signup' | 'login' | 'confirm';
@@ -210,12 +212,36 @@ export function AuthScreen(): JSX.Element {
   const router = useRouter();
   const { login, signup } = useAuth();
   const { data: onboardingData } = useOnboarding();
+  const { analysisResult } = useAnalysis();
   const [syncUser] = useSyncUserMutation();
   const [saveOnboarding] = useSaveOnboardingMutation();
   const [mode, setMode] = useState<AuthMode>('login');
   const [submittedEmail, setSubmittedEmail] = useState('');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /**
+   * Persist the in-memory analysis result to the DB so the user can reload
+   * it on future app opens. Fire-and-forget — never blocks navigation.
+   */
+  const persistAnalysisSession = (token: string) => {
+    if (!analysisResult || analysisResult.neighborhoods.length === 0) return;
+    if (!onboardingData.workCoordinates) return;
+
+    const neighborhoodIds = analysisResult.neighborhoods.map(
+      (item) => item.neighborhood.id,
+    );
+
+    apiClient
+      .saveAnalysisSession(token, {
+        neighborhoodIds,
+        longitude: onboardingData.workCoordinates.longitude,
+        latitude: onboardingData.workCoordinates.latitude,
+        timeMinutes: onboardingData.commute,
+        mode: 'driving',
+      })
+      .catch(() => {/* silently ignore — session save is non-critical */});
+  };
 
   const syncToBackend = async (token: string) => {
     const syncResult = await syncUser({ token });
@@ -286,6 +312,9 @@ export function AuthScreen(): JSX.Element {
         setServerError('Something went wrong while syncing your account.');
         return;
       }
+
+      // Save the in-memory analysis to DB in background (non-blocking)
+      persistAnalysisSession(token);
 
       router.replace('/(tabs)/explore');
     } catch (error) {
