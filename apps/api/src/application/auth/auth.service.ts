@@ -31,4 +31,11 @@ export class AuthService {
     });
     return !!user;
   }
+
+  async updateProfile(userId: string, name: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { name },
+    });
+  }
 }

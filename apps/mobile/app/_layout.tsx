@@ -12,7 +12,6 @@ import { OnboardingProvider, useOnboarding } from '@features/onboarding/context/
 import { THEME } from '@shared/theme';
 import { supabase } from '@shared/lib/supabase';
 
-// Configure Mapbox access token
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '');
 
 function RootLayoutContent(): JSX.Element {
@@ -84,6 +83,7 @@ function RootLayoutContent(): JSX.Element {
       <Stack.Screen name="index" options={{ gestureEnabled: false }} />
       <Stack.Screen name="welcome" options={{ gestureEnabled: false }} />
       <Stack.Screen name="auth" />
+      <Stack.Screen name="change-password" />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="analysis" options={{ gestureEnabled: false }} />
       <Stack.Screen name="map" options={{ gestureEnabled: false }} />

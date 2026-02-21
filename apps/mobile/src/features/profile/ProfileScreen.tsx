@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import React, { JSX, useState } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { THEME } from '@shared/theme';
-import { ImagePlaceholder } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { AvatarEditor } from './components/AvatarEditor';
+import { EditNameModal } from './components/EditNameModal';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -23,17 +24,25 @@ interface MenuItem {
   onPress?: () => void;
 }
 
-const MENU_ITEMS: MenuItem[] = [
-  { icon: 'search-outline', label: 'Search Preferences' },
-  { icon: 'people-outline', label: 'Family Profiles' },
-  { icon: 'shield-checkmark-outline', label: 'Account Security' },
-  { icon: 'notifications-outline', label: 'Notifications' },
-  { icon: 'help-circle-outline', label: 'Help & Support' },
-];
-
 export function ProfileScreen(): JSX.Element {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { reset } = useOnboarding();
+
+  const [name, setName] = useState(user?.user_metadata?.full_name ?? '');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    user?.user_metadata?.avatar_url ?? null
+  );
+  const [editNameVisible, setEditNameVisible] = useState(false);
+
+  const MENU_ITEMS: MenuItem[] = [
+    {
+      icon: 'shield-checkmark-outline',
+      label: 'Change Password',
+      onPress: () => router.push('/change-password'),
+    },
+    { icon: 'notifications-outline', label: 'Notifications' },
+    { icon: 'help-circle-outline', label: 'Help & Support' },
+  ];
 
   const handleSignOut = () => {
     Alert.alert(
@@ -65,19 +74,23 @@ export function ProfileScreen(): JSX.Element {
         <Text style={styles.headerTitle}>Profile</Text>
 
         <View style={styles.avatarSection}>
-          <View style={styles.avatarContainer}>
-            <ImagePlaceholder height={88} style={styles.avatar} label="" />
-            <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark" size={10} color="#FFFFFF" />
-            </View>
-          </View>
+          <AvatarEditor
+            userId={user?.id ?? ''}
+            avatarUrl={avatarUrl}
+            onUpdated={setAvatarUrl}
+          />
 
-          <Text style={styles.profileName}>Alexandra Hamilton</Text>
-          <Text style={styles.profileRole}>Senior Architect</Text>
-          <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={13} color={THEME.colors.textSecondary} />
-            <Text style={styles.profileLocation}>New York, NY</Text>
-          </View>
+          <TouchableOpacity
+            onPress={() => setEditNameVisible(true)}
+            style={styles.nameRow}
+          >
+            <Text style={styles.profileName}>{name || 'Add your name'}</Text>
+            <Ionicons name="pencil-outline" size={14} color={THEME.colors.primary} />
+          </TouchableOpacity>
+
+          <Text style={styles.profileEmail}>
+            {user?.email ?? ''}
+          </Text>
         </View>
 
         <View style={styles.menuCard}>
@@ -101,8 +114,15 @@ export function ProfileScreen(): JSX.Element {
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>VERSION 2.4.0</Text>
+        <Text style={styles.version}>VERSION 1.0.0</Text>
       </ScrollView>
+
+      <EditNameModal
+        visible={editNameVisible}
+        currentName={name}
+        onClose={() => setEditNameVisible(false)}
+        onSaved={setName}
+      />
     </SafeAreaView>
   );
 }
@@ -124,45 +144,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: THEME.spacing.xs,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: THEME.spacing.xs,
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    overflow: 'hidden',
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#3B82F6',
+  nameRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: THEME.colors.background,
+    gap: THEME.spacing.xs,
+    marginTop: THEME.spacing.xs,
   },
   profileName: {
     fontSize: THEME.fontSize.lg,
     fontWeight: THEME.fontWeight.bold,
     color: THEME.colors.text,
   },
-  profileRole: {
-    fontSize: THEME.fontSize.sm,
-    fontWeight: THEME.fontWeight.medium,
-    color: THEME.colors.primary,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  profileLocation: {
+  profileEmail: {
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.textSecondary,
   },

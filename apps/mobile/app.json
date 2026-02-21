@@ -52,6 +52,12 @@
         {
           "locationWhenInUsePermission": "Show your location on the map"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow access to your photos to update your profile picture."
+        }
       ]
     ],
     "experiments": {

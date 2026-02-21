@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from '../../application/auth/auth.service';
 import { SupabaseService } from '../../infrastructure/supabase/supabase.service';
@@ -27,5 +27,11 @@ export class AuthController {
   async checkEmail(@Body() body: { email: string }) {
     const exists = await this.authService.emailExists(body.email);
     return { exists };
+  }
+
+  @Patch('profile')
+  @UseGuards(AuthGuard('jwt'))
+  async updateProfile(@Request() req: any, @Body() body: { name: string }) {
+    return this.authService.updateProfile(req.user.id, body.name);
   }
 }

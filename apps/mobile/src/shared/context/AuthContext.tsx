@@ -10,6 +10,7 @@ interface AuthContextValue {
   hasClickedCard: boolean;
   isLoading: boolean;
   session: Session | null;
+  user: Session['user'] | null;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
   signup: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       hasClickedCard,
       isLoading,
       session,
+      user: session?.user ?? null,
       login,
       signup,
       logout,
