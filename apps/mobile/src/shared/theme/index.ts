@@ -4,8 +4,8 @@
 export const THEME = {
   colors: {
     // Brand
-    primary: '#3730A3',        // indigo-800
-    primaryActive: '#4F46E5',  // indigo-600 — pressed/active states
+    primary: '#5048E5',       
+    primaryActive: '#3F48CC',  // pressed/active states
     primaryLight: '#EEF2FF',   // indigo-50  — tag backgrounds, tinted surfaces
 
     // Backgrounds
