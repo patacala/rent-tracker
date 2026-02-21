@@ -19,12 +19,15 @@ import { THEME } from '@shared/theme';
 import { Button, Input, ToggleGroup } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 import { useCheckEmailMutation, useSyncUserMutation } from './store/authApi';
 import {
   useSaveOnboardingMutation,
   useUpdateOnboardingMutation,
   useLazyGetOnboardingQuery,
 } from '@features/onboarding/store/onboardingApi';
+import { apiClient } from '@shared/api/apiClient';
+import { supabase } from '@shared/lib/supabase';
 import { useLocalSearchParams } from 'expo-router';
 
 type AuthMode = 'signup' | 'login' | 'confirm';
@@ -216,6 +219,7 @@ export function AuthScreen(): JSX.Element {
   const router = useRouter();
   const { login, signup } = useAuth();
   const { data: onboardingData } = useOnboarding();
+  const { analysisResult } = useAnalysis();
   const [syncUser] = useSyncUserMutation();
   const [checkEmail] = useCheckEmailMutation();
   const [fetchOnboarding] = useLazyGetOnboardingQuery();
@@ -228,6 +232,33 @@ export function AuthScreen(): JSX.Element {
   const [submittedEmail, setSubmittedEmail] = useState('');
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /**
+   * Persist the in-memory analysis result to DB after login.
+   * Obtains the JWT from supabase directly so it never blocks navigation.
+   */
+  const persistAnalysisSession = async () => {
+    if (!analysisResult || analysisResult.neighborhoods.length === 0) return;
+    if (!onboardingData.workCoordinates) return;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+
+    const neighborhoodIds = analysisResult.neighborhoods.map(
+      (item) => item.neighborhood.id,
+    );
+
+    apiClient
+      .saveAnalysisSession(token, {
+        neighborhoodIds,
+        longitude: onboardingData.workCoordinates.longitude,
+        latitude: onboardingData.workCoordinates.latitude,
+        timeMinutes: onboardingData.commute,
+        mode: 'driving',
+      })
+      .catch(() => {/* silently ignore — session save is non-critical */});
+  };
 
   const syncToBackend = async () => {
     const syncResult = await syncUser();
@@ -301,24 +332,38 @@ export function AuthScreen(): JSX.Element {
           setServerError('Something went wrong while syncing your account.');
           return;
         }
+        persistAnalysisSession();
         router.replace('/(tabs)/explore');
         return;
       }
 
       if (hasOnboarding && !hasLocalOnboarding) {
+        persistAnalysisSession();
         router.replace('/(tabs)/explore');
         return;
       }
 
+      // Both local and remote onboarding exist — ask user
       Alert.alert(
         'Update your Onboarding?',
         'You already have Onboarding Preferences. Would you like to update it?',
         [
-          { text: 'No, keep existing', style: 'cancel', onPress: () => router.replace('/(tabs)/explore') },
-          { text: 'Yes, update', onPress: async () => {
-            try { await updateToBackend(); } catch (e) { console.warn('Update failed:', e); }
-            router.replace('/(tabs)/explore');
-          }},
+          {
+            text: 'No, keep existing',
+            style: 'cancel',
+            onPress: () => {
+              persistAnalysisSession();
+              router.replace('/(tabs)/explore');
+            },
+          },
+          {
+            text: 'Yes, update',
+            onPress: async () => {
+              try { await updateToBackend(); } catch (e) { console.warn('Update failed:', e); }
+              persistAnalysisSession();
+              router.replace('/(tabs)/explore');
+            },
+          },
         ]
       );
     } catch (error) {

@@ -22,7 +22,7 @@ import { SaveOnboardingRequest, useUpdateOnboardingMutation } from '@features/on
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
   const { isLoggedIn, hasClickedCard, markCardClicked } = useAuth();
-  const { data: neighborhoods } = useExploreNeighborhoods();
+  const { data: neighborhoods, isEmpty } = useExploreNeighborhoods();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
   const [prefsOpen, setPrefsOpen] = useState(false);
@@ -141,7 +141,16 @@ export function ExploreScreen(): JSX.Element {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No neighborhoods match your search.</Text>
+            <Ionicons
+              name={isEmpty ? 'map-outline' : 'search-outline'}
+              size={40}
+              color={THEME.colors.textMuted}
+            />
+            <Text style={styles.emptyText}>
+              {isEmpty
+                ? 'No analysis yet.\nRun an analysis to see neighborhoods.'
+                : 'No neighborhoods match your search.'}
+            </Text>
           </View>
         }
       />
@@ -253,6 +262,9 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: THEME.fontSize.base,
     color: THEME.colors.textMuted,
+    textAlign: 'center',
+    marginTop: THEME.spacing.md,
+    lineHeight: 22,
   },
   fab: {
     position: 'absolute',

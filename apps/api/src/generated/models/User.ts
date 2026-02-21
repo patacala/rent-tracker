@@ -191,6 +191,7 @@ export type UserWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   onboarding?: Prisma.XOR<Prisma.OnboardingProfileNullableScalarRelationFilter, Prisma.OnboardingProfileWhereInput> | null
+  searchSessions?: Prisma.SearchSessionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -201,6 +202,7 @@ export type UserOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   onboarding?: Prisma.OnboardingProfileOrderByWithRelationInput
+  searchSessions?: Prisma.SearchSessionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -214,6 +216,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   onboarding?: Prisma.XOR<Prisma.OnboardingProfileNullableScalarRelationFilter, Prisma.OnboardingProfileWhereInput> | null
+  searchSessions?: Prisma.SearchSessionListRelationFilter
 }, "id" | "supabaseId" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -248,6 +251,7 @@ export type UserCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   onboarding?: Prisma.OnboardingProfileCreateNestedOneWithoutUserInput
+  searchSessions?: Prisma.SearchSessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -258,6 +262,7 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   onboarding?: Prisma.OnboardingProfileUncheckedCreateNestedOneWithoutUserInput
+  searchSessions?: Prisma.SearchSessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -268,6 +273,7 @@ export type UserUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   onboarding?: Prisma.OnboardingProfileUpdateOneWithoutUserNestedInput
+  searchSessions?: Prisma.SearchSessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -278,6 +284,7 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   onboarding?: Prisma.OnboardingProfileUncheckedUpdateOneWithoutUserNestedInput
+  searchSessions?: Prisma.SearchSessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -351,6 +358,20 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
+export type UserCreateNestedOneWithoutSearchSessionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSearchSessionsInput, Prisma.UserUncheckedCreateWithoutSearchSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSearchSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutSearchSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSearchSessionsInput, Prisma.UserUncheckedCreateWithoutSearchSessionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSearchSessionsInput
+  upsert?: Prisma.UserUpsertWithoutSearchSessionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSearchSessionsInput, Prisma.UserUpdateWithoutSearchSessionsInput>, Prisma.UserUncheckedUpdateWithoutSearchSessionsInput>
+}
+
 export type UserCreateNestedOneWithoutOnboardingInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutOnboardingInput, Prisma.UserUncheckedCreateWithoutOnboardingInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutOnboardingInput
@@ -365,6 +386,62 @@ export type UserUpdateOneRequiredWithoutOnboardingNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOnboardingInput, Prisma.UserUpdateWithoutOnboardingInput>, Prisma.UserUncheckedUpdateWithoutOnboardingInput>
 }
 
+export type UserCreateWithoutSearchSessionsInput = {
+  id?: string
+  supabaseId: string
+  email: string
+  name?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboarding?: Prisma.OnboardingProfileCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSearchSessionsInput = {
+  id?: string
+  supabaseId: string
+  email: string
+  name?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboarding?: Prisma.OnboardingProfileUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSearchSessionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSearchSessionsInput, Prisma.UserUncheckedCreateWithoutSearchSessionsInput>
+}
+
+export type UserUpsertWithoutSearchSessionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSearchSessionsInput, Prisma.UserUncheckedUpdateWithoutSearchSessionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSearchSessionsInput, Prisma.UserUncheckedCreateWithoutSearchSessionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSearchSessionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSearchSessionsInput, Prisma.UserUncheckedUpdateWithoutSearchSessionsInput>
+}
+
+export type UserUpdateWithoutSearchSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboarding?: Prisma.OnboardingProfileUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSearchSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboarding?: Prisma.OnboardingProfileUncheckedUpdateOneWithoutUserNestedInput
+}
+
 export type UserCreateWithoutOnboardingInput = {
   id?: string
   supabaseId: string
@@ -372,6 +449,7 @@ export type UserCreateWithoutOnboardingInput = {
   name?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  searchSessions?: Prisma.SearchSessionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOnboardingInput = {
@@ -381,6 +459,7 @@ export type UserUncheckedCreateWithoutOnboardingInput = {
   name?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  searchSessions?: Prisma.SearchSessionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOnboardingInput = {
@@ -406,6 +485,7 @@ export type UserUpdateWithoutOnboardingInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  searchSessions?: Prisma.SearchSessionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOnboardingInput = {
@@ -415,8 +495,38 @@ export type UserUncheckedUpdateWithoutOnboardingInput = {
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  searchSessions?: Prisma.SearchSessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
+
+/**
+ * Count Type UserCountOutputType
+ */
+
+export type UserCountOutputType = {
+  searchSessions: number
+}
+
+export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  searchSessions?: boolean | UserCountOutputTypeCountSearchSessionsArgs
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserCountOutputType
+   */
+  select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSearchSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SearchSessionWhereInput
+}
 
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -427,6 +537,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   onboarding?: boolean | Prisma.User$onboardingArgs<ExtArgs>
+  searchSessions?: boolean | Prisma.User$searchSessionsArgs<ExtArgs>
+  _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -459,6 +571,8 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "supabaseId" | "email" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   onboarding?: boolean | Prisma.User$onboardingArgs<ExtArgs>
+  searchSessions?: boolean | Prisma.User$searchSessionsArgs<ExtArgs>
+  _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -467,6 +581,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     onboarding: Prisma.$OnboardingProfilePayload<ExtArgs> | null
+    searchSessions: Prisma.$SearchSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -870,6 +985,7 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   onboarding<T extends Prisma.User$onboardingArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$onboardingArgs<ExtArgs>>): Prisma.Prisma__OnboardingProfileClient<runtime.Types.Result.GetResult<Prisma.$OnboardingProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  searchSessions<T extends Prisma.User$searchSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$searchSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SearchSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1309,6 +1425,30 @@ export type User$onboardingArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.OnboardingProfileInclude<ExtArgs> | null
   where?: Prisma.OnboardingProfileWhereInput
+}
+
+/**
+ * User.searchSessions
+ */
+export type User$searchSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SearchSession
+   */
+  select?: Prisma.SearchSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SearchSession
+   */
+  omit?: Prisma.SearchSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SearchSessionInclude<ExtArgs> | null
+  where?: Prisma.SearchSessionWhereInput
+  orderBy?: Prisma.SearchSessionOrderByWithRelationInput | Prisma.SearchSessionOrderByWithRelationInput[]
+  cursor?: Prisma.SearchSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SearchSessionScalarFieldEnum | Prisma.SearchSessionScalarFieldEnum[]
 }
 
 /**

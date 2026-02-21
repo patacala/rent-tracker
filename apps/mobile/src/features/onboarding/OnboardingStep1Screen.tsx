@@ -1,4 +1,4 @@
-import React, { JSX, useEffect } from 'react';
+import React, { JSX, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { THEME } from '@shared/theme';
 import { Button, HeaderBackButton, Input, Map, StepIndicator, ToggleGroup } from '@shared/components';
 import { useOnboarding } from './context/OnboardingContext';
 import { MIAMI_CONFIG } from '@rent-tracker/config';
+import { geocodeAddress } from '@shared/api/geocodingService';
 
 type CommuteOption = 15 | 30 | 45;
 
@@ -31,6 +32,7 @@ export function OnboardingStep1Screen(): JSX.Element {
   const { fromAuth } = useLocalSearchParams<{ fromAuth?: string }>();
   const isFromAuth = fromAuth === 'true';
   const { data, setStep1, setCurrentStep } = useOnboarding();
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   const { control, handleSubmit, watch, formState: { errors, isValid } } = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -48,15 +50,29 @@ export function OnboardingStep1Screen(): JSX.Element {
   useEffect(() => {
     const subscription = watch((values) => {
       if (values.workAddress && values.workAddress.length >= 3) {
-        setStep1({ workAddress: values.workAddress, commute: values.commute as CommuteOption });
+        setStep1({ 
+          workAddress: values.workAddress, 
+          commute: values.commute as CommuteOption,
+          workCoordinates: data.workCoordinates,
+        });
       }
     });
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, data.workCoordinates]);
 
   const onNext = async (values: Step1FormData) => {
-    await setStep1(values);
-    router.push(`/onboarding/step2?fromAuth=${isFromAuth}`);
+    setIsGeocoding(true);
+    try {
+      const coordinates = await geocodeAddress(values.workAddress);
+      await setStep1({ ...values, workCoordinates: coordinates });
+      router.push(`/onboarding/step2?fromAuth=${isFromAuth}`);
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+      await setStep1({ ...values, workCoordinates: null });
+      router.push(`/onboarding/step2?fromAuth=${isFromAuth}`);
+    } finally {
+      setIsGeocoding(false);
+    }
   };
 
   return (
@@ -137,13 +153,19 @@ export function OnboardingStep1Screen(): JSX.Element {
         <Map style={styles.mapPreview}>
           <Map.Camera
             defaultSettings={{
-              centerCoordinate: [MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat],
+              centerCoordinate: data.workCoordinates
+                ? [data.workCoordinates.longitude, data.workCoordinates.latitude]
+                : [MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat],
               zoomLevel: 11,
             }}
           />
           <Map.Circle
             id="commute-radius"
-            centerCoordinate={[MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat]}
+            centerCoordinate={
+              data.workCoordinates
+                ? [data.workCoordinates.longitude, data.workCoordinates.latitude]
+                : [MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat]
+            }
             radiusInMeters={commuteMinutesToMeters(watch('commute') || 30)}
             fillColor={THEME.colors.primary}
             fillOpacity={0.15}
@@ -162,9 +184,9 @@ export function OnboardingStep1Screen(): JSX.Element {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button onPress={handleSubmit(onNext)} disabled={!isValid} style={styles.cta}>
-          <Button.Label>Next: My Priorities</Button.Label>
-          <Button.Icon name="arrow-forward-outline" />
+        <Button onPress={handleSubmit(onNext)} disabled={!isValid || isGeocoding} style={styles.cta}>
+          <Button.Label>{isGeocoding ? 'Locating...' : 'Next: My Priorities'}</Button.Label>
+          {!isGeocoding && <Button.Icon name="arrow-forward-outline" />}
         </Button>
         <Text style={styles.stepLabel}>Step 1 of 3 · Work & Commute</Text>
       </View>
