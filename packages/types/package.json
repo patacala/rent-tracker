@@ -2,19 +2,18 @@
   "name": "@rent-tracker/types",
   "version": "0.0.1",
   "private": true,
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src --ext .ts",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
