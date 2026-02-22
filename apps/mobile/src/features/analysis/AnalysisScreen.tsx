@@ -11,7 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { Button, MapPlaceholder, ProgressBar } from '@shared/components';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
-import { useAuth } from '@shared/context/AuthContext';
 import { useAnalysis } from './context/AnalysisContext';
 import { apiClient } from '@shared/api/apiClient';
 

@@ -88,6 +88,7 @@ export class NeighborhoodsController {
     return this.getPOIsUseCase.execute({ neighborhoodId: id });
   }
 
+  @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Post('analyze')
   @HttpCode(HttpStatus.OK)

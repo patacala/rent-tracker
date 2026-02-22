@@ -257,7 +257,7 @@ export function AuthScreen(): JSX.Element {
         timeMinutes: onboardingData.commute,
         mode: 'driving',
       })
-      .catch(() => {/* silently ignore — session save is non-critical */});
+      .catch(() => {});
   };
 
   const syncToBackend = async () => {
