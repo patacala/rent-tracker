@@ -1,4 +1,3 @@
-import { API_CONFIG } from '@shared/config';
 import { BASE_URL } from '@shared/api/baseUrl';
 
 async function post<T>(endpoint: string, body: unknown) {
@@ -17,7 +16,7 @@ async function post<T>(endpoint: string, body: unknown) {
 }
 
 async function postWithAuth<T>(endpoint: string, body: unknown, token: string) {
-  const response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -64,7 +63,7 @@ export interface AnalyzeLocationResponse {
 }
 
 async function postPublic<T>(endpoint: string, body: unknown) {
-  const url = `${API_CONFIG.baseUrl}${endpoint}`;
+  const url = `${BASE_URL}${endpoint}`;
   console.log('API Request:', url);
   console.log('Request body:', JSON.stringify(body, null, 2));
 

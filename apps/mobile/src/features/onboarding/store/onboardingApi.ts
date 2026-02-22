@@ -19,6 +19,7 @@ export interface OnboardingProfile extends SaveOnboardingRequest {
 export const onboardingApi = createApi({
   reducerPath: 'onboardingApi',
   baseQuery: authenticatedBaseQuery,
+  tagTypes: ['Onboarding'],
   endpoints: (builder) => ({
     saveOnboarding: builder.mutation<void, SaveOnboardingRequest>({
       query: (body) => ({
@@ -33,12 +34,14 @@ export const onboardingApi = createApi({
         method: 'PATCH',
         body,
       }),
+      invalidatesTags: ['Onboarding'],
     }),
     getOnboarding: builder.query<OnboardingProfile | null, void>({
       query: () => ({
         url: '/onboarding',
         method: 'GET',
       }),
+      providesTags: ['Onboarding'],
     }),
   }),
 });
