@@ -13,11 +13,34 @@ export class PrismaPOIRepository implements IPOIRepository {
   }
 
   async findByNeighborhood(neighborhoodId: string): Promise<POIEntity[]> {
-    const raw = await this.prisma.pOI.findMany({
+    // Return up to 10 POIs per category to keep response size manageable
+    const categories = await this.prisma.pOI.findMany({
       where: { neighborhoodId },
+      select: { category: true },
+      distinct: ['category'],
     });
 
-    return raw.map(r => this.toEntity(r));
+    const perCategory = await Promise.all(
+      categories.map(({ category }) =>
+        this.prisma.pOI.findMany({
+          where: { neighborhoodId, category },
+          take: 10,
+          select: {
+            id: true,
+            neighborhoodId: true,
+            category: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            cachedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+      ),
+    );
+
+    return perCategory.flat().map(r => this.toEntity(r));
   }
 
   async findByNeighborhoodAndCategory(
@@ -40,6 +63,10 @@ export class PrismaPOIRepository implements IPOIRepository {
     metadata?: Record<string, any>;
     mapboxId?: string;
   }>): Promise<POIEntity[]> {
+    if (pois.length === 0) return [];
+
+    const neighborhoodId = pois[0].neighborhoodId;
+
     await this.prisma.pOI.createMany({
       data: pois.map(p => ({
         neighborhoodId: p.neighborhoodId,
@@ -53,16 +80,30 @@ export class PrismaPOIRepository implements IPOIRepository {
       skipDuplicates: true,
     });
 
-    // Fetch created POIs (Prisma createMany doesn't return created records)
-    const created = await this.prisma.pOI.findMany({
-      where: {
-        neighborhoodId: { in: pois.map(p => p.neighborhoodId) },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: pois.length,
-    });
+    // Return up to 10 POIs per category for this neighborhood (keeps response lean)
+    const categories = [...new Set(pois.map(p => p.category))];
+    const perCategory = await Promise.all(
+      categories.map(category =>
+        this.prisma.pOI.findMany({
+          where: { neighborhoodId, category },
+          take: 10,
+          select: {
+            id: true,
+            neighborhoodId: true,
+            category: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            cachedAt: true,
+            createdAt: true,
+            updatedAt: true,
+            // metadata excluded — too heavy for API response
+          },
+        }),
+      ),
+    );
 
-    return created.map(r => this.toEntity(r));
+    return perCategory.flat().map(r => this.toEntity(r));
   }
 
   async deleteByNeighborhood(neighborhoodId: string): Promise<number> {
@@ -92,8 +133,8 @@ export class PrismaPOIRepository implements IPOIRepository {
       name: raw.name,
       latitude: raw.latitude,
       longitude: raw.longitude,
-      metadata: raw.metadata,
-      mapboxId: raw.mapboxId,
+      metadata: raw.metadata ?? undefined,
+      mapboxId: raw.mapboxId ?? undefined,
       cachedAt: raw.cachedAt,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
