@@ -36,7 +36,7 @@ export function EditPreferencesForm({
   onSave,
   onUpdate,
 }: EditPreferencesFormProps): JSX.Element {
-  const { data: serverData, isLoading } = useGetOnboardingQuery(undefined);
+  const { data: serverData, isLoading, isError } = useGetOnboardingQuery(undefined);
 
   const [showLoader, setShowLoader] = useState(isLoading || !serverData);
   const [dataPopulated, setDataPopulated] = useState(false);
@@ -69,12 +69,12 @@ export function EditPreferencesForm({
       if (dataPopulated) {
         const timeout = setTimeout(() => setShowLoader(false), 400);
         return () => clearTimeout(timeout);
-      } else if (serverData) {
+      } else {
         setShowLoader(false);
       }
     }
     return undefined;
-  }, [isLoading, dataPopulated]);
+  }, [isLoading, dataPopulated, isError]);
 
   if (showLoader) {
     return (

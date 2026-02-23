@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: 'rent-tracker://auth/confirm',
+        emailRedirectTo: 'https://heartfelt-muffin-54d184.netlify.app/',
       },
     });
     return { error: error?.message ?? null };
