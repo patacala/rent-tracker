@@ -55,7 +55,6 @@ const SignupForm = memo(function SignupForm({
   serverError: string | null;
   isSubmitting: boolean;
 }) {
-
   const { control, handleSubmit, formState: { errors, isValid } } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
@@ -233,10 +232,6 @@ export function AuthScreen(): JSX.Element {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /**
-   * Persist the in-memory analysis result to DB after login.
-   * Obtains the JWT from supabase directly so it never blocks navigation.
-   */
   const persistAnalysisSession = async () => {
     if (!analysisResult || analysisResult.neighborhoods.length === 0) return;
     if (!onboardingData.workCoordinates) return;
@@ -257,7 +252,7 @@ export function AuthScreen(): JSX.Element {
         timeMinutes: onboardingData.commute,
         mode: 'driving',
       })
-      .catch(() => {/* silently ignore — session save is non-critical */});
+      .catch(() => {});
   };
 
   const syncToBackend = async () => {
@@ -314,6 +309,7 @@ export function AuthScreen(): JSX.Element {
   const handleLogin = async (values: LoginFormData) => {
     setServerError(null);
     setIsSubmitting(true);
+
     try {
       const result = await login(values.email, values.password);
       if (result.error) { setServerError(result.error); return; }
@@ -328,7 +324,9 @@ export function AuthScreen(): JSX.Element {
       }
 
       if (!hasOnboarding && hasLocalOnboarding) {
-        try { await syncToBackend(); } catch (error) {
+        try { 
+          await syncToBackend(); 
+        } catch (error) {
           setServerError('Something went wrong while syncing your account.');
           return;
         }
@@ -343,7 +341,6 @@ export function AuthScreen(): JSX.Element {
         return;
       }
 
-      // Both local and remote onboarding exist — ask user
       Alert.alert(
         'Update your Onboarding?',
         'You already have Onboarding Preferences. Would you like to update it?',

@@ -1,4 +1,4 @@
-import React, { JSX, useEffect, useRef, useState } from 'react';
+import React, { JSX, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -36,12 +36,10 @@ export function EditPreferencesForm({
   onSave,
   onUpdate,
 }: EditPreferencesFormProps): JSX.Element {
-  const { data: serverData, isLoading, isFetching } = useGetOnboardingQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: serverData, isLoading } = useGetOnboardingQuery(undefined);
 
-  const [showLoader, setShowLoader] = useState(true);
-  const prevFetching = useRef(false);
+  const [showLoader, setShowLoader] = useState(isLoading || !serverData);
+  const [dataPopulated, setDataPopulated] = useState(false);
 
   const [workAddress, setWorkAddress] = useState<string>('');
   const [commute, setCommute] = useState<number>(30);
@@ -54,27 +52,7 @@ export function EditPreferencesForm({
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (isLoading) {
-      setShowLoader(true);
-      return;
-    }
-
-    if (prevFetching.current && !isFetching) {
-      const timeout = setTimeout(() => setShowLoader(false), 400);
-      prevFetching.current = false;
-      return () => clearTimeout(timeout);
-    }
-
-    if (!isFetching) {
-      setShowLoader(false);
-    }
-
-    prevFetching.current = isFetching;
-    return undefined;
-  }, [isLoading, isFetching]);
-
-  useEffect(() => {
-    if (serverData) {
+    if (serverData && !dataPopulated) {
       setWorkAddress(serverData.workAddress ?? '');
       setCommute(serverData.commute ?? 30);
       setPriorities(serverData.priorities ?? []);
@@ -82,8 +60,21 @@ export function EditPreferencesForm({
       setHasChildren(serverData.hasChildren ?? 'no');
       setChildAgeGroups(serverData.childAgeGroups ?? []);
       setHasPets(serverData.hasPets ?? 'no');
+      setDataPopulated(true);
     }
   }, [serverData]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (dataPopulated) {
+        const timeout = setTimeout(() => setShowLoader(false), 400);
+        return () => clearTimeout(timeout);
+      } else if (serverData) {
+        setShowLoader(false);
+      }
+    }
+    return undefined;
+  }, [isLoading, dataPopulated]);
 
   if (showLoader) {
     return (
@@ -259,16 +250,12 @@ export function EditPreferencesForm({
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-  },
+  wrapper: { flex: 1 },
   container: {
     gap: THEME.spacing.lg,
     paddingBottom: THEME.spacing.sm,
   },
-  bottomSpacer: {
-    height: 80,
-  },
+  bottomSpacer: { height: 80 },
   floatingBtn: {
     position: 'absolute',
     bottom: 0,
@@ -285,9 +272,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  section: {
-    gap: THEME.spacing.sm,
-  },
+  section: { gap: THEME.spacing.sm },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -348,9 +333,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  locationText: {
-    flex: 1,
-  },
+  locationText: { flex: 1 },
   locationAddress: {
     fontSize: THEME.fontSize.sm,
     fontWeight: THEME.fontWeight.semibold,
@@ -368,31 +351,6 @@ const styles = StyleSheet.create({
   commuteValue: {
     fontSize: THEME.fontSize.sm,
     fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.primary,
-  },
-  commuteOptions: {
-    flexDirection: 'row',
-    gap: THEME.spacing.sm,
-  },
-  commuteChip: {
-    flex: 1,
-    paddingVertical: THEME.spacing.sm,
-    borderRadius: THEME.borderRadius.md,
-    borderWidth: 1.5,
-    borderColor: THEME.colors.border,
-    backgroundColor: THEME.colors.background,
-    alignItems: 'center',
-  },
-  commuteChipActive: {
-    borderColor: THEME.colors.primary,
-    backgroundColor: THEME.colors.primaryLight,
-  },
-  commuteChipText: {
-    fontSize: THEME.fontSize.xs,
-    fontWeight: THEME.fontWeight.semibold,
-    color: THEME.colors.textSecondary,
-  },
-  commuteChipTextActive: {
     color: THEME.colors.primary,
   },
   chipsWrap: {
@@ -417,9 +375,7 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.medium,
     color: THEME.colors.textSecondary,
   },
-  priorityChipTextActive: {
-    color: '#FFFFFF',
-  },
+  priorityChipTextActive: { color: '#FFFFFF' },
   lifestyleRow: {
     flexDirection: 'row',
     gap: THEME.spacing.md,
@@ -466,9 +422,7 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.semibold,
     color: THEME.colors.text,
   },
-  lifestyleTitleActive: {
-    color: THEME.colors.primary,
-  },
+  lifestyleTitleActive: { color: THEME.colors.primary },
   lifestyleDesc: {
     fontSize: THEME.fontSize.xs,
     color: THEME.colors.textSecondary,

@@ -26,6 +26,7 @@ export function ExploreScreen(): JSX.Element {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
 
   const [updateOnboarding] = useUpdateOnboardingMutation();
 
@@ -53,6 +54,7 @@ export function ExploreScreen(): JSX.Element {
 
   const handleUpdate = async (payload: SaveOnboardingRequest) => {
     await updateOnboarding(payload);
+    setFormKey((k) => k + 1);
   };
 
   return (
@@ -155,20 +157,16 @@ export function ExploreScreen(): JSX.Element {
         }
       />
 
-      {/* <Button onPress={() => router.push('/map')} style={styles.fab}>
-        <Button.Icon name="map-outline" />
-        <Button.Label>View on Map</Button.Label>
-      </Button> */}
-
       <BottomSheet
         visible={prefsOpen}
         onClose={() => setPrefsOpen(false)}
         title="Edit Preferences"
         blur
         blurIntensity={12}
-        snapHeight="81%"
+        snapHeight="83%"
       >
         <EditPreferencesForm
+          key={formKey}
           onSave={() => setPrefsOpen(false)}
           onUpdate={handleUpdate}
         />
@@ -179,7 +177,7 @@ export function ExploreScreen(): JSX.Element {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: THEME.colors.background },
-    header: {
+  header: {
     paddingHorizontal: THEME.spacing.lg,
     paddingTop: THEME.spacing.md,
     paddingBottom: THEME.spacing.md,

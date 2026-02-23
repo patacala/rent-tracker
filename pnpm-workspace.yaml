@@ -5,5 +5,6 @@ onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/engines'
   - '@scarf/scarf'
+  - dtrace-provider
   - prisma
   - unrs-resolver

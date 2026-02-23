@@ -45,6 +45,7 @@
     "@babel/core": "^7.29.0",
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.2",
+    "eas-cli": "18.0.3",
     "typescript": "^5.9.3"
   }
 }
