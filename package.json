@@ -7,11 +7,13 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "build:packages": "turbo run build --filter='./packages/*'",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "clean": "turbo run clean && rm -rf node_modules",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "prepare": "turbo run build --filter='./packages/*'"
   },
   "devDependencies": {
     "turbo": "^2.8.9",
