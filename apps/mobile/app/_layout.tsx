@@ -40,11 +40,6 @@ function RootLayoutContent(): JSX.Element {
     const inOnboardingScreen = currentSegment === 'onboarding';
     const inAuthScreen = currentSegment === 'auth';
     const inWelcomeScreen = currentSegment === 'welcome';
-    const inAnalysisScreen = currentSegment === 'analysis';
-    const inTabsScreen = currentSegment === '(tabs)';
-    const inNeighborhoodScreen = currentSegment === 'neighborhood';
-
-    const hasOnboardingData = onboardingData.workAddress.trim().length > 0;
 
     if (isLoggedIn && (inWelcomeScreen || inAuthScreen)) {
       router.replace('/(tabs)/explore');
@@ -54,20 +49,6 @@ function RootLayoutContent(): JSX.Element {
     if (!isLoggedIn && currentStep > 0 && currentStep < 4 && !inOnboardingScreen) {
       router.replace(`/onboarding/step${currentStep}` as any);
       return;
-    }
-
-    if (
-      !isLoggedIn &&
-      hasOnboardingData &&
-      currentStep === 0 &&
-      !inAuthScreen &&
-      !inWelcomeScreen &&
-      !inAnalysisScreen &&
-      !inOnboardingScreen &&
-      !inTabsScreen &&
-      !inNeighborhoodScreen
-    ) {
-      router.replace('/auth');
     }
   }, [isLoading, isLoggedIn, onboardingData, currentStep, segments]);
 

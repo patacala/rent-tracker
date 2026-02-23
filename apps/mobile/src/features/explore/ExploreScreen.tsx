@@ -5,27 +5,30 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
-import { FilterChips, Input, NeighborhoodCard, Tag } from '@shared/components';
+import { Button, FilterChips, Input, NeighborhoodCard, Tag } from '@shared/components';
 import { APP_CONFIG } from '@rent-tracker/config';
 import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
 import { EXPLORE_FILTERS, type ExploreFilter } from './types';
 import { useAuth } from '@shared/context/AuthContext';
 import { BottomSheet } from '@shared/components/BottomSheet';
 import { EditPreferencesForm } from './components/EditPreferencesForm';
+import { AuthPromptModal } from './components/AuthPromptModal';
 import { SaveOnboardingRequest, useUpdateOnboardingMutation } from '@features/onboarding/store/onboardingApi';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
-  const { isLoggedIn, hasClickedCard, markCardClicked } = useAuth();
+  const { isLoggedIn } = useAuth();
   const { data: neighborhoods, isEmpty } = useExploreNeighborhoods();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
   const [updateOnboarding] = useUpdateOnboardingMutation();
@@ -38,18 +41,8 @@ export function ExploreScreen(): JSX.Element {
       search.trim() === '' || item.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleCardPress = async (id: string) => {
-    if (isLoggedIn) {
-      router.push(`/neighborhood/${id}`);
-      return;
-    }
-
-    if (!hasClickedCard) {
-      await markCardClicked();
-      router.push(`/neighborhood/${id}`);
-    } else {
-      router.push('/auth');
-    }
+  const handleCardPress = (id: string) => {
+    router.push(`/neighborhood/${id}`);
   };
 
   const handleUpdate = async (payload: SaveOnboardingRequest) => {
@@ -104,7 +97,11 @@ export function ExploreScreen(): JSX.Element {
             style={styles.card}
           >
             <View style={styles.cardImageContainer}>
-              <NeighborhoodCard.Image height={180} />
+              <Image
+                source={require('@assets/miami-bg.png')}
+                style={{ width: '100%', height: 180}}
+                resizeMode="cover"
+              />
               <NeighborhoodCard.Score score={item.score} />
               <View style={styles.cardOverlayText}>
                 <Text style={styles.cardName}>{item.name}</Text>
@@ -157,6 +154,29 @@ export function ExploreScreen(): JSX.Element {
         }
       />
 
+      {isLoggedIn ? (
+        <Button onPress={() => router.push('/map')} style={styles.fab}>
+          <Button.Icon name="map-outline" />
+          <Button.Label>View on Map</Button.Label>
+        </Button>
+      ) : (
+        <TouchableOpacity
+          style={styles.findMoreBtn}
+          onPress={() => setAuthModalVisible(true)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.findMoreLeft}>
+            <View style={styles.findMoreIconWrap}>
+              <Ionicons name="compass-outline" size={18} color={THEME.colors.primary} />
+            </View>
+            <Text style={styles.findMoreTitle}>Find More Neighborhoods</Text>
+          </View>
+          <View style={styles.findMoreBadge}>
+            <Ionicons name="lock-closed" size={12} color={THEME.colors.primary} />
+          </View>
+        </TouchableOpacity>
+      )}
+
       <BottomSheet
         visible={prefsOpen}
         onClose={() => setPrefsOpen(false)}
@@ -169,6 +189,19 @@ export function ExploreScreen(): JSX.Element {
           key={formKey}
           onSave={() => setPrefsOpen(false)}
           onUpdate={handleUpdate}
+        />
+      </BottomSheet>
+
+      <BottomSheet
+        visible={authModalVisible}
+        onClose={() => setAuthModalVisible(false)}
+        title=""
+        blur
+        blurIntensity={12}
+        snapHeight="52%"
+      >
+        <AuthPromptModal
+          onClose={() => setAuthModalVisible(false)}
         />
       </BottomSheet>
     </SafeAreaView>
@@ -272,6 +305,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: THEME.spacing.lg,
     ...THEME.shadow.md,
   },
+  findMoreBtn: {
+    position: 'absolute',
+    bottom: THEME.spacing.md,
+    left: THEME.spacing.sm,
+    right: THEME.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: THEME.colors.background,
+    borderRadius: THEME.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: THEME.colors.primary,
+    paddingHorizontal: THEME.spacing.md,
+    paddingVertical: THEME.spacing.md,
+    ...THEME.shadow.md,
+  },
+  findMoreLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: THEME.spacing.md,
+  },
+  findMoreIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: THEME.borderRadius.md,
+    backgroundColor: THEME.colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  findMoreTitle: {
+    fontSize: THEME.fontSize.sm,
+    fontWeight: THEME.fontWeight.semibold,
+    color: THEME.colors.text,
+  },
+  findMoreBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: THEME.borderRadius.full,
+    backgroundColor: THEME.colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   editPrefsBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -284,11 +359,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: THEME.spacing.md,
     paddingVertical: THEME.spacing.sm,
     borderStyle: 'dashed',
-  },
-  editPrefsBtnLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: THEME.spacing.xs,
   },
   editPrefsLabel: {
     fontSize: THEME.fontSize.xs,

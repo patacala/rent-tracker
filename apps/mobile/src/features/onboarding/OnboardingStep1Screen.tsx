@@ -156,7 +156,7 @@ export function OnboardingStep1Screen(): JSX.Element {
               centerCoordinate: data.workCoordinates
                 ? [data.workCoordinates.longitude, data.workCoordinates.latitude]
                 : [MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat],
-              zoomLevel: 11,
+              zoomLevel: 8.5,
             }}
           />
           <Map.Circle
@@ -195,15 +195,47 @@ export function OnboardingStep1Screen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: THEME.colors.background },
-  scroll: { flex: 1 },
-  content: { padding: THEME.spacing.lg, paddingBottom: THEME.spacing.xl, gap: THEME.spacing.xl },
-  header: { flexDirection: 'row', alignItems: 'center', gap: THEME.spacing.md, marginLeft: 20 },
-  brandName: { fontSize: THEME.fontSize.md, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text },
-  section: { gap: THEME.spacing.sm },
-  sectionTitle: { fontSize: THEME.fontSize.lg, fontWeight: THEME.fontWeight.bold, color: THEME.colors.text },
-  sectionSubtitle: { fontSize: THEME.fontSize.sm, color: THEME.colors.textSecondary, lineHeight: 19 },
-  errorText: { fontSize: THEME.fontSize.xs, color: THEME.colors.error, marginTop: 2 },
+  safe: { 
+    flex: 1, 
+    backgroundColor: THEME.colors.background 
+  },
+  scroll: { 
+    flex: 1 
+  },
+  content: { 
+    padding: THEME.spacing.lg, 
+    paddingBottom: THEME.spacing.xl, 
+    gap: THEME.spacing.xl 
+  },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: THEME.spacing.md, 
+    marginLeft: 20 
+  },
+  brandName: { 
+    fontSize: THEME.fontSize.md, 
+    fontWeight: THEME.fontWeight.bold, 
+    color: THEME.colors.text 
+  },
+  section: { 
+    gap: THEME.spacing.sm 
+  },
+  sectionTitle: { 
+    fontSize: THEME.fontSize.lg, 
+    fontWeight: THEME.fontWeight.bold, 
+    color: THEME.colors.text 
+  },
+  sectionSubtitle: { 
+    fontSize: THEME.fontSize.sm, 
+    color: THEME.colors.textSecondary, 
+    lineHeight: 19 
+  },
+  errorText: { 
+    fontSize: THEME.fontSize.xs, 
+    color: THEME.colors.error, 
+    marginTop: 2 
+  },
   commuteHint: {
     flexDirection: 'row',
     gap: THEME.spacing.xs,
@@ -212,8 +244,16 @@ const styles = StyleSheet.create({
     borderRadius: THEME.borderRadius.sm,
     marginTop: THEME.spacing.xs,
   },
-  commuteHintText: { flex: 1, fontSize: THEME.fontSize.xs, color: THEME.colors.primary, lineHeight: 17 },
-  mapPreview: { height: 140, borderRadius: THEME.borderRadius.lg },
+  commuteHintText: { 
+    flex: 1, 
+    fontSize: THEME.fontSize.xs, 
+    color: THEME.colors.primary, 
+    lineHeight: 17 
+  },
+  mapPreview: { 
+    height: 170, 
+    borderRadius: THEME.borderRadius.lg 
+  },
   mapPreviewLabel: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -221,7 +261,11 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.xs,
     marginTop: -THEME.spacing.md,
   },
-  mapPreviewText: { fontSize: THEME.fontSize.xs, color: THEME.colors.primary, fontWeight: THEME.fontWeight.medium },
+  mapPreviewText: { 
+    fontSize: THEME.fontSize.xs, 
+    color: THEME.colors.primary, 
+    fontWeight: THEME.fontWeight.medium 
+  },
   footer: {
     padding: THEME.spacing.lg,
     paddingBottom: THEME.spacing.md,
@@ -231,5 +275,9 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.colors.background,
   },
   cta: { width: '100%' },
-  stepLabel: { fontSize: THEME.fontSize.xs, color: THEME.colors.textMuted, textAlign: 'center' },
+  stepLabel: { 
+    fontSize: THEME.fontSize.xs, 
+    color: THEME.colors.textMuted, 
+    textAlign: 'center' 
+  },
 });

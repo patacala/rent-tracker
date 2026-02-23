@@ -1,9 +1,9 @@
 import React, { JSX } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
-import { HeaderBackButton, ImagePlaceholder, ScoreBadge } from '@shared/components';
+import { HeaderBackButton, ScoreBadge } from '@shared/components';
 import { useNeighborhoodDetail } from './hooks/useNeighborhoodDetail';
 import { MatchSection } from './components/MatchSection';
 import { StatsSection } from './components/StatsSection';
@@ -36,7 +36,11 @@ export function NeighborhoodDetailScreen(): JSX.Element {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <ImagePlaceholder height={220} style={styles.hero} />
+        <Image
+          source={require('@assets/miami-bg.png')}
+          style={{ width: '100%', height: 220}}
+          resizeMode="cover"
+        />
 
         <View style={styles.quoteCard}>
           <Text style={styles.quoteText}>{detail.matchQuote}</Text>
