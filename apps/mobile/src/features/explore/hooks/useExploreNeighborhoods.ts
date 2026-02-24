@@ -49,6 +49,7 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
         tags: uniqueCategories.slice(0, 3),
         matchCount: Math.max(1, Math.floor(item.pois.length / 3)),
         commuteMinutes: 15 + idx * 2,
+        photoUrl: item.neighborhood.photoUrl ?? null,
       };
     });
   }, [analysisResult]);

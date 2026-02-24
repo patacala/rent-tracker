@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import React, { JSX, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,10 @@ export function ExploreScreen(): JSX.Element {
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [formKey, setFormKey] = useState(0);
+
+  useEffect(() => {
+    console.log('neighborhoods', neighborhoods);
+  }, [neighborhoods]);
 
   const { data: serverOnboarding, isLoading: onboardingLoading } = useGetOnboardingQuery(
     undefined,
@@ -127,7 +131,11 @@ export function ExploreScreen(): JSX.Element {
           >
             <View style={styles.cardImageContainer}>
               <Image
-                source={require('@assets/miami-bg.png')}
+                source={
+                  item.photoUrl
+                    ? { uri: item.photoUrl }
+                    : require('@assets/miami-bg.png')
+                }
                 style={{ width: '100%', height: 180 }}
                 resizeMode="cover"
               />
