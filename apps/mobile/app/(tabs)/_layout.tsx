@@ -13,7 +13,7 @@ const TAB_CONFIG: Array<{
   iconActive: IoniconName;
 }> = [
   { name: 'explore', label: 'Explore', icon: 'search-outline', iconActive: 'search' },
-  { name: 'saved', label: 'Saved', icon: 'bookmark-outline', iconActive: 'bookmark' },
+  { name: 'favorities', label: 'Favorities', icon: 'heart-outline', iconActive: 'heart' },
   { name: 'profile', label: 'Profile', icon: 'person-outline', iconActive: 'person' },
 ];
 

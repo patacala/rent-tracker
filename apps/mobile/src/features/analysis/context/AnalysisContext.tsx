@@ -13,6 +13,7 @@ export interface NeighborhoodEntity {
   name: string;
   score?: number;
   boundary?: any;
+  photoUrl?: string | null;
 }
 
 export interface AnalyzeLocationOutput {

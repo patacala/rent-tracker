@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useAnalysis } from '@features/analysis/context/AnalysisContext';
+import { useAuth } from '@shared/context/AuthContext';
+import { useGetNeighborhoodsQuery } from '@features/analysis/store/analysisApi';
 import type { NeighborhoodListItem } from '../types';
 
 const TAGLINES = [
@@ -18,6 +20,7 @@ const TAGLINES = [
 interface UseExploreNeighborhoodsReturn {
   data: NeighborhoodListItem[];
   isEmpty: boolean;
+  isLoading: boolean;
 }
 
 function calculateScore(poisCount: number): number {
@@ -27,14 +30,21 @@ function calculateScore(poisCount: number): number {
 }
 
 export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
+  const { isLoggedIn } = useAuth();
   const { analysisResult } = useAnalysis();
 
-  const data = useMemo(() => {
-    if (!analysisResult || analysisResult.neighborhoods.length === 0) {
-      return [];
-    }
+  const { data: apiNeighborhoods, isLoading } = useGetNeighborhoodsQuery(undefined, {
+    skip: !isLoggedIn,
+  });
 
-    return analysisResult.neighborhoods.map((item, idx) => {
+  const source = isLoggedIn
+    ? apiNeighborhoods?.neighborhoods ?? []
+    : analysisResult?.neighborhoods ?? [];
+
+  const data = useMemo(() => {
+    if (source.length === 0) return [];
+
+    return source.map((item, idx) => {
       const uniqueCategories = Array.from(
         new Set(item.pois.map((p) => p.category.toUpperCase())),
       );
@@ -52,7 +62,7 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
         photoUrl: item.neighborhood.photoUrl ?? null,
       };
     });
-  }, [analysisResult]);
+  }, [source]);
 
-  return { data, isEmpty: data.length === 0 };
+  return { data, isEmpty: data.length === 0, isLoading };
 }

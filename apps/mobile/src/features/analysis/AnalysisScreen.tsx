@@ -88,8 +88,6 @@ export function AnalysisScreen(): JSX.Element {
 
       await new Promise(resolve => setTimeout(resolve, 600));
 
-      // Set context state first; navigation is handled by the useEffect below
-      // to guarantee the context is committed before ExploreScreen renders.
       setAnalysisResult(result);
       setReadyToNavigate(true);
     } catch (err) {
