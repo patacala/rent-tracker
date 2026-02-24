@@ -42,6 +42,7 @@ export type NeighborhoodMinAggregateOutputType = {
   source: string | null
   centerLat: number | null
   centerLng: number | null
+  photoUrl: string | null
   cachedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -53,6 +54,7 @@ export type NeighborhoodMaxAggregateOutputType = {
   source: string | null
   centerLat: number | null
   centerLng: number | null
+  photoUrl: string | null
   cachedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -65,6 +67,7 @@ export type NeighborhoodCountAggregateOutputType = {
   source: number
   centerLat: number
   centerLng: number
+  photoUrl: number
   cachedAt: number
   createdAt: number
   updatedAt: number
@@ -88,6 +91,7 @@ export type NeighborhoodMinAggregateInputType = {
   source?: true
   centerLat?: true
   centerLng?: true
+  photoUrl?: true
   cachedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -99,6 +103,7 @@ export type NeighborhoodMaxAggregateInputType = {
   source?: true
   centerLat?: true
   centerLng?: true
+  photoUrl?: true
   cachedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -111,6 +116,7 @@ export type NeighborhoodCountAggregateInputType = {
   source?: true
   centerLat?: true
   centerLng?: true
+  photoUrl?: true
   cachedAt?: true
   createdAt?: true
   updatedAt?: true
@@ -210,6 +216,7 @@ export type NeighborhoodGroupByOutputType = {
   source: string
   centerLat: number
   centerLng: number
+  photoUrl: string | null
   cachedAt: Date
   createdAt: Date
   updatedAt: Date
@@ -245,6 +252,7 @@ export type NeighborhoodWhereInput = {
   source?: Prisma.StringFilter<"Neighborhood"> | string
   centerLat?: Prisma.FloatFilter<"Neighborhood"> | number
   centerLng?: Prisma.FloatFilter<"Neighborhood"> | number
+  photoUrl?: Prisma.StringNullableFilter<"Neighborhood"> | string | null
   cachedAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
@@ -258,6 +266,7 @@ export type NeighborhoodOrderByWithRelationInput = {
   source?: Prisma.SortOrder
   centerLat?: Prisma.SortOrder
   centerLng?: Prisma.SortOrder
+  photoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   cachedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -274,6 +283,7 @@ export type NeighborhoodWhereUniqueInput = Prisma.AtLeast<{
   source?: Prisma.StringFilter<"Neighborhood"> | string
   centerLat?: Prisma.FloatFilter<"Neighborhood"> | number
   centerLng?: Prisma.FloatFilter<"Neighborhood"> | number
+  photoUrl?: Prisma.StringNullableFilter<"Neighborhood"> | string | null
   cachedAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
@@ -287,6 +297,7 @@ export type NeighborhoodOrderByWithAggregationInput = {
   source?: Prisma.SortOrder
   centerLat?: Prisma.SortOrder
   centerLng?: Prisma.SortOrder
+  photoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   cachedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -307,6 +318,7 @@ export type NeighborhoodScalarWhereWithAggregatesInput = {
   source?: Prisma.StringWithAggregatesFilter<"Neighborhood"> | string
   centerLat?: Prisma.FloatWithAggregatesFilter<"Neighborhood"> | number
   centerLng?: Prisma.FloatWithAggregatesFilter<"Neighborhood"> | number
+  photoUrl?: Prisma.StringNullableWithAggregatesFilter<"Neighborhood"> | string | null
   cachedAt?: Prisma.DateTimeWithAggregatesFilter<"Neighborhood"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Neighborhood"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Neighborhood"> | Date | string
@@ -319,6 +331,7 @@ export type NeighborhoodCreateInput = {
   source: string
   centerLat: number
   centerLng: number
+  photoUrl?: string | null
   cachedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -332,6 +345,7 @@ export type NeighborhoodUncheckedCreateInput = {
   source: string
   centerLat: number
   centerLng: number
+  photoUrl?: string | null
   cachedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -345,6 +359,7 @@ export type NeighborhoodUpdateInput = {
   source?: Prisma.StringFieldUpdateOperationsInput | string
   centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
   centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -358,6 +373,7 @@ export type NeighborhoodUncheckedUpdateInput = {
   source?: Prisma.StringFieldUpdateOperationsInput | string
   centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
   centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -371,6 +387,7 @@ export type NeighborhoodCreateManyInput = {
   source: string
   centerLat: number
   centerLng: number
+  photoUrl?: string | null
   cachedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -383,6 +400,7 @@ export type NeighborhoodUpdateManyMutationInput = {
   source?: Prisma.StringFieldUpdateOperationsInput | string
   centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
   centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -395,6 +413,7 @@ export type NeighborhoodUncheckedUpdateManyInput = {
   source?: Prisma.StringFieldUpdateOperationsInput | string
   centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
   centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -407,6 +426,7 @@ export type NeighborhoodCountOrderByAggregateInput = {
   source?: Prisma.SortOrder
   centerLat?: Prisma.SortOrder
   centerLng?: Prisma.SortOrder
+  photoUrl?: Prisma.SortOrder
   cachedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -423,6 +443,7 @@ export type NeighborhoodMaxOrderByAggregateInput = {
   source?: Prisma.SortOrder
   centerLat?: Prisma.SortOrder
   centerLng?: Prisma.SortOrder
+  photoUrl?: Prisma.SortOrder
   cachedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -434,6 +455,7 @@ export type NeighborhoodMinOrderByAggregateInput = {
   source?: Prisma.SortOrder
   centerLat?: Prisma.SortOrder
   centerLng?: Prisma.SortOrder
+  photoUrl?: Prisma.SortOrder
   cachedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -470,6 +492,7 @@ export type NeighborhoodCreateWithoutPoisInput = {
   source: string
   centerLat: number
   centerLng: number
+  photoUrl?: string | null
   cachedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -482,6 +505,7 @@ export type NeighborhoodUncheckedCreateWithoutPoisInput = {
   source: string
   centerLat: number
   centerLng: number
+  photoUrl?: string | null
   cachedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -510,6 +534,7 @@ export type NeighborhoodUpdateWithoutPoisInput = {
   source?: Prisma.StringFieldUpdateOperationsInput | string
   centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
   centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -522,6 +547,7 @@ export type NeighborhoodUncheckedUpdateWithoutPoisInput = {
   source?: Prisma.StringFieldUpdateOperationsInput | string
   centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
   centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -565,6 +591,7 @@ export type NeighborhoodSelect<ExtArgs extends runtime.Types.Extensions.Internal
   source?: boolean
   centerLat?: boolean
   centerLng?: boolean
+  photoUrl?: boolean
   cachedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -579,6 +606,7 @@ export type NeighborhoodSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   source?: boolean
   centerLat?: boolean
   centerLng?: boolean
+  photoUrl?: boolean
   cachedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -591,6 +619,7 @@ export type NeighborhoodSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   source?: boolean
   centerLat?: boolean
   centerLng?: boolean
+  photoUrl?: boolean
   cachedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -603,12 +632,13 @@ export type NeighborhoodSelectScalar = {
   source?: boolean
   centerLat?: boolean
   centerLng?: boolean
+  photoUrl?: boolean
   cachedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type NeighborhoodOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "boundary" | "source" | "centerLat" | "centerLng" | "cachedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["neighborhood"]>
+export type NeighborhoodOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "boundary" | "source" | "centerLat" | "centerLng" | "photoUrl" | "cachedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["neighborhood"]>
 export type NeighborhoodInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   pois?: boolean | Prisma.Neighborhood$poisArgs<ExtArgs>
   _count?: boolean | Prisma.NeighborhoodCountOutputTypeDefaultArgs<ExtArgs>
@@ -628,6 +658,7 @@ export type $NeighborhoodPayload<ExtArgs extends runtime.Types.Extensions.Intern
     source: string
     centerLat: number
     centerLng: number
+    photoUrl: string | null
     cachedAt: Date
     createdAt: Date
     updatedAt: Date
@@ -1061,6 +1092,7 @@ export interface NeighborhoodFieldRefs {
   readonly source: Prisma.FieldRef<"Neighborhood", 'String'>
   readonly centerLat: Prisma.FieldRef<"Neighborhood", 'Float'>
   readonly centerLng: Prisma.FieldRef<"Neighborhood", 'Float'>
+  readonly photoUrl: Prisma.FieldRef<"Neighborhood", 'String'>
   readonly cachedAt: Prisma.FieldRef<"Neighborhood", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Neighborhood", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Neighborhood", 'DateTime'>

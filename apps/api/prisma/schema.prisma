@@ -63,6 +63,9 @@ model Neighborhood {
   centerLat Float
   centerLng Float
 
+  // Street View photo (cached indefinitely — only fetched once per neighborhood)
+  photoUrl  String?
+
   // Caching (TTL: 7 days)
   cachedAt DateTime @default(now())
 

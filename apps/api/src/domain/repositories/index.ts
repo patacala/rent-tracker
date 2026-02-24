@@ -82,6 +82,7 @@ export interface INeighborhoodRepository {
     params: Partial<{
       name: string;
       boundary: GeoJSON.Polygon;
+      photoUrl: string;
       cachedAt: Date;
     }>,
   ): Promise<NeighborhoodEntity>;

@@ -101,6 +101,7 @@ export class PrismaNeighborhoodRepository implements INeighborhoodRepository {
   async update(id: string, params: Partial<{
     name: string;
     boundary: GeoJSON.Polygon;
+    photoUrl: string;
     cachedAt: Date;
   }>): Promise<NeighborhoodEntity> {
     const raw = await this.prisma.neighborhood.update({
@@ -134,6 +135,7 @@ export class PrismaNeighborhoodRepository implements INeighborhoodRepository {
       source: raw.source,
       centerLat: raw.centerLat,
       centerLng: raw.centerLng,
+      photoUrl: raw.photoUrl ?? null,
       cachedAt: raw.cachedAt,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,

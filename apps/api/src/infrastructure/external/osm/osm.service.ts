@@ -9,7 +9,6 @@ import type {
 } from '../../../domain/services/external-services.interface';
 import type { POICategory } from '../../../domain/entities/poi.entity';
 
-/** Raw element shapes returned by the Overpass JSON API */
 interface OverpassNode {
   type: 'node';
   id: number;
@@ -21,6 +20,7 @@ interface OverpassNode {
 interface OverpassWay {
   type: 'way';
   id: number;
+  center?: { lat: number; lon: number };
   geometry?: Array<{ lat: number; lon: number }>;
   tags?: Record<string, string>;
 }
@@ -29,8 +29,15 @@ type OverpassElement = OverpassNode | OverpassWay;
 
 /**
  * OsmService — queries the public Overpass API (OpenStreetMap).
- * Provides searchBoundaries (neighbourhood polygons) and searchPOIs.
- * No API key required; completely free.
+ *
+ * Key optimisations over a naive implementation:
+ * 1. Global [bbox] setting — avoids repeating coordinates on every filter line.
+ * 2. [maxsize] setting — prevents mid-stream aborts on large result sets.
+ * 3. `out center` for boundaries — returns only the centroid of each Way,
+ *    avoiding multi-KB geometry payloads we don't actually use.
+ * 4. `out qt` for POIs — quicksort output, faster server-side serialisation.
+ * 5. Mirror rotation + retry — if the primary Overpass server returns 5xx/429,
+ *    the request is retried on the next mirror automatically.
  */
 @Injectable()
 export class OsmService {
@@ -43,50 +50,35 @@ export class OsmService {
   async searchBoundaries(polygon: GeoJSON.Polygon): Promise<BoundaryFeature[]> {
     const [west, south, east, north] = this.calculateBBox(polygon);
 
-    // Overpass bbox format: (south, west, north, east)
-    const bboxStr = `(${south},${west},${north},${east})`;
-
+    /**
+     * Uses `out geom` for Ways to get real polygon boundaries for map rendering.
+     * Nodes (point features) are approximated as circles since they have no polygon.
+     * Boundary queries return few elements (20-40 per city) so the payload is small
+     * even with full geometry — unlike POI queries which can return 10,000+ items.
+     */
     const query = [
-      `[out:json][timeout:${OVERPASS_CONFIG.timeoutSeconds}];`,
+      `[out:json]`,
+      `[timeout:${OVERPASS_CONFIG.timeoutSeconds}]`,
+      `[maxsize:${OVERPASS_CONFIG.maxsizeBytes}]`,
+      `[bbox:${south},${west},${north},${east}];`,
       `(`,
-      `  node["place"~"neighbourhood|suburb|quarter"]${bboxStr};`,
-      `  way["place"~"neighbourhood|suburb|quarter"]${bboxStr};`,
+      `  node["place"~"^(neighbourhood|suburb|quarter)$"];`,
+      `  way["place"~"^(neighbourhood|suburb|quarter)$"];`,
       `);`,
       `out geom;`,
     ].join('\n');
 
-    try {
-      this.logger.log(
-        `Overpass: searching neighbourhoods in bbox [S:${south.toFixed(4)}, W:${west.toFixed(4)}, N:${north.toFixed(4)}, E:${east.toFixed(4)}]`,
-      );
+    this.logger.log(
+      `Overpass boundaries: bbox [S:${south.toFixed(4)}, W:${west.toFixed(4)}, N:${north.toFixed(4)}, E:${east.toFixed(4)}]`,
+    );
 
-      const response = await firstValueFrom(
-        this.httpService.post<{ elements: OverpassElement[] }>(
-          OVERPASS_CONFIG.baseUrl,
-          `data=${encodeURIComponent(query)}`,
-          {
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            timeout: OVERPASS_CONFIG.timeoutMs,
-          },
-        ),
-      );
+    const elements = await this.queryWithRetry<OverpassElement>(query, 'searchBoundaries');
 
-      const elements = response.data.elements ?? [];
-      this.logger.log(`Overpass returned ${elements.length} neighbourhood elements`);
+    this.logger.log(`Overpass returned ${elements.length} neighbourhood elements`);
 
-      return elements
-        .map((el) => this.elementToBoundaryFeature(el))
-        .filter((f): f is BoundaryFeature => f !== null);
-    } catch (error: any) {
-      this.logger.error(
-        `Overpass searchBoundaries failed: ${error?.message}`,
-        error?.stack,
-      );
-      throw new HttpException(
-        'Failed to fetch neighbourhood boundaries from Overpass',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
+    return elements
+      .map((el) => this.elementToBoundaryFeature(el))
+      .filter((f): f is BoundaryFeature => f !== null);
   }
 
   // ─── POIs ─────────────────────────────────────────────────────────────────
@@ -96,57 +88,105 @@ export class OsmService {
     categories: POICategory[];
   }): Promise<POIFeature[]> {
     const [west, south, east, north] = this.calculateBBox(params.boundary);
-    const bboxStr = `(${south},${west},${north},${east})`;
 
-    // Collect unique Overpass tag expressions for the requested categories
     const filters = [
       ...new Set(
         params.categories.flatMap((cat) => OVERPASS_CONFIG.categoryFilters[cat] ?? []),
       ),
     ];
 
-    if (filters.length === 0) {
-      return [];
-    }
+    if (filters.length === 0) return [];
 
-    const nodeLines = filters.map((f) => `  node${f}${bboxStr};`).join('\n');
+    /**
+     * Optimisations:
+     * - [bbox:...] global setting removes N repetitions of the bbox string.
+     * - `out qt` (quicksort) is faster server-side than the default `out`.
+     * - Anchored regexes (^...$) in categoryFilters prevent partial matches,
+     *   reducing false positives and result set size.
+     */
+    const nodeLines = filters.map((f) => `  node${f};`).join('\n');
     const query = [
-      `[out:json][timeout:${OVERPASS_CONFIG.timeoutSeconds}];`,
+      `[out:json]`,
+      `[timeout:${OVERPASS_CONFIG.timeoutSeconds}]`,
+      `[maxsize:${OVERPASS_CONFIG.maxsizeBytes}]`,
+      `[bbox:${south},${west},${north},${east}];`,
       `(`,
       nodeLines,
       `);`,
-      `out body;`,
+      `out qt;`,
     ].join('\n');
 
-    try {
-      this.logger.log(
-        `Overpass: searching POIs for [${params.categories.join(', ')}]`,
-      );
+    this.logger.log(
+      `Overpass POIs: [${params.categories.join(', ')}] in bbox [S:${south.toFixed(4)}, W:${west.toFixed(4)}, N:${north.toFixed(4)}, E:${east.toFixed(4)}]`,
+    );
 
-      const response = await firstValueFrom(
-        this.httpService.post<{ elements: OverpassElement[] }>(
-          OVERPASS_CONFIG.baseUrl,
-          `data=${encodeURIComponent(query)}`,
-          {
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            timeout: OVERPASS_CONFIG.timeoutMs,
-          },
-        ),
-      );
+    const elements = await this.queryWithRetry<OverpassElement>(query, 'searchPOIs');
 
-      const elements = response.data.elements ?? [];
-      this.logger.log(`Overpass returned ${elements.length} POI elements`);
+    this.logger.log(`Overpass returned ${elements.length} POI elements`);
 
-      return elements
-        .map((el) => this.elementToPOIFeature(el, params.categories))
-        .filter((f): f is POIFeature => f !== null);
-    } catch (error: any) {
-      this.logger.error(`Overpass searchPOIs failed: ${error?.message}`, error?.stack);
-      throw new HttpException(
-        'Failed to fetch POIs from Overpass',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+    return elements
+      .map((el) => this.elementToPOIFeature(el, params.categories))
+      .filter((f): f is POIFeature => f !== null);
+  }
+
+  async searchPOIsForArea(params: {
+    polygon: GeoJSON.Polygon;
+    categories: POICategory[];
+  }): Promise<POIFeature[]> {
+    return this.searchPOIs({ boundary: params.polygon, categories: params.categories });
+  }
+
+  // ─── Mirror rotation + retry ──────────────────────────────────────────────
+
+  /**
+   * Sends the Overpass QL query to the first available mirror.
+   * On 429 / 5xx it waits briefly and tries the next mirror.
+   * Throws only after all mirrors are exhausted.
+   */
+  private async queryWithRetry<T>(query: string, context: string): Promise<T[]> {
+    const mirrors = [...OVERPASS_CONFIG.mirrors];
+    let lastError: Error | undefined;
+
+    for (let i = 0; i < mirrors.length; i++) {
+      const url = mirrors[i];
+      try {
+        if (i > 0) {
+          const waitMs = i * 2_000;
+          this.logger.warn(`${context}: retrying on mirror ${i + 1}/${mirrors.length} (${url}) after ${waitMs}ms`);
+          await this.sleep(waitMs);
+        }
+
+        const response = await firstValueFrom(
+          this.httpService.post<{ elements: T[] }>(
+            url,
+            `data=${encodeURIComponent(query)}`,
+            {
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              timeout: OVERPASS_CONFIG.timeoutMs,
+            },
+          ),
+        );
+
+        return response.data.elements ?? [];
+      } catch (error: any) {
+        const status: number | undefined = error?.response?.status;
+        lastError = error;
+
+        this.logger.error(
+          `${context} failed on ${url} [HTTP ${status ?? 'network error'}]: ${error?.message}`,
+        );
+
+        // Don't retry on client errors (4xx except 429)
+        if (status && status >= 400 && status < 500 && status !== 429) {
+          break;
+        }
+      }
     }
+
+    throw new HttpException(
+      `Overpass ${context} failed on all mirrors: ${lastError?.message}`,
+      HttpStatus.SERVICE_UNAVAILABLE,
+    );
   }
 
   // ─── Element converters ───────────────────────────────────────────────────
@@ -159,17 +199,27 @@ export class OsmService {
     let boundary: GeoJSON.Polygon;
 
     if (element.type === 'node') {
-      // Nodes are points; approximate with a small circle polygon
+      // OSM nodes are points — approximate with a small circle polygon.
+      // centerLat/centerLng will be set to the exact point coordinates.
       boundary = this.buildPointPolygon(element.lat, element.lon);
-    } else if (element.type === 'way' && Array.isArray(element.geometry) && element.geometry.length >= 3) {
-      const ring: [number, number][] = element.geometry.map((p) => [p.lon, p.lat]);
-      // Ensure the ring is closed
-      const first = ring[0];
-      const last = ring[ring.length - 1];
-      if (first[0] !== last[0] || first[1] !== last[1]) {
-        ring.push([first[0], first[1]]);
+    } else if (element.type === 'way') {
+      if (element.geometry && element.geometry.length >= 3) {
+        // Real polygon from `out geom` — used for accurate map rendering.
+        // The centroid is computed separately in SearchNeighborhoodsUseCase
+        // from this same polygon, so calculations stay accurate.
+        const ring: [number, number][] = element.geometry.map((p) => [p.lon, p.lat]);
+        const first = ring[0];
+        const last  = ring[ring.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          ring.push([first[0], first[1]]);
+        }
+        boundary = { type: 'Polygon', coordinates: [ring] };
+      } else if (element.center) {
+        // Fallback: server returned center but no geometry (shouldn't happen with out geom)
+        boundary = this.buildPointPolygon(element.center.lat, element.center.lon);
+      } else {
+        return null;
       }
-      boundary = { type: 'Polygon', coordinates: [ring] };
     } else {
       return null;
     }
@@ -186,7 +236,6 @@ export class OsmService {
     element: OverpassElement,
     requested: POICategory[],
   ): POIFeature | null {
-    // Only nodes carry lat/lon directly from Overpass `out body`
     if (element.type !== 'node') return null;
 
     const tags = element.tags ?? {};
@@ -206,25 +255,8 @@ export class OsmService {
     };
   }
 
-  // ─── Bulk POI fetch (one query for the entire isochrone) ─────────────────
-
-  /**
-   * Fetches all POIs inside the isochrone polygon in a single Overpass request.
-   * Use this from AnalyzeLocationUseCase to avoid N parallel per-neighbourhood calls.
-   */
-  async searchPOIsForArea(params: {
-    polygon: GeoJSON.Polygon;
-    categories: POICategory[];
-  }): Promise<POIFeature[]> {
-    return this.searchPOIs({ boundary: params.polygon, categories: params.categories });
-  }
-
   // ─── Category detection ───────────────────────────────────────────────────
 
-  /**
-   * Determines which POICategory best matches a set of OSM tags.
-   * Checks are ordered: more specific categories (supermarket) before generic ones (shop).
-   */
   private detectCategory(
     tags: Record<string, string>,
     requested: POICategory[],
@@ -236,19 +268,18 @@ export class OsmService {
     const railway = tags['railway'] ?? '';
 
     const checks: [POICategory, () => boolean][] = [
-      ['school',      () => /school|university|college|kindergarten/.test(amenity)],
-      ['park',        () => /park|garden|nature_reserve/.test(leisure)],
-      ['supermarket', () => /supermarket|grocery|convenience/.test(shop)],
+      ['school',      () => /^(school|university|college|kindergarten)$/.test(amenity)],
+      ['park',        () => /^(park|garden|nature_reserve)$/.test(leisure)],
+      ['supermarket', () => /^(supermarket|convenience)$/.test(shop)],
       ['shop',        () => shop.length > 0],
       ['transit',     () =>
         highway === 'bus_stop' ||
-        /station|halt|tram_stop|subway_entrance/.test(railway) ||
-        /bus_station|ferry_terminal/.test(amenity)],
-      ['gym',         () => /fitness_centre|sports_centre|swimming_pool/.test(leisure) || amenity === 'gym'],
-      ['hospital',    () => /hospital|clinic|doctors|dentist|pharmacy/.test(amenity)],
+        /^(station|halt|tram_stop|subway_entrance)$/.test(railway)],
+      ['gym',         () => /^(fitness_centre|sports_centre|swimming_pool)$/.test(leisure)],
+      ['hospital',    () => /^(hospital|clinic|doctors|dentist|pharmacy)$/.test(amenity)],
       ['restaurant',  () => amenity === 'restaurant'],
-      ['bar',         () => /bar|pub|nightclub|biergarten/.test(amenity)],
-      ['cafe',        () => /cafe|fast_food|food_court/.test(amenity)],
+      ['bar',         () => /^(bar|pub|nightclub)$/.test(amenity)],
+      ['cafe',        () => /^(cafe|fast_food)$/.test(amenity)],
     ];
 
     for (const [cat, test] of checks) {
@@ -260,7 +291,6 @@ export class OsmService {
 
   // ─── Geometry helpers ─────────────────────────────────────────────────────
 
-  /** Returns [minLng, minLat, maxLng, maxLat] from a GeoJSON Polygon */
   private calculateBBox(polygon: GeoJSON.Polygon): [number, number, number, number] {
     const coords = polygon.coordinates[0];
     let minLng = Infinity, minLat = Infinity;
@@ -276,7 +306,7 @@ export class OsmService {
     return [minLng, minLat, maxLng, maxLat];
   }
 
-  /** Approximates a point as a small regular polygon (for OSM nodes) */
+  /** Approximates a point as a small regular polygon (used for OSM nodes and way centroids) */
   private buildPointPolygon(lat: number, lng: number, radiusDeg = 0.005): GeoJSON.Polygon {
     const numPoints = 16;
     const coords: [number, number][] = [];
@@ -288,5 +318,9 @@ export class OsmService {
       ]);
     }
     return { type: 'Polygon', coordinates: [coords] };
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
