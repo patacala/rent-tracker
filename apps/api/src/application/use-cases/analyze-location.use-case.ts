@@ -15,6 +15,7 @@ import {
 } from '../../domain/repositories';
 import type { NeighborhoodEntity } from '../../domain/entities/neighborhood.entity';
 import type { POIEntity, POICategory } from '../../domain/entities/poi.entity';
+import { GoogleStreetViewService } from '../../infrastructure/external/google/google-street-view.service';
 
 export interface AnalyzeLocationInput {
   longitude: number;
@@ -25,17 +26,22 @@ export interface AnalyzeLocationInput {
   userId?: string;
 }
 
+export interface AnalysisResult {
+  neighborhood: NeighborhoodEntity;
+  pois: POIEntity[];
+}
+
 export interface AnalyzeLocationOutput {
-  neighborhoods: Array<{
-    neighborhood: NeighborhoodEntity;
-    pois: POIEntity[];
-  }>;
+  neighborhoods: AnalysisResult[];
 }
 
 const POI_CATEGORIES: POICategory[] = [
   'school', 'park', 'shop', 'transit', 'gym',
   'hospital', 'restaurant', 'bar', 'cafe', 'supermarket',
 ];
+
+/** Max concurrent Google Street View calls to respect API rate limits */
+const PHOTO_BATCH_SIZE = 5;
 
 @Injectable()
 export class AnalyzeLocationUseCase {
@@ -44,6 +50,7 @@ export class AnalyzeLocationUseCase {
   constructor(
     private readonly getIsochroneUseCase: GetIsochroneUseCase,
     private readonly searchNeighborhoodsUseCase: SearchNeighborhoodsUseCase,
+    private readonly streetViewService: GoogleStreetViewService,
     @Inject(MAPBOX_SERVICE)
     private readonly geoService: IMapboxService,
     @Inject(POI_REPOSITORY)
@@ -53,26 +60,48 @@ export class AnalyzeLocationUseCase {
   ) {}
 
   async execute(input: AnalyzeLocationInput): Promise<AnalyzeLocationOutput> {
-    // Step 1: Get isochrone polygon
+    const polygon       = await this.fetchIsochrone(input);
+    const neighborhoods = await this.fetchNeighborhoods(polygon);
+
+    if (neighborhoods.length === 0) {
+      this.logger.warn('No neighborhoods found — returning empty result');
+      return { neighborhoods: [] };
+    }
+
+    const results = await this.fetchAndDistributePOIs(polygon, neighborhoods);
+    await this.fetchNeighborhoodPhotos(results);
+    this.persistSession(input, results); // fire-and-forget
+
+    return { neighborhoods: results };
+  }
+
+  // ─── Step 1 ───────────────────────────────────────────────────────────────
+
+  private async fetchIsochrone(input: AnalyzeLocationInput): Promise<GeoJSON.Polygon> {
     this.logger.log(
       `Step 1: Fetching ${input.timeMinutes}min isochrone for [${input.longitude}, ${input.latitude}]`,
     );
     const { polygon } = await this.getIsochroneUseCase.execute(input);
+    return polygon;
+  }
 
-    // Step 2: Search neighborhoods within polygon
+  // ─── Step 2 ───────────────────────────────────────────────────────────────
+
+  private async fetchNeighborhoods(polygon: GeoJSON.Polygon): Promise<NeighborhoodEntity[]> {
     this.logger.log('Step 2: Searching neighborhoods within isochrone');
     const { neighborhoods } = await this.searchNeighborhoodsUseCase.execute({ polygon });
-
-    if (neighborhoods.length === 0) {
-      this.logger.warn('No neighborhoods found');
-      return { neighborhoods: [] };
-    }
-
     this.logger.log(`Found ${neighborhoods.length} neighborhoods`);
+    return neighborhoods;
+  }
 
-    // Step 3: ONE Overpass call for all POIs in the whole isochrone area
-    // Avoids N parallel requests that trigger rate-limiting (HTTP 429)
+  // ─── Step 3 ───────────────────────────────────────────────────────────────
+
+  private async fetchAndDistributePOIs(
+    polygon: GeoJSON.Polygon,
+    neighborhoods: NeighborhoodEntity[],
+  ): Promise<AnalysisResult[]> {
     this.logger.log('Step 3: Fetching all POIs in isochrone area (single Overpass call)');
+
     let allPOIs: POIFeature[] = [];
     try {
       allPOIs = await this.geoService.searchPOIsForArea({
@@ -84,8 +113,6 @@ export class AnalyzeLocationUseCase {
       this.logger.warn(`POI fetch failed (${err?.message}), continuing with empty POI list`);
     }
 
-    // Step 4: Distribute POIs to nearest neighbourhood + persist
-    this.logger.log('Step 4: Assigning POIs to neighbourhoods and saving to DB');
     const centroids = neighborhoods.map((n) => ({
       neighborhood: n,
       ...this.calculateCentroid(n.boundary),
@@ -111,7 +138,6 @@ export class AnalyzeLocationUseCase {
           return { neighborhood, pois: cached };
         }
 
-        // Delete stale cache before inserting fresh data
         await this.poiRepo.deleteByNeighborhood(neighborhood.id);
 
         const saved = await this.poiRepo.createMany(
@@ -131,26 +157,63 @@ export class AnalyzeLocationUseCase {
     );
 
     this.logger.log(
-      `Analysis complete. ${results.length} neighbourhoods, ` +
+      `Step 3 complete. ${results.length} neighbourhoods, ` +
         `${results.reduce((s, r) => s + r.pois.length, 0)} total POIs`,
     );
 
-    // Persist session for authenticated users so they can reload results later
-    if (input.userId) {
-      const neighborhoodIds = results.map((r) => r.neighborhood.id);
-      this.sessionRepo.save({
+    return results;
+  }
+
+  // ─── Step 4 ───────────────────────────────────────────────────────────────
+
+  private async fetchNeighborhoodPhotos(results: AnalysisResult[]): Promise<void> {
+    const withoutPhoto = results.filter((r) => !r.neighborhood.photoUrl);
+
+    if (withoutPhoto.length === 0) {
+      this.logger.log('Step 4: All neighborhoods already have photos cached — skipping Google API');
+      return;
+    }
+
+    this.logger.log(
+      `Step 4: Fetching Street View photos for ${withoutPhoto.length} new neighborhoods ` +
+        `(${results.length - withoutPhoto.length} already cached)`,
+    );
+
+    for (let i = 0; i < withoutPhoto.length; i += PHOTO_BATCH_SIZE) {
+      const batch = withoutPhoto.slice(i, i + PHOTO_BATCH_SIZE);
+
+      await Promise.all(
+        batch.map(async (r) => {
+          const url = await this.streetViewService.fetchAndPersist(r.neighborhood);
+          if (url) {
+            // Reflect the new photoUrl in the in-memory result so the API response includes it
+            (r.neighborhood as any).photoUrl = url;
+          }
+        }),
+      );
+    }
+
+    this.logger.log('Step 4 complete.');
+  }
+
+  // ─── Step 5 ───────────────────────────────────────────────────────────────
+
+  private persistSession(input: AnalyzeLocationInput, results: AnalysisResult[]): void {
+    if (!input.userId) return;
+
+    const neighborhoodIds = results.map((r) => r.neighborhood.id);
+    this.sessionRepo
+      .save({
         userId: input.userId,
         longitude: input.longitude,
         latitude: input.latitude,
         timeMinutes: input.timeMinutes,
         mode: input.mode,
         neighborhoodIds,
-      }).catch((err) =>
+      })
+      .catch((err) =>
         this.logger.warn(`Failed to save search session: ${err?.message}`),
       );
-    }
-
-    return { neighborhoods: results };
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -167,14 +230,14 @@ export class AnalyzeLocationUseCase {
 
   /**
    * Returns the neighbourhood whose centroid is closest to (lng, lat),
-   * provided the distance is within MAX_RADIUS_DEG (~3 km).
+   * provided the distance is within MAX_RADIUS_DEG (~5.5 km).
    */
   private findNearestNeighborhood(
     lng: number,
     lat: number,
     centroids: Array<{ neighborhood: NeighborhoodEntity; lat: number; lng: number }>,
   ): { neighborhood: NeighborhoodEntity } | null {
-    const MAX_RADIUS_DEG = 0.05; // ~5.5 km — keeps POIs within their area
+    const MAX_RADIUS_DEG = 0.05;
     let best: { neighborhood: NeighborhoodEntity } | null = null;
     let bestDist = Infinity;
 

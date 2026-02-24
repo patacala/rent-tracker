@@ -11,6 +11,8 @@ import { MockDistanceService } from './external/distance/mock-distance.service';
 import { MapboxService } from './external/mapbox/mapbox.service';
 import { OsmService } from './external/osm/osm.service';
 import { GeoService } from './external/geo/geo.service';
+import { GoogleStreetViewService } from './external/google/google-street-view.service';
+import { SupabaseService } from './supabase/supabase.service';
 import {
   USER_REPOSITORY,
   NEIGHBORHOOD_REPOSITORY,
@@ -35,6 +37,10 @@ import { PLACES_SERVICE, DISTANCE_SERVICE, MAPBOX_SERVICE } from '@domain/servic
     MapboxService,
     OsmService,
     { provide: MAPBOX_SERVICE, useClass: GeoService },
+    // Google Street View photo service
+    GoogleStreetViewService,
+    // Supabase (needed by GoogleStreetViewService for storage uploads)
+    SupabaseService,
     // Direct services needed by repositories
     PrismaService,
   ],
@@ -46,6 +52,7 @@ import { PLACES_SERVICE, DISTANCE_SERVICE, MAPBOX_SERVICE } from '@domain/servic
     PLACES_SERVICE,
     DISTANCE_SERVICE,
     MAPBOX_SERVICE,
+    GoogleStreetViewService,
   ],
 })
 export class InfrastructureModule {}

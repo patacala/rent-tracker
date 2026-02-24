@@ -8,6 +8,7 @@ export class NeighborhoodEntity {
     public readonly source: 'mapbox_tilequery' | 'mapbox_boundaries' | 'osm_overpass' | 'static_miami_config' | 'manual',
     public readonly centerLat: number,
     public readonly centerLng: number,
+    public readonly photoUrl: string | null,
     public readonly cachedAt: Date,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
@@ -20,6 +21,7 @@ export class NeighborhoodEntity {
     source: 'mapbox_tilequery' | 'mapbox_boundaries' | 'osm_overpass' | 'static_miami_config' | 'manual';
     centerLat: number;
     centerLng: number;
+    photoUrl?: string | null;
     cachedAt: Date;
     createdAt: Date;
     updatedAt: Date;
@@ -31,6 +33,7 @@ export class NeighborhoodEntity {
       params.source,
       params.centerLat,
       params.centerLng,
+      params.photoUrl ?? null,
       params.cachedAt,
       params.createdAt,
       params.updatedAt,
