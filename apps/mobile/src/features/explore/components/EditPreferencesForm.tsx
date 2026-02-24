@@ -12,7 +12,10 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { THEME } from '@shared/theme';
 import { Button } from '@shared/components';
-import { SaveOnboardingRequest, useGetOnboardingQuery } from '@features/onboarding/store/onboardingApi';
+import {
+  SaveOnboardingRequest,
+  OnboardingProfile,
+} from '@features/onboarding/store/onboardingApi';
 
 const PRIORITIES = [
   { id: 'schools', label: 'Schools' },
@@ -28,19 +31,18 @@ const PRIORITIES = [
 type LifestylePreference = 'suburban' | 'urban';
 
 interface EditPreferencesFormProps {
+  initialData: OnboardingProfile | null;
+  loading: boolean;
   onSave: () => void;
   onUpdate: (payload: SaveOnboardingRequest) => Promise<void>;
 }
 
 export function EditPreferencesForm({
+  initialData,
+  loading,
   onSave,
   onUpdate,
 }: EditPreferencesFormProps): JSX.Element {
-  const { data: serverData, isLoading, isError } = useGetOnboardingQuery(undefined);
-
-  const [showLoader, setShowLoader] = useState(isLoading || !serverData);
-  const [dataPopulated, setDataPopulated] = useState(false);
-
   const [workAddress, setWorkAddress] = useState<string>('');
   const [commute, setCommute] = useState<number>(30);
   const [priorities, setPriorities] = useState<string[]>([]);
@@ -52,31 +54,18 @@ export function EditPreferencesForm({
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (serverData && !dataPopulated) {
-      setWorkAddress(serverData.workAddress ?? '');
-      setCommute(serverData.commute ?? 30);
-      setPriorities(serverData.priorities ?? []);
-      setLifestyle((serverData.lifestyle as LifestylePreference) ?? null);
-      setHasChildren(serverData.hasChildren ?? 'no');
-      setChildAgeGroups(serverData.childAgeGroups ?? []);
-      setHasPets(serverData.hasPets ?? 'no');
-      setDataPopulated(true);
+    if (initialData) {
+      setWorkAddress(initialData.workAddress ?? '');
+      setCommute(initialData.commute ?? 30);
+      setPriorities(initialData.priorities ?? []);
+      setLifestyle((initialData.lifestyle as LifestylePreference) ?? null);
+      setHasChildren(initialData.hasChildren ?? 'no');
+      setChildAgeGroups(initialData.childAgeGroups ?? []);
+      setHasPets(initialData.hasPets ?? 'no');
     }
-  }, [serverData]);
+  }, [initialData]);
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (dataPopulated) {
-        const timeout = setTimeout(() => setShowLoader(false), 400);
-        return () => clearTimeout(timeout);
-      } else {
-        setShowLoader(false);
-      }
-    }
-    return undefined;
-  }, [isLoading, dataPopulated, isError]);
-
-  if (showLoader) {
+  if (loading) {
     return (
       <View style={styles.loadingWrapper}>
         <ActivityIndicator color={THEME.colors.primary} />

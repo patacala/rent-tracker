@@ -5,7 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Image
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,14 +16,21 @@ import { APP_CONFIG } from '@rent-tracker/config';
 import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
 import { EXPLORE_FILTERS, type ExploreFilter } from './types';
 import { useAuth } from '@shared/context/AuthContext';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { BottomSheet } from '@shared/components/BottomSheet';
 import { EditPreferencesForm } from './components/EditPreferencesForm';
 import { AuthPromptModal } from './components/AuthPromptModal';
-import { SaveOnboardingRequest, useUpdateOnboardingMutation } from '@features/onboarding/store/onboardingApi';
+import {
+  OnboardingProfile,
+  SaveOnboardingRequest,
+  useGetOnboardingQuery,
+  useUpdateOnboardingMutation,
+} from '@features/onboarding/store/onboardingApi';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
+  const { data: localOnboarding } = useOnboarding();
   const { data: neighborhoods, isEmpty } = useExploreNeighborhoods();
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
@@ -31,7 +38,29 @@ export function ExploreScreen(): JSX.Element {
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
+  const { data: serverOnboarding, isLoading: onboardingLoading } = useGetOnboardingQuery(
+    undefined,
+    { skip: !isLoggedIn },
+  );
+
   const [updateOnboarding] = useUpdateOnboardingMutation();
+
+  // Si hay datos del servidor úsalos, si no usa los locales
+  const formInitialData: OnboardingProfile | null = serverOnboarding
+    ? serverOnboarding
+    : localOnboarding?.workAddress?.trim().length
+    ? {
+        id: '',
+        userId: '',
+        workAddress: localOnboarding.workAddress,
+        commute: localOnboarding.commute,
+        priorities: localOnboarding.priorities,
+        hasChildren: localOnboarding.hasChildren,
+        childAgeGroups: localOnboarding.childAgeGroups,
+        hasPets: localOnboarding.hasPets,
+        lifestyle: localOnboarding.lifestyle ?? undefined,
+      }
+    : null;
 
   const cityName =
     APP_CONFIG.defaultCity.charAt(0).toUpperCase() + APP_CONFIG.defaultCity.slice(1);
@@ -99,7 +128,7 @@ export function ExploreScreen(): JSX.Element {
             <View style={styles.cardImageContainer}>
               <Image
                 source={require('@assets/miami-bg.png')}
-                style={{ width: '100%', height: 180}}
+                style={{ width: '100%', height: 180 }}
                 resizeMode="cover"
               />
               <NeighborhoodCard.Score score={item.score} />
@@ -187,6 +216,8 @@ export function ExploreScreen(): JSX.Element {
       >
         <EditPreferencesForm
           key={formKey}
+          initialData={formInitialData}
+          loading={onboardingLoading}
           onSave={() => setPrefsOpen(false)}
           onUpdate={handleUpdate}
         />
@@ -200,9 +231,7 @@ export function ExploreScreen(): JSX.Element {
         blurIntensity={12}
         snapHeight="52%"
       >
-        <AuthPromptModal
-          onClose={() => setAuthModalVisible(false)}
-        />
+        <AuthPromptModal onClose={() => setAuthModalVisible(false)} />
       </BottomSheet>
     </SafeAreaView>
   );

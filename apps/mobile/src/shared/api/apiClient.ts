@@ -1,6 +1,6 @@
 import { BASE_URL } from '@shared/api/baseUrl';
 
-async function post<T>(endpoint: string, body: unknown) {
+/* async function post<T>(endpoint: string, body: unknown) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -13,7 +13,7 @@ async function post<T>(endpoint: string, body: unknown) {
   }
 
   return response.json() as Promise<T>;
-}
+} */
 
 async function postWithAuth<T>(endpoint: string, body: unknown, token: string) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -89,9 +89,9 @@ async function postPublic<T>(endpoint: string, body: unknown) {
 }
 
 export const apiClient = {
-  createUser: (body: any) => post('/users', body),
+  /* createUser: (body: any) => post('/users', body),
   savePreferences: (body: any) => post('/preferences', body),
-  calculateLifestyleScore: (body: any) => post('/lifestyle-score', body),
+  calculateLifestyleScore: (body: any) => post('/lifestyle-score', body), */
   analyzeLocation: (body: AnalyzeLocationRequest) =>
     postPublic<AnalyzeLocationResponse>('/api/neighborhoods/analyze', body),
   saveAnalysisSession: (
