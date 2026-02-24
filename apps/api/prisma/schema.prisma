@@ -17,6 +17,7 @@ model User {
   updatedAt       DateTime           @updatedAt
   onboarding      OnboardingProfile?
   searchSessions  SearchSession[]
+  favoriteNeighborhoods FavoriteNeighborhood[]
 }
 
 model SearchSession {
@@ -71,6 +72,7 @@ model Neighborhood {
 
   // Relations
   pois POI[]
+  favoriteNeighborhoods FavoriteNeighborhood[]
 
   // Indexes for performance
   @@index([centerLat, centerLng])
@@ -108,4 +110,20 @@ model POI {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model FavoriteNeighborhood {
+  id             String       @id @default(cuid())
+  userId         String
+  neighborhoodId String
+
+  // Relations
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  neighborhood   Neighborhood @relation(fields: [neighborhoodId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Un usuario no puede guardar el mismo barrio dos veces
+  @@unique([userId, neighborhoodId])
+  @@index([userId])
 }

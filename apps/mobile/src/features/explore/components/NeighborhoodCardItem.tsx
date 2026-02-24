@@ -1,0 +1,211 @@
+import React, { JSX, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { THEME } from '@shared/theme';
+import { NeighborhoodCard, Tag } from '@shared/components';
+import { useAuth } from '@shared/context/AuthContext';
+import { useToggleFavoriteMutation, useGetFavoritesQuery } from '@features/saved/store/savedApi';
+import { useToast } from '@shared/context/ToastContext';
+import type { NeighborhoodListItem } from '../types';
+
+interface NeighborhoodCardItemProps {
+  item: NeighborhoodListItem;
+  onPress: (id: string) => void;
+}
+
+export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProps): JSX.Element {
+  const { isLoggedIn } = useAuth();
+  const toast = useToast();
+  const [toggleFavorite, { isLoading: isToggling }] = useToggleFavoriteMutation();
+  const { data: favoritesData } = useGetFavoritesQuery(undefined, {
+    skip: !isLoggedIn,
+  });
+
+  const isFavorite = favoritesData?.neighborhoods?.some((n) => n.id === item.id) ?? false;
+  const [localFavorite, setLocalFavorite] = useState(isFavorite);
+
+  useEffect(() => {
+    setLocalFavorite(isFavorite);
+  }, [isFavorite]);
+
+  const handleToggleFavorite = async () => {
+    if (!isLoggedIn || isToggling) return;
+
+    const next = !localFavorite;
+    setLocalFavorite(next);
+
+    try {
+      await toggleFavorite(item.id).unwrap();
+      toast.success(next ? 'Added to favorites' : 'Removed from favorites');
+    } catch {
+      setLocalFavorite(!next);
+      toast.error('Something went wrong, please try again');
+    }
+  };
+
+  return (
+    <NeighborhoodCard onPress={() => onPress(item.id)} style={styles.card}>
+      <View style={styles.cardImageContainer}>
+        <Image
+          source={
+            item.photoUrl
+              ? { uri: item.photoUrl }
+              : require('@assets/miami-bg.png')
+          }
+          style={styles.image}
+          resizeMode="cover"
+        />
+
+        <View style={styles.overlay} />
+
+        <View style={styles.scoreContainer}>
+          <NeighborhoodCard.Score score={item.score} />
+        </View>
+
+        {isLoggedIn && (
+          <TouchableOpacity
+            style={styles.favoriteBtn}
+            onPress={handleToggleFavorite}
+            disabled={isToggling}
+            hitSlop={8}
+          >
+            <Ionicons
+              name={localFavorite ? 'heart' : 'heart-outline'}
+              size={30}
+              color={localFavorite ? THEME.colors.primary : '#FFFFFF'}
+            />
+          </TouchableOpacity>
+        )}
+
+        <View style={styles.cardOverlayText}>
+          <Text style={styles.cardName} numberOfLines={1} ellipsizeMode="tail">
+            {item.name}
+          </Text>
+          <Text style={styles.cardTagline}>{item.tagline}</Text>
+        </View>
+      </View>
+
+      <View style={styles.cardBody}>
+        <NeighborhoodCard.Tags>
+          {item.tags.slice(0, 3).map((tag) => (
+            <Tag key={tag} variant="neutral">
+              <Tag.Label>{tag}</Tag.Label>
+            </Tag>
+          ))}
+        </NeighborhoodCard.Tags>
+
+        <NeighborhoodCard.Footer>
+          <View style={styles.matchRow}>
+            <View style={styles.matchAvatars}>
+              <View style={[styles.avatar, { backgroundColor: THEME.colors.primary }]} />
+              <View
+                style={[
+                  styles.avatar,
+                  { backgroundColor: THEME.colors.primaryActive, marginLeft: -6 },
+                ]}
+              />
+            </View>
+            <Text style={styles.matchText}>
+              {item.matchCount} match your profile
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => onPress(item.id)}>
+            <Text style={styles.detailsLink}>Details &rsaquo;</Text>
+          </TouchableOpacity>
+        </NeighborhoodCard.Footer>
+      </View>
+    </NeighborhoodCard>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { width: '100%' },
+
+  cardImageContainer: { position: 'relative' },
+
+  image: { width: '100%', height: 180 },
+
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+
+  scoreContainer: {
+    position: 'absolute',
+    top: 12,
+    left: 70,
+  },
+
+  favoriteBtn: {
+    position: 'absolute',
+    top: 20,
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.50)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  cardOverlayText: {
+    position: 'absolute',
+    bottom: THEME.spacing.md,
+    left: THEME.spacing.md,
+  },
+
+  cardName: {
+    fontSize: THEME.fontSize.lg,
+    fontWeight: THEME.fontWeight.bold,
+    color: '#FFFFFF',
+    width: '96%',
+  },
+
+  cardTagline: {
+    fontSize: THEME.fontSize.xs,
+    color: 'rgba(255,255,255,0.8)',
+    letterSpacing: 0.5,
+  },
+
+  cardBody: {
+    paddingHorizontal: THEME.spacing.md,
+    paddingTop: THEME.spacing.sm,
+  },
+
+  matchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: THEME.spacing.sm,
+  },
+
+  matchAvatars: { flexDirection: 'row' },
+
+  avatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+
+  matchText: {
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.textSecondary,
+  },
+
+  detailsLink: {
+    fontSize: THEME.fontSize.sm,
+    color: THEME.colors.primary,
+    fontWeight: THEME.fontWeight.semibold,
+  },
+});

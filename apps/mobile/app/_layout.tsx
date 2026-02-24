@@ -12,6 +12,7 @@ import { OnboardingProvider, useOnboarding } from '@features/onboarding/context/
 import { AnalysisProvider } from '@features/analysis/context/AnalysisContext';
 import { THEME } from '@shared/theme';
 import { supabase } from '@shared/lib/supabase';
+import { ToastProvider } from '@shared/context/ToastContext';
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '');
 
@@ -82,8 +83,10 @@ export default function RootLayout(): JSX.Element {
         <AuthProvider>
           <OnboardingProvider>
             <AnalysisProvider>
-              <StatusBar style="dark" />
-              <RootLayoutContent />
+              <ToastProvider>
+                <StatusBar style="dark" />
+                <RootLayoutContent />
+              </ToastProvider>
             </AnalysisProvider>
           </OnboardingProvider>
         </AuthProvider>

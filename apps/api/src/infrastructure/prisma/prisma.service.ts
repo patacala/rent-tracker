@@ -29,4 +29,5 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get neighborhood() { return this.prisma.neighborhood; }
   get pOI() { return this.prisma.pOI; }
   get searchSession() { return this.prisma.searchSession; }
+  get favoriteNeighborhood() { return this.prisma.favoriteNeighborhood; }
 }

@@ -62,3 +62,8 @@ export type Neighborhood = Prisma.NeighborhoodModel
  * 
  */
 export type POI = Prisma.POIModel
+/**
+ * Model FavoriteNeighborhood
+ * 
+ */
+export type FavoriteNeighborhood = Prisma.FavoriteNeighborhoodModel

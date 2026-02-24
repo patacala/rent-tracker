@@ -192,6 +192,7 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   onboarding?: Prisma.XOR<Prisma.OnboardingProfileNullableScalarRelationFilter, Prisma.OnboardingProfileWhereInput> | null
   searchSessions?: Prisma.SearchSessionListRelationFilter
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -203,6 +204,7 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   onboarding?: Prisma.OnboardingProfileOrderByWithRelationInput
   searchSessions?: Prisma.SearchSessionOrderByRelationAggregateInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -217,6 +219,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   onboarding?: Prisma.XOR<Prisma.OnboardingProfileNullableScalarRelationFilter, Prisma.OnboardingProfileWhereInput> | null
   searchSessions?: Prisma.SearchSessionListRelationFilter
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodListRelationFilter
 }, "id" | "supabaseId" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -252,6 +255,7 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   onboarding?: Prisma.OnboardingProfileCreateNestedOneWithoutUserInput
   searchSessions?: Prisma.SearchSessionCreateNestedManyWithoutUserInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -263,6 +267,7 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   onboarding?: Prisma.OnboardingProfileUncheckedCreateNestedOneWithoutUserInput
   searchSessions?: Prisma.SearchSessionUncheckedCreateNestedManyWithoutUserInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -274,6 +279,7 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   onboarding?: Prisma.OnboardingProfileUpdateOneWithoutUserNestedInput
   searchSessions?: Prisma.SearchSessionUpdateManyWithoutUserNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -285,6 +291,7 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   onboarding?: Prisma.OnboardingProfileUncheckedUpdateOneWithoutUserNestedInput
   searchSessions?: Prisma.SearchSessionUncheckedUpdateManyWithoutUserNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -386,6 +393,20 @@ export type UserUpdateOneRequiredWithoutOnboardingNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOnboardingInput, Prisma.UserUpdateWithoutOnboardingInput>, Prisma.UserUncheckedUpdateWithoutOnboardingInput>
 }
 
+export type UserCreateNestedOneWithoutFavoriteNeighborhoodsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFavoriteNeighborhoodsInput, Prisma.UserUncheckedCreateWithoutFavoriteNeighborhoodsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavoriteNeighborhoodsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutFavoriteNeighborhoodsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFavoriteNeighborhoodsInput, Prisma.UserUncheckedCreateWithoutFavoriteNeighborhoodsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFavoriteNeighborhoodsInput
+  upsert?: Prisma.UserUpsertWithoutFavoriteNeighborhoodsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFavoriteNeighborhoodsInput, Prisma.UserUpdateWithoutFavoriteNeighborhoodsInput>, Prisma.UserUncheckedUpdateWithoutFavoriteNeighborhoodsInput>
+}
+
 export type UserCreateWithoutSearchSessionsInput = {
   id?: string
   supabaseId: string
@@ -394,6 +415,7 @@ export type UserCreateWithoutSearchSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   onboarding?: Prisma.OnboardingProfileCreateNestedOneWithoutUserInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSearchSessionsInput = {
@@ -404,6 +426,7 @@ export type UserUncheckedCreateWithoutSearchSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   onboarding?: Prisma.OnboardingProfileUncheckedCreateNestedOneWithoutUserInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSearchSessionsInput = {
@@ -430,6 +453,7 @@ export type UserUpdateWithoutSearchSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   onboarding?: Prisma.OnboardingProfileUpdateOneWithoutUserNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSearchSessionsInput = {
@@ -440,6 +464,7 @@ export type UserUncheckedUpdateWithoutSearchSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   onboarding?: Prisma.OnboardingProfileUncheckedUpdateOneWithoutUserNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutOnboardingInput = {
@@ -450,6 +475,7 @@ export type UserCreateWithoutOnboardingInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   searchSessions?: Prisma.SearchSessionCreateNestedManyWithoutUserInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOnboardingInput = {
@@ -460,6 +486,7 @@ export type UserUncheckedCreateWithoutOnboardingInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   searchSessions?: Prisma.SearchSessionUncheckedCreateNestedManyWithoutUserInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOnboardingInput = {
@@ -486,6 +513,7 @@ export type UserUpdateWithoutOnboardingInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   searchSessions?: Prisma.SearchSessionUpdateManyWithoutUserNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOnboardingInput = {
@@ -496,6 +524,67 @@ export type UserUncheckedUpdateWithoutOnboardingInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   searchSessions?: Prisma.SearchSessionUncheckedUpdateManyWithoutUserNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutFavoriteNeighborhoodsInput = {
+  id?: string
+  supabaseId: string
+  email: string
+  name?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboarding?: Prisma.OnboardingProfileCreateNestedOneWithoutUserInput
+  searchSessions?: Prisma.SearchSessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutFavoriteNeighborhoodsInput = {
+  id?: string
+  supabaseId: string
+  email: string
+  name?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  onboarding?: Prisma.OnboardingProfileUncheckedCreateNestedOneWithoutUserInput
+  searchSessions?: Prisma.SearchSessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutFavoriteNeighborhoodsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFavoriteNeighborhoodsInput, Prisma.UserUncheckedCreateWithoutFavoriteNeighborhoodsInput>
+}
+
+export type UserUpsertWithoutFavoriteNeighborhoodsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFavoriteNeighborhoodsInput, Prisma.UserUncheckedUpdateWithoutFavoriteNeighborhoodsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFavoriteNeighborhoodsInput, Prisma.UserUncheckedCreateWithoutFavoriteNeighborhoodsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFavoriteNeighborhoodsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFavoriteNeighborhoodsInput, Prisma.UserUncheckedUpdateWithoutFavoriteNeighborhoodsInput>
+}
+
+export type UserUpdateWithoutFavoriteNeighborhoodsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboarding?: Prisma.OnboardingProfileUpdateOneWithoutUserNestedInput
+  searchSessions?: Prisma.SearchSessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFavoriteNeighborhoodsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  supabaseId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  onboarding?: Prisma.OnboardingProfileUncheckedUpdateOneWithoutUserNestedInput
+  searchSessions?: Prisma.SearchSessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -505,10 +594,12 @@ export type UserUncheckedUpdateWithoutOnboardingInput = {
 
 export type UserCountOutputType = {
   searchSessions: number
+  favoriteNeighborhoods: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   searchSessions?: boolean | UserCountOutputTypeCountSearchSessionsArgs
+  favoriteNeighborhoods?: boolean | UserCountOutputTypeCountFavoriteNeighborhoodsArgs
 }
 
 /**
@@ -528,6 +619,13 @@ export type UserCountOutputTypeCountSearchSessionsArgs<ExtArgs extends runtime.T
   where?: Prisma.SearchSessionWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountFavoriteNeighborhoodsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FavoriteNeighborhoodWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -538,6 +636,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   onboarding?: boolean | Prisma.User$onboardingArgs<ExtArgs>
   searchSessions?: boolean | Prisma.User$searchSessionsArgs<ExtArgs>
+  favoriteNeighborhoods?: boolean | Prisma.User$favoriteNeighborhoodsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -572,6 +671,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   onboarding?: boolean | Prisma.User$onboardingArgs<ExtArgs>
   searchSessions?: boolean | Prisma.User$searchSessionsArgs<ExtArgs>
+  favoriteNeighborhoods?: boolean | Prisma.User$favoriteNeighborhoodsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -582,6 +682,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     onboarding: Prisma.$OnboardingProfilePayload<ExtArgs> | null
     searchSessions: Prisma.$SearchSessionPayload<ExtArgs>[]
+    favoriteNeighborhoods: Prisma.$FavoriteNeighborhoodPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -986,6 +1087,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   onboarding<T extends Prisma.User$onboardingArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$onboardingArgs<ExtArgs>>): Prisma.Prisma__OnboardingProfileClient<runtime.Types.Result.GetResult<Prisma.$OnboardingProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   searchSessions<T extends Prisma.User$searchSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$searchSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SearchSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  favoriteNeighborhoods<T extends Prisma.User$favoriteNeighborhoodsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$favoriteNeighborhoodsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoriteNeighborhoodPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1449,6 +1551,30 @@ export type User$searchSessionsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.SearchSessionScalarFieldEnum | Prisma.SearchSessionScalarFieldEnum[]
+}
+
+/**
+ * User.favoriteNeighborhoods
+ */
+export type User$favoriteNeighborhoodsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FavoriteNeighborhood
+   */
+  select?: Prisma.FavoriteNeighborhoodSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FavoriteNeighborhood
+   */
+  omit?: Prisma.FavoriteNeighborhoodOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FavoriteNeighborhoodInclude<ExtArgs> | null
+  where?: Prisma.FavoriteNeighborhoodWhereInput
+  orderBy?: Prisma.FavoriteNeighborhoodOrderByWithRelationInput | Prisma.FavoriteNeighborhoodOrderByWithRelationInput[]
+  cursor?: Prisma.FavoriteNeighborhoodWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FavoriteNeighborhoodScalarFieldEnum | Prisma.FavoriteNeighborhoodScalarFieldEnum[]
 }
 
 /**

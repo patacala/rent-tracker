@@ -15,6 +15,9 @@ import { GetMyAnalysisUseCase } from './application/use-cases/get-my-analysis.us
 import { AuthController } from './presentation/auth/auth.controller';
 import { OnboardingController } from './presentation/onboarding/onboarding.controller';
 import { NeighborhoodsController } from './presentation/neighborhoods/neighborhoods.controller';
+import { ToggleFavoriteUseCase } from '@application/use-cases/toggle-favorite.use-case';
+import { GetFavoritesUseCase } from '@application/use-cases/get-favorites.use-case';
+import { FavoritesController } from '@presentation/favorites/favorites.controller';
 
 @Module({
   imports: [
@@ -34,11 +37,14 @@ import { NeighborhoodsController } from './presentation/neighborhoods/neighborho
     GetNeighborhoodPOIsUseCase,
     AnalyzeLocationUseCase,
     GetMyAnalysisUseCase,
+    ToggleFavoriteUseCase,
+    GetFavoritesUseCase,
   ],
   controllers: [
     AuthController,
     OnboardingController,
     NeighborhoodsController,
+    FavoritesController,
   ],
 })
 export class AppModule {}

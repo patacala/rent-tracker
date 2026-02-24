@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,8 +15,6 @@ import {
   Button,
   FilterChips,
   Input,
-  NeighborhoodCard,
-  Tag,
 } from '@shared/components';
 import { APP_CONFIG } from '@rent-tracker/config';
 import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
@@ -33,6 +30,7 @@ import {
   useGetOnboardingQuery,
   useUpdateOnboardingMutation,
 } from '@features/onboarding/store/onboardingApi';
+import { NeighborhoodCardItem } from './components/NeighborhoodCardItem';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
@@ -150,65 +148,10 @@ export function ExploreScreen(): JSX.Element {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <NeighborhoodCard
-              onPress={() => handleCardPress(item.id)}
-              style={styles.card}
-            >
-              <View style={styles.cardImageContainer}>
-                <Image
-                  source={
-                    item.photoUrl
-                      ? { uri: item.photoUrl }
-                      : require('@assets/miami-bg.png')
-                  }
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-                <NeighborhoodCard.Score score={item.score} />
-                <View style={styles.cardOverlayText}>
-                  <Text style={styles.cardName}>{item.name}</Text>
-                  <Text style={styles.cardTagline}>{item.tagline}</Text>
-                </View>
-              </View>
-
-              <View style={styles.cardBody}>
-                <NeighborhoodCard.Tags>
-                  {item.tags.slice(0, 3).map((tag) => (
-                    <Tag key={tag} variant="neutral">
-                      <Tag.Label>{tag}</Tag.Label>
-                    </Tag>
-                  ))}
-                </NeighborhoodCard.Tags>
-
-                <NeighborhoodCard.Footer>
-                  <View style={styles.matchRow}>
-                    <View style={styles.matchAvatars}>
-                      <View
-                        style={[
-                          styles.avatar,
-                          { backgroundColor: THEME.colors.primary },
-                        ]}
-                      />
-                      <View
-                        style={[
-                          styles.avatar,
-                          {
-                            backgroundColor: THEME.colors.primaryActive,
-                            marginLeft: -6,
-                          },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.matchText}>
-                      {item.matchCount} match your profile
-                    </Text>
-                  </View>
-                  <TouchableOpacity onPress={() => handleCardPress(item.id)}>
-                    <Text style={styles.detailsLink}>Details &rsaquo;</Text>
-                  </TouchableOpacity>
-                </NeighborhoodCard.Footer>
-              </View>
-            </NeighborhoodCard>
+            <NeighborhoodCardItem
+              item={item}
+              onPress={handleCardPress}
+            />
           )}
           ListEmptyComponent={
             <View style={styles.empty}>

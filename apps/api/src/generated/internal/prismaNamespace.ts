@@ -388,7 +388,8 @@ export const ModelName = {
   SearchSession: 'SearchSession',
   OnboardingProfile: 'OnboardingProfile',
   Neighborhood: 'Neighborhood',
-  POI: 'POI'
+  POI: 'POI',
+  FavoriteNeighborhood: 'FavoriteNeighborhood'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -404,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "searchSession" | "onboardingProfile" | "neighborhood" | "pOI"
+    modelProps: "user" | "searchSession" | "onboardingProfile" | "neighborhood" | "pOI" | "favoriteNeighborhood"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -778,6 +779,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FavoriteNeighborhood: {
+      payload: Prisma.$FavoriteNeighborhoodPayload<ExtArgs>
+      fields: Prisma.FavoriteNeighborhoodFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FavoriteNeighborhoodFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FavoriteNeighborhoodFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>
+        }
+        findFirst: {
+          args: Prisma.FavoriteNeighborhoodFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FavoriteNeighborhoodFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>
+        }
+        findMany: {
+          args: Prisma.FavoriteNeighborhoodFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>[]
+        }
+        create: {
+          args: Prisma.FavoriteNeighborhoodCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>
+        }
+        createMany: {
+          args: Prisma.FavoriteNeighborhoodCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FavoriteNeighborhoodCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>[]
+        }
+        delete: {
+          args: Prisma.FavoriteNeighborhoodDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>
+        }
+        update: {
+          args: Prisma.FavoriteNeighborhoodUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>
+        }
+        deleteMany: {
+          args: Prisma.FavoriteNeighborhoodDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FavoriteNeighborhoodUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FavoriteNeighborhoodUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>[]
+        }
+        upsert: {
+          args: Prisma.FavoriteNeighborhoodUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FavoriteNeighborhoodPayload>
+        }
+        aggregate: {
+          args: Prisma.FavoriteNeighborhoodAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFavoriteNeighborhood>
+        }
+        groupBy: {
+          args: Prisma.FavoriteNeighborhoodGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FavoriteNeighborhoodGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FavoriteNeighborhoodCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FavoriteNeighborhoodCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -891,6 +966,16 @@ export const POIScalarFieldEnum = {
 } as const
 
 export type POIScalarFieldEnum = (typeof POIScalarFieldEnum)[keyof typeof POIScalarFieldEnum]
+
+
+export const FavoriteNeighborhoodScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  neighborhoodId: 'neighborhoodId',
+  createdAt: 'createdAt'
+} as const
+
+export type FavoriteNeighborhoodScalarFieldEnum = (typeof FavoriteNeighborhoodScalarFieldEnum)[keyof typeof FavoriteNeighborhoodScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1116,6 +1201,7 @@ export type GlobalOmitConfig = {
   onboardingProfile?: Prisma.OnboardingProfileOmit
   neighborhood?: Prisma.NeighborhoodOmit
   pOI?: Prisma.POIOmit
+  favoriteNeighborhood?: Prisma.FavoriteNeighborhoodOmit
 }
 
 /* Types for Logging */

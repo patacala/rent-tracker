@@ -119,9 +119,17 @@ export interface IPOIRepository {
   deleteStaleCache(olderThanHours: number): Promise<number>;
 }
 
+export interface IFavoriteNeighborhoodRepository {
+  save(params: { userId: string; neighborhoodId: string }): Promise<void>;
+  delete(params: { userId: string; neighborhoodId: string }): Promise<void>;
+  findByUserId(userId: string): Promise<{ neighborhoodId: string; createdAt: Date }[]>;
+  isFavorite(params: { userId: string; neighborhoodId: string }): Promise<boolean>;
+}
+
 // ─── Injection Tokens ────────────────────────
 export const USER_REPOSITORY = 'IUserRepository';
 export const USER_PREFERENCES_REPOSITORY = 'IUserPreferencesRepository';
 export const SEARCH_SESSION_REPOSITORY = 'ISearchSessionRepository';
 export const NEIGHBORHOOD_REPOSITORY = 'INeighborhoodRepository';
 export const POI_REPOSITORY = 'IPOIRepository';
+export const FAVORITE_NEIGHBORHOOD_REPOSITORY = 'IFavoriteNeighborhoodRepository';

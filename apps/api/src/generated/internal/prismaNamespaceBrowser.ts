@@ -55,7 +55,8 @@ export const ModelName = {
   SearchSession: 'SearchSession',
   OnboardingProfile: 'OnboardingProfile',
   Neighborhood: 'Neighborhood',
-  POI: 'POI'
+  POI: 'POI',
+  FavoriteNeighborhood: 'FavoriteNeighborhood'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -148,6 +149,16 @@ export const POIScalarFieldEnum = {
 } as const
 
 export type POIScalarFieldEnum = (typeof POIScalarFieldEnum)[keyof typeof POIScalarFieldEnum]
+
+
+export const FavoriteNeighborhoodScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  neighborhoodId: 'neighborhoodId',
+  createdAt: 'createdAt'
+} as const
+
+export type FavoriteNeighborhoodScalarFieldEnum = (typeof FavoriteNeighborhoodScalarFieldEnum)[keyof typeof FavoriteNeighborhoodScalarFieldEnum]
 
 
 export const SortOrder = {

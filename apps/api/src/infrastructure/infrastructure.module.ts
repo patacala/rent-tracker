@@ -18,8 +18,10 @@ import {
   NEIGHBORHOOD_REPOSITORY,
   POI_REPOSITORY,
   SEARCH_SESSION_REPOSITORY,
+  FAVORITE_NEIGHBORHOOD_REPOSITORY,
 } from '@domain/repositories';
 import { PLACES_SERVICE, DISTANCE_SERVICE, MAPBOX_SERVICE } from '@domain/services/external-services.interface';
+import { PrismaFavoriteNeighborhoodRepository } from './repositories/prisma-favorite-neighborhood.repository';
 
 @Module({
   imports: [PrismaModule, HttpModule],
@@ -29,6 +31,7 @@ import { PLACES_SERVICE, DISTANCE_SERVICE, MAPBOX_SERVICE } from '@domain/servic
     { provide: NEIGHBORHOOD_REPOSITORY, useClass: PrismaNeighborhoodRepository },
     { provide: POI_REPOSITORY, useClass: PrismaPOIRepository },
     { provide: SEARCH_SESSION_REPOSITORY, useClass: PrismaSearchSessionRepository },
+    { provide: FAVORITE_NEIGHBORHOOD_REPOSITORY, useClass: PrismaFavoriteNeighborhoodRepository },
     // External service bindings
     { provide: PLACES_SERVICE, useClass: MockPlacesService },
     { provide: DISTANCE_SERVICE, useClass: MockDistanceService },
@@ -52,6 +55,7 @@ import { PLACES_SERVICE, DISTANCE_SERVICE, MAPBOX_SERVICE } from '@domain/servic
     PLACES_SERVICE,
     DISTANCE_SERVICE,
     MAPBOX_SERVICE,
+    FAVORITE_NEIGHBORHOOD_REPOSITORY,
     GoogleStreetViewService,
   ],
 })
