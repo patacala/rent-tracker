@@ -1,6 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { GeoJSON } from 'geojson';
-import { MIAMI_CONFIG } from '@rent-tracker/config';
 import {
   NEIGHBORHOOD_REPOSITORY,
   type INeighborhoodRepository,
@@ -41,7 +40,7 @@ export class SearchNeighborhoodsUseCase {
       return { neighborhoods: validCached };
     }
 
-    // Step 2: Try Mapbox, fallback to MIAMI_CONFIG if unavailable
+    // Step 2: Fetch from Overpass/OSM — return empty list on failure
     let boundaries: Awaited<ReturnType<IMapboxService['searchBoundaries']>> = [];
 
     try {
@@ -49,35 +48,15 @@ export class SearchNeighborhoodsUseCase {
       boundaries = await this.mapboxService.searchBoundaries(input.polygon);
     } catch (error: any) {
       this.logger.error(`Overpass Boundaries API error: ${error?.message}`);
+      return { neighborhoods: [] };
     }
 
-    // Step 3: If Overpass returned nothing, use static Miami neighborhoods
     if (boundaries.length === 0) {
-      this.logger.log('Overpass returned no results. Using static Miami neighborhoods fallback');
-      const fallback = MIAMI_CONFIG.neighborhoods.map(n => ({
-        id: n.id,
-        name: n.name,
-        boundary: this.buildPointPolygon(n.lat, n.lng),
-        properties: {},
-      }));
-
-      const saved = await Promise.all(
-        fallback.map(b =>
-          this.neighborhoodRepo.upsert({
-            id: b.id,
-            name: b.name,
-            boundary: b.boundary,
-            source: 'static_miami_config',
-            centerLat: this.calculateCenter(b.boundary).lat,
-            centerLng: this.calculateCenter(b.boundary).lng,
-          }),
-        ),
-      );
-
-      return { neighborhoods: saved };
+      this.logger.warn('Overpass returned no neighborhoods for this area');
+      return { neighborhoods: [] };
     }
 
-    // Step 4: Save OSM results to DB
+    // Step 3: Save OSM results to DB
     this.logger.log(`Saving ${boundaries.length} neighborhoods to DB`);
     const saved = await Promise.all(
       boundaries.map(b =>
@@ -107,16 +86,5 @@ export class SearchNeighborhoodsUseCase {
       lat: sumLat / coordinates.length,
       lng: sumLng / coordinates.length,
     };
-  }
-
-  private buildPointPolygon(lat: number, lng: number, radiusDeg = 0.01): GeoJSON.Polygon {
-    const points = 16;
-    const coords: [number, number][] = [];
-    for (let i = 0; i < points; i++) {
-      const angle = (i / points) * 2 * Math.PI;
-      coords.push([lng + radiusDeg * Math.cos(angle), lat + radiusDeg * Math.sin(angle)]);
-    }
-    coords.push(coords[0]);
-    return { type: 'Polygon', coordinates: [coords] };
   }
 }

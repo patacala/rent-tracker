@@ -124,6 +124,7 @@ export const NeighborhoodScalarFieldEnum = {
   source: 'source',
   centerLat: 'centerLat',
   centerLng: 'centerLng',
+  photoUrl: 'photoUrl',
   cachedAt: 'cachedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
