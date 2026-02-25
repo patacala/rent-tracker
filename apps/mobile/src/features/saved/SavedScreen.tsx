@@ -5,18 +5,22 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
-import { Button, FilterChips, ImagePlaceholder, Tag } from '@shared/components';
+import { Button, FilterChips, Tag } from '@shared/components';
+import { useAuth } from '@shared/context/AuthContext';
 import { useSavedNeighborhoods } from './hooks/useSavedNeighborhoods';
 import { SORT_OPTIONS, type SortOption } from './types';
 
 export function SavedScreen(): JSX.Element {
   const router = useRouter();
-  const { data: saved, remove } = useSavedNeighborhoods();
+  const { isLoggedIn } = useAuth();
+  const { data: saved, remove, isLoading } = useSavedNeighborhoods();
   const [activeSort, setActiveSort] = useState<SortOption>('Highest Match');
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
@@ -47,72 +51,91 @@ export function SavedScreen(): JSX.Element {
         />
       </View>
 
-      <FlatList
-        data={saved}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <ImagePlaceholder height={90} style={styles.cardImage} />
+      {isLoading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={THEME.colors.primary} />
+          <Text style={styles.loadingText}>Loading favorites...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={saved}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Image
+                source={
+                  item.photoUrl
+                    ? { uri: item.photoUrl }
+                    : require('@assets/miami-bg.png')
+                }
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
 
-            <View style={styles.cardBody}>
-              <View style={styles.cardTopRow}>
-                <View style={styles.cardNameBlock}>
-                  <Text style={styles.cardName}>{item.name}</Text>
-                  <Text style={styles.cardCity}>{item.city}</Text>
+              <View style={styles.cardBody}>
+                <View style={styles.cardTopRow}>
+                  <View style={styles.cardNameBlock}>
+                    <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.cardCity}>Miami, FL</Text>
+                  </View>
+                  <View style={styles.matchBadge}>
+                    <Text style={styles.matchBadgeText}>{item.score}</Text>
+                    <Text style={styles.matchBadgeLabel}>score</Text>
+                  </View>
                 </View>
-                <View style={styles.matchBadge}>
-                  <Text style={styles.matchBadgeText}>{item.matchPercent}%</Text>
-                  <Text style={styles.matchBadgeLabel}>match</Text>
-                </View>
-              </View>
 
-              <Tag variant="neutral">
-                <Tag.Label>{item.tag}</Tag.Label>
-              </Tag>
-
-              <View style={styles.cardFooter}>
-                <View>
-                  <Text style={styles.priceLabel}>AVG. PRICE</Text>
-                  <Text style={styles.priceValue}>{item.avgPrice}</Text>
+                <View style={styles.tagsRow}>
+                  {item.tags.slice(0, 2).map((tag) => (
+                    <Tag key={tag} variant="neutral">
+                      <Tag.Label>{tag}</Tag.Label>
+                    </Tag>
+                  ))}
                 </View>
-                <View style={styles.cardActions}>
+
+                <View style={styles.cardFooter}>
                   <TouchableOpacity onPress={() => router.push(`/neighborhood/${item.id}`)}>
                     <Text style={styles.detailsLink}>View details</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => remove(item.id)} hitSlop={8}>
-                    <Ionicons name="heart" size={20} color={THEME.colors.primary} />
-                  </TouchableOpacity>
+                  <View style={styles.cardActions}>
+                    <TouchableOpacity onPress={() => remove(item.id)} hitSlop={8}>
+                      <Ionicons name="heart" size={20} color={THEME.colors.primary} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
 
-              <TouchableOpacity
-                style={styles.compareRow}
-                onPress={() => toggleCompare(item.id)}
-              >
-                <View
-                  style={[
-                    styles.compareCheck,
-                    compareIds.includes(item.id) && styles.compareCheckActive,
-                  ]}
+                <TouchableOpacity
+                  style={styles.compareRow}
+                  onPress={() => toggleCompare(item.id)}
                 >
-                  {compareIds.includes(item.id) ? (
-                    <Ionicons name="checkmark" size={10} color="#FFFFFF" />
-                  ) : null}
-                </View>
-                <Text style={styles.compareLabel}>Add to compare</Text>
-              </TouchableOpacity>
+                  <View
+                    style={[
+                      styles.compareCheck,
+                      compareIds.includes(item.id) && styles.compareCheckActive,
+                    ]}
+                  >
+                    {compareIds.includes(item.id) ? (
+                      <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                    ) : null}
+                  </View>
+                  <Text style={styles.compareLabel}>Add to compare</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="bookmark-outline" size={40} color={THEME.colors.textMuted} />
-            <Text style={styles.emptyText}>No saved neighborhoods yet.</Text>
-          </View>
-        }
-      />
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="heart-outline" size={40} color={THEME.colors.textMuted} />
+              <Text style={styles.emptyText}>
+                {!isLoggedIn
+                  ? 'Sign in to see your favorites.'
+                  : 'No saved neighborhoods yet.'}
+              </Text>
+            </View>
+          }
+        />
+      )}
 
       <Button onPress={() => {}} style={styles.fab}>
         <Button.Icon name="git-compare-outline" />
@@ -174,26 +197,36 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...THEME.shadow.sm,
   },
-  cardImage: { borderRadius: 0 },
+
+  cardImage: {
+    width: '100%',
+    height: 90,
+  },
+
   cardBody: {
     padding: THEME.spacing.md,
     gap: THEME.spacing.sm,
   },
+
   cardTopRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
-  cardNameBlock: { flex: 1, gap: 2 },
+
+  cardNameBlock: { flex: 1, gap: 2, marginRight: THEME.spacing.sm },
+
   cardName: {
     fontSize: THEME.fontSize.md,
     fontWeight: THEME.fontWeight.bold,
     color: THEME.colors.text,
   },
+
   cardCity: {
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.textSecondary,
   },
+
   matchBadge: {
     alignItems: 'center',
     backgroundColor: THEME.colors.successLight,
@@ -202,39 +235,39 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     minWidth: 52,
   },
+
   matchBadgeText: {
     fontSize: THEME.fontSize.md,
     fontWeight: THEME.fontWeight.bold,
     color: THEME.colors.success,
   },
+
   matchBadgeLabel: {
     fontSize: THEME.fontSize.xxs,
     fontWeight: THEME.fontWeight.semibold,
     color: THEME.colors.success,
     letterSpacing: 0.3,
   },
+
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: THEME.spacing.xs,
+  },
+
   cardFooter: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: THEME.spacing.xs,
   },
-  priceLabel: {
-    fontSize: THEME.fontSize.xxs,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.textMuted,
-    letterSpacing: 0.5,
-  },
-  priceValue: {
-    fontSize: THEME.fontSize.md,
-    fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
-  },
+
   cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.md,
   },
+
   detailsLink: {
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.primary,
@@ -250,6 +283,7 @@ const styles = StyleSheet.create({
     paddingTop: THEME.spacing.sm,
     marginTop: THEME.spacing.xs,
   },
+
   compareCheck: {
     width: 18,
     height: 18,
@@ -260,10 +294,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: THEME.colors.background,
   },
+
   compareCheckActive: {
     backgroundColor: THEME.colors.primary,
     borderColor: THEME.colors.primary,
   },
+
   compareLabel: {
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.textSecondary,
@@ -274,9 +310,23 @@ const styles = StyleSheet.create({
     paddingVertical: THEME.spacing.xxl,
     gap: THEME.spacing.md,
   },
+
   emptyText: {
     fontSize: THEME.fontSize.base,
     color: THEME.colors.textMuted,
+    textAlign: 'center',
+  },
+
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: THEME.spacing.md,
+  },
+
+  loadingText: {
+    fontSize: THEME.fontSize.base,
+    color: THEME.colors.textSecondary,
   },
 
   fab: {

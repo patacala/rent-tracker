@@ -1,27 +1,33 @@
-import { useState, useCallback } from 'react';
-import { MIAMI_CONFIG } from '@rent-tracker/config';
-import type { SavedNeighborhood } from '../types';
-
-const MOCK_SAVED: SavedNeighborhood[] = MIAMI_CONFIG.neighborhoods.slice(0, 3).map((n, idx) => ({
-  id: n.id,
-  name: n.name,
-  city: 'Miami, FL',
-  matchPercent: ([96, 88, 81] as const)[idx] ?? 80,
-  tag: (['Safe for Families', 'Financial Hub', 'Arts District'] as const)[idx] ?? 'Neighborhood',
-  avgPrice: (['$1.2M', '$890K', '$650K'] as const)[idx] ?? '$750K',
-}));
+import { useGetFavoritesQuery, useToggleFavoriteMutation } from '@features/saved/store/savedApi';
+import { useExploreNeighborhoods } from '@features/explore/hooks/useExploreNeighborhoods';
+import { useToast } from '@shared/context/ToastContext';
 
 interface UseSavedNeighborhoodsReturn {
-  data: SavedNeighborhood[];
+  data: ReturnType<typeof useExploreNeighborhoods>['data'];
   remove: (id: string) => void;
+  isLoading: boolean;
 }
 
 export function useSavedNeighborhoods(): UseSavedNeighborhoodsReturn {
-  const [data, setData] = useState<SavedNeighborhood[]>(MOCK_SAVED);
+  const toast = useToast();
+  const { data: favoritesData, isLoading } = useGetFavoritesQuery();
+  const [toggleFavorite] = useToggleFavoriteMutation();
+  const { data: allNeighborhoods } = useExploreNeighborhoods();
 
-  const remove = useCallback((id: string) => {
-    setData((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+  const favoriteIds = new Set(
+    favoritesData?.neighborhoods?.map((n) => n.id) ?? [],
+  );
 
-  return { data, remove };
+  const data = allNeighborhoods.filter((n) => favoriteIds.has(n.id));
+
+  const remove = async (id: string) => {
+    try {
+      await toggleFavorite(id).unwrap();
+      toast.success('Removed from favorites');
+    } catch {
+      toast.error('Something went wrong, please try again');
+    }
+  };
+
+  return { data, remove, isLoading };
 }
