@@ -16,7 +16,7 @@ export { StatCard } from './StatCard';
 export { NeighborhoodCard } from './NeighborhoodCard';
 export { InsightItem } from './InsightItem';
 export { AmenityRow } from './AmenityRow';
-export { Map } from './Map';
+export { Map, MapPolygon } from './Map';
 export type { Coordinate } from './Map';
 export {
   NeighborhoodMarker,

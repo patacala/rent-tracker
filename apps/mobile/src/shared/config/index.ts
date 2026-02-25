@@ -9,7 +9,7 @@ export const APP_CONFIG = {
 } as const;
 
 export const API_CONFIG = {
-  baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://192.168.1.173:3000',
+  baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
   version: 'v1',
   timeout: 10_000,
 } as const;

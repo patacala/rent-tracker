@@ -13,6 +13,8 @@ export interface NeighborhoodEntity {
   name: string;
   score?: number;
   boundary?: any;
+  centerLat?: number;
+  centerLng?: number;
   photoUrl?: string | null;
 }
 
@@ -21,6 +23,8 @@ export interface AnalyzeLocationOutput {
     neighborhood: NeighborhoodEntity;
     pois: POIEntity[];
   }>;
+  /** Isochrone polygon returned by the backend — used for map rendering */
+  isochrone?: any;
 }
 
 interface AnalysisContextValue {

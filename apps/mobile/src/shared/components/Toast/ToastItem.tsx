@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, JSX } from 'react';
-import { Animated, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Animated, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Toast } from '@shared/context/ToastContext';
 
@@ -56,7 +56,9 @@ export function ToastItem({ toast, onRemove }: ToastItemProps): JSX.Element {
       }),
     ]).start();
 
-    // Auto dismiss
+    // Loading toasts are dismissed manually — skip the auto-dismiss timer
+    if (toast.loading) return;
+
     const timer = setTimeout(() => dismiss(), toast.duration ?? 3000);
     return () => clearTimeout(timer);
   }, []);
@@ -88,7 +90,10 @@ export function ToastItem({ toast, onRemove }: ToastItemProps): JSX.Element {
         },
       ]}
     >
-      <Ionicons name={config.icon as any} size={20} color={config.color} />
+      {toast.loading
+        ? <ActivityIndicator size="small" color={config.color} />
+        : <Ionicons name={config.icon as any} size={20} color={config.color} />
+      }
       <Text style={[styles.message, { color: config.color }]} numberOfLines={2}>
         {toast.message}
       </Text>

@@ -31,6 +31,12 @@ export interface NeighborhoodEntry {
 export interface MyAnalysisResponse {
   analyzedAt: string | null;
   neighborhoods: NeighborhoodEntry[];
+  searchParams: {
+    longitude: number;
+    latitude: number;
+    timeMinutes: number;
+    mode: 'driving' | 'walking' | 'cycling';
+  } | null;
 }
 
 export interface NeighborhoodUIItem {

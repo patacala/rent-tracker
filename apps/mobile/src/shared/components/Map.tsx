@@ -1,4 +1,4 @@
-import React, { JSX, ReactNode } from 'react';
+import React, { JSX, ReactNode, useMemo } from 'react';
 import { StyleProp, ViewStyle, View } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 
@@ -42,6 +42,17 @@ export interface MapCircleProps {
   id: string;
   centerCoordinate: [number, number];
   radiusInMeters: number;
+  fillColor?: string;
+  fillOpacity?: number;
+  strokeColor?: string;
+  strokeWidth?: number;
+  strokeOpacity?: number;
+}
+
+export interface MapPolygonProps {
+  id: string;
+  /** GeoJSON Polygon geometry to render */
+  polygon: any;
   fillColor?: string;
   fillOpacity?: number;
   strokeColor?: string;
@@ -154,6 +165,36 @@ function MapCircle({
   );
 }
 
+export function MapPolygon({
+  id,
+  polygon,
+  fillColor = 'rgba(37, 99, 235, 0.12)',
+  fillOpacity = 1,
+  strokeColor = '#2563EB',
+  strokeWidth = 2,
+  strokeOpacity = 0.8,
+}: MapPolygonProps): JSX.Element {
+  // Memoize so ShapeSource receives a stable reference and doesn't re-mount on every render
+  const shape = useMemo(() => ({
+    type: 'Feature' as const,
+    properties: {},
+    geometry: polygon,
+  }), [polygon]);
+
+  return (
+    <ShapeSource id={`${id}-source`} shape={shape}>
+      <FillLayer
+        id={`${id}-fill`}
+        style={{ fillColor, fillOpacity }}
+      />
+      <LineLayer
+        id={`${id}-stroke`}
+        style={{ lineColor: strokeColor, lineWidth: strokeWidth, lineOpacity: strokeOpacity }}
+      />
+    </ShapeSource>
+  );
+}
+
 function MapUserLocation({
   visible = true,
   animated = true,
@@ -180,5 +221,6 @@ export const Map = Object.assign(MapRoot, {
   Camera: MapCamera,
   Marker: MapMarker,
   Circle: MapCircle,
+  Polygon: MapPolygon,
   UserLocation: MapUserLocation,
 });

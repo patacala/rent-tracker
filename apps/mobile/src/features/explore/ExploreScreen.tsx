@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import React, { JSX, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -32,13 +32,44 @@ import {
 } from '@features/onboarding/store/onboardingApi';
 import { NeighborhoodCardItem } from './components/NeighborhoodCardItem';
 import { useToast } from '@shared/context/ToastContext';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
+import { apiClient } from '@shared/api/apiClient';
+import { supabase } from '@shared/lib/supabase';
+import { geocodeAddress } from '@shared/api/geocodingService';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
   const toast = useToast();
   const { isLoggedIn } = useAuth();
   const { data: localOnboarding } = useOnboarding();
-  const { data: neighborhoods, isEmpty, isLoading: apiLoading } = useExploreNeighborhoods();
+  const { data: neighborhoods, isEmpty, isLoading: apiLoading, searchParams } = useExploreNeighborhoods();
+  const { setAnalysisResult } = useAnalysis();
+
+  // When logged in with saved search params, run one full analysis with token (no free-tier cap).
+  // Runs once per searchParams so opening Explore with "Downtown Orlando" gets full results.
+  const lastRefreshedParamsRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isLoggedIn || !searchParams) return;
+
+    const paramsKey = JSON.stringify(searchParams);
+    if (lastRefreshedParamsRef.current === paramsKey) return;
+    lastRefreshedParamsRef.current = paramsKey;
+
+    const runBackgroundRefresh = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      try {
+        const result = await apiClient.analyzeLocation(searchParams, session.access_token);
+        setAnalysisResult(result);
+      } catch {
+        lastRefreshedParamsRef.current = null; // allow retry on next mount/params change
+      }
+    };
+
+    runBackgroundRefresh();
+  }, [isLoggedIn, searchParams, setAnalysisResult]);
 
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
@@ -91,7 +122,49 @@ export function ExploreScreen(): JSX.Element {
       toast.success('Preferences updated successfully');
     } catch {
       toast.error('Failed to update preferences, please try again');
+      return;
     }
+
+    // Only re-analyze if location or commute actually changed
+    const addressChanged = payload.workAddress !== formInitialData?.workAddress;
+    const commuteChanged = payload.commute !== formInitialData?.commute;
+    if (!addressChanged && !commuteChanged) return;
+
+    const loadingToastId = toast.loading('Analyzing neighborhoods with your new preferences...');
+
+    const runAnalysis = async () => {
+      const coords = await geocodeAddress(payload.workAddress);
+      if (!coords) {
+        toast.dismiss(loadingToastId);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.dismiss(loadingToastId);
+        return;
+      }
+
+      try {
+        const result = await apiClient.analyzeLocation(
+          {
+            longitude: coords.longitude,
+            latitude: coords.latitude,
+            timeMinutes: payload.commute,
+            mode: 'driving',
+          },
+          session.access_token,
+        );
+        setAnalysisResult(result);
+        toast.dismiss(loadingToastId);
+        toast.success('Neighborhoods updated with your new preferences!');
+      } catch {
+        toast.dismiss(loadingToastId);
+        toast.error('Analysis failed. Your preferences were saved.');
+      }
+    };
+
+    runAnalysis();
   };
 
   return (

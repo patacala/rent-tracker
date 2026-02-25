@@ -21,6 +21,8 @@ interface UseExploreNeighborhoodsReturn {
   data: NeighborhoodListItem[];
   isEmpty: boolean;
   isLoading: boolean;
+  /** Search params from the saved session — used by ExploreScreen to trigger background full refresh */
+  searchParams: { longitude: number; latitude: number; timeMinutes: number; mode: 'driving' | 'walking' | 'cycling' } | null;
 }
 
 function calculateScore(poisCount: number): number {
@@ -66,5 +68,10 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
     });
   }, [source]);
 
-  return { data, isEmpty: data.length === 0, isLoading };
+  return {
+    data,
+    isEmpty: data.length === 0,
+    isLoading,
+    searchParams: apiNeighborhoods?.searchParams ?? null,
+  };
 }

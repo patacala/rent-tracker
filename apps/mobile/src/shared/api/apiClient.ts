@@ -53,6 +53,7 @@ export interface NeighborhoodEntity {
   name: string;
   score?: number;
   boundary?: any;
+  photoUrl?: string | null;
 }
 
 export interface AnalyzeLocationResponse {
@@ -60,6 +61,8 @@ export interface AnalyzeLocationResponse {
     neighborhood: NeighborhoodEntity;
     pois: POIEntity[];
   }>;
+  /** Isochrone polygon of the reachable area — for map rendering */
+  isochrone?: any;
 }
 
 async function postPublic<T>(endpoint: string, body: unknown) {
@@ -92,8 +95,10 @@ export const apiClient = {
   /* createUser: (body: any) => post('/users', body),
   savePreferences: (body: any) => post('/preferences', body),
   calculateLifestyleScore: (body: any) => post('/lifestyle-score', body), */
-  analyzeLocation: (body: AnalyzeLocationRequest) =>
-    postPublic<AnalyzeLocationResponse>('/api/neighborhoods/analyze', body),
+  analyzeLocation: (body: AnalyzeLocationRequest, token?: string) =>
+    token
+      ? postWithAuth<AnalyzeLocationResponse>('/api/neighborhoods/analyze', body, token)
+      : postPublic<AnalyzeLocationResponse>('/api/neighborhoods/analyze', body),
   saveAnalysisSession: (
     token: string,
     body: {
