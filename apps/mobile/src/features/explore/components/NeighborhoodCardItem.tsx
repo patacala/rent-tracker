@@ -1,10 +1,11 @@
-import React, { JSX, useEffect, useState } from 'react';
+import React, { JSX, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Image,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
@@ -29,10 +30,31 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
 
   const isFavorite = favoritesData?.neighborhoods?.some((n) => n.id === item.id) ?? false;
   const [localFavorite, setLocalFavorite] = useState(isFavorite);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setLocalFavorite(isFavorite);
   }, [isFavorite]);
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, []);
 
   const handleToggleFavorite = async () => {
     if (!isLoggedIn || isToggling) return;
@@ -60,7 +82,22 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
           }
           style={styles.image}
           resizeMode="cover"
+          onLoad={() => setImageLoaded(true)}
         />
+
+        {!imageLoaded && (
+          <Animated.View
+            style={[
+              styles.imageSkeleton,
+              {
+                opacity: shimmerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.4, 0.9],
+                }),
+              },
+            ]}
+          />
+        )}
 
         <View style={styles.overlay} />
 
@@ -130,6 +167,15 @@ const styles = StyleSheet.create({
   cardImageContainer: { position: 'relative' },
 
   image: { width: '100%', height: 180 },
+
+  imageSkeleton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 180,
+    backgroundColor: THEME.colors.border,
+  },
 
   overlay: {
     position: 'absolute',

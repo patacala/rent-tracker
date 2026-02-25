@@ -218,7 +218,7 @@ export function AuthScreen(): JSX.Element {
   const router = useRouter();
   const { login, signup } = useAuth();
   const { data: onboardingData } = useOnboarding();
-  const { analysisResult } = useAnalysis();
+  const { analysisResult, reset: resetAnalysis } = useAnalysis();
   const [syncUser] = useSyncUserMutation();
   const [checkEmail] = useCheckEmailMutation();
   const [fetchOnboarding] = useLazyGetOnboardingQuery();
@@ -319,24 +319,27 @@ export function AuthScreen(): JSX.Element {
       const hasLocalOnboarding = onboardingData.workAddress.trim().length > 0;
 
       if (!hasOnboarding && !hasLocalOnboarding) {
+        resetAnalysis(); // 👈
         router.replace('/onboarding/step1?fromAuth=true');
         return;
       }
 
       if (!hasOnboarding && hasLocalOnboarding) {
-        try { 
-          await syncToBackend(); 
+        try {
+          await syncToBackend();
         } catch (error) {
           setServerError('Something went wrong while syncing your account.');
           return;
         }
         persistAnalysisSession();
+        resetAnalysis(); // 👈
         router.replace('/(tabs)/explore');
         return;
       }
 
       if (hasOnboarding && !hasLocalOnboarding) {
         persistAnalysisSession();
+        resetAnalysis(); // 👈
         router.replace('/(tabs)/explore');
         return;
       }
@@ -350,6 +353,7 @@ export function AuthScreen(): JSX.Element {
             style: 'cancel',
             onPress: () => {
               persistAnalysisSession();
+              resetAnalysis(); // 👈
               router.replace('/(tabs)/explore');
             },
           },
@@ -358,6 +362,7 @@ export function AuthScreen(): JSX.Element {
             onPress: async () => {
               try { await updateToBackend(); } catch (e) { console.warn('Update failed:', e); }
               persistAnalysisSession();
+              resetAnalysis(); // 👈
               router.replace('/(tabs)/explore');
             },
           },
