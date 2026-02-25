@@ -71,7 +71,7 @@ export interface IMapboxService {
   getIsochrone(params: IsochroneParams): Promise<IsochroneResult>;
 
   // OSM / Overpass - Boundaries
-  searchBoundaries(polygon: GeoJSON.Polygon): Promise<BoundaryFeature[]>;
+  searchBoundaries(polygon: GeoJSON.Polygon, limit?: number): Promise<BoundaryFeature[]>;
 
   // OSM / Overpass - POIs for a single neighbourhood boundary
   searchPOIs(params: {

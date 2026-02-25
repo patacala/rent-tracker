@@ -10,10 +10,9 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
-import { Button, FilterChips, HeaderBackButton, ImagePlaceholder, Map, NeighborhoodMarker, ScoreBadge, Tag } from '@shared/components';
+import { Button, FilterChips, HeaderBackButton, ImagePlaceholder, Map, MapPolygon, NeighborhoodMarker, ScoreBadge, Tag } from '@shared/components';
 import { useMapNeighborhoods } from './hooks/useMapNeighborhoods';
 import { MAP_FILTERS, type MapFilter, type NeighborhoodPreview } from './types';
-import { MIAMI_CONFIG } from '@rent-tracker/config';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.42;
@@ -21,7 +20,7 @@ const SHEET_HEIGHT = SCREEN_HEIGHT * 0.42;
 export function MapScreen(): JSX.Element {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data: neighborhoods } = useMapNeighborhoods();
+  const { data: neighborhoods, isochrone, center } = useMapNeighborhoods();
   const [activeFilter, setActiveFilter] = useState<MapFilter | null>(null);
   const [selected, setSelected] = useState<NeighborhoodPreview | null>(null);
   const sheetAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
@@ -49,10 +48,15 @@ export function MapScreen(): JSX.Element {
       <Map style={styles.map}>
         <Map.Camera
           defaultSettings={{
-            centerCoordinate: [MIAMI_CONFIG.center.lng, MIAMI_CONFIG.center.lat],
+            centerCoordinate: center,
             zoomLevel: 11,
           }}
         />
+
+        {/* Isochrone fill — shows the reachable area from the work address */}
+        {isochrone ? (
+          <MapPolygon id="isochrone" polygon={isochrone} />
+        ) : null}
 
         {neighborhoods.map((item) => (
           <Map.Marker

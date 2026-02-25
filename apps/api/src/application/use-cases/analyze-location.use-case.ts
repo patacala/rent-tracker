@@ -1,4 +1,5 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { GeoJSON } from 'geojson';
 import { GetIsochroneUseCase } from './get-isochrone.use-case';
 import { SearchNeighborhoodsUseCase } from './search-neighborhoods.use-case';
@@ -33,6 +34,8 @@ export interface AnalysisResult {
 
 export interface AnalyzeLocationOutput {
   neighborhoods: AnalysisResult[];
+  /** The isochrone polygon used to define the reachable area — for map rendering */
+  isochrone: GeoJSON.Polygon;
 }
 
 const POI_CATEGORIES: POICategory[] = [
@@ -51,6 +54,7 @@ export class AnalyzeLocationUseCase {
     private readonly getIsochroneUseCase: GetIsochroneUseCase,
     private readonly searchNeighborhoodsUseCase: SearchNeighborhoodsUseCase,
     private readonly streetViewService: GoogleStreetViewService,
+    private readonly configService: ConfigService,
     @Inject(MAPBOX_SERVICE)
     private readonly geoService: IMapboxService,
     @Inject(POI_REPOSITORY)
@@ -60,19 +64,23 @@ export class AnalyzeLocationUseCase {
   ) {}
 
   async execute(input: AnalyzeLocationInput): Promise<AnalyzeLocationOutput> {
+    // Límite solo para usuarios no logueados (free tier). Con userId no se aplica límite.
+    const freeTierLimit = this.configService.get<number>('FREE_TIER_NEIGHBORHOOD_LIMIT', 10);
+    const limit = input.userId ? undefined : freeTierLimit;
+
     const polygon       = await this.fetchIsochrone(input);
-    const neighborhoods = await this.fetchNeighborhoods(polygon);
+    const neighborhoods = await this.fetchNeighborhoods(polygon, limit);
 
     if (neighborhoods.length === 0) {
       this.logger.warn('No neighborhoods found — returning empty result');
-      return { neighborhoods: [] };
+      return { neighborhoods: [], isochrone: polygon };
     }
 
     const results = await this.fetchAndDistributePOIs(polygon, neighborhoods);
     await this.fetchNeighborhoodPhotos(results);
     this.persistSession(input, results); // fire-and-forget
 
-    return { neighborhoods: results };
+    return { neighborhoods: results, isochrone: polygon };
   }
 
   // ─── Step 1 ───────────────────────────────────────────────────────────────
@@ -87,9 +95,11 @@ export class AnalyzeLocationUseCase {
 
   // ─── Step 2 ───────────────────────────────────────────────────────────────
 
-  private async fetchNeighborhoods(polygon: GeoJSON.Polygon): Promise<NeighborhoodEntity[]> {
-    this.logger.log('Step 2: Searching neighborhoods within isochrone');
-    const { neighborhoods } = await this.searchNeighborhoodsUseCase.execute({ polygon });
+  private async fetchNeighborhoods(polygon: GeoJSON.Polygon, limit?: number): Promise<NeighborhoodEntity[]> {
+    this.logger.log(
+      `Step 2: Searching neighborhoods within isochrone${limit ? ` (free tier, limit=${limit})` : ''}`,
+    );
+    const { neighborhoods } = await this.searchNeighborhoodsUseCase.execute({ polygon, limit });
     this.logger.log(`Found ${neighborhoods.length} neighborhoods`);
     return neighborhoods;
   }

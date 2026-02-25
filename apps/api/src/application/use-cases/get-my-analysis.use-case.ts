@@ -16,6 +16,13 @@ export interface GetMyAnalysisOutput {
     pois: POIEntity[];
   }>;
   analyzedAt: Date | null;
+  /** Original search params so the client can re-run a full analysis after login */
+  searchParams: {
+    longitude: number;
+    latitude: number;
+    timeMinutes: number;
+    mode: string;
+  } | null;
 }
 
 @Injectable()
@@ -36,7 +43,7 @@ export class GetMyAnalysisUseCase {
 
     if (!session || session.neighborhoodIds.length === 0) {
       this.logger.log(`No saved session for user ${userId}`);
-      return { neighborhoods: [], analyzedAt: null };
+      return { neighborhoods: [], analyzedAt: null, searchParams: null };
     }
 
     this.logger.log(
@@ -57,6 +64,12 @@ export class GetMyAnalysisUseCase {
         (e): e is { neighborhood: NeighborhoodEntity; pois: POIEntity[] } => e !== null,
       ),
       analyzedAt: session.createdAt,
+      searchParams: {
+        longitude: session.longitude,
+        latitude: session.latitude,
+        timeMinutes: session.timeMinutes,
+        mode: session.mode,
+      },
     };
   }
 }

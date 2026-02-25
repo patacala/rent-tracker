@@ -32,8 +32,8 @@ export class GeoService implements IMapboxService {
     return this.mapboxService.getIsochrone(params);
   }
 
-  searchBoundaries(polygon: GeoJSON.Polygon): Promise<BoundaryFeature[]> {
-    return this.osmService.searchBoundaries(polygon);
+  searchBoundaries(polygon: GeoJSON.Polygon, limit?: number): Promise<BoundaryFeature[]> {
+    return this.osmService.searchBoundaries(polygon, limit);
   }
 
   searchPOIs(params: {

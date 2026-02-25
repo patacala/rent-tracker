@@ -47,15 +47,20 @@ export class OsmService {
 
   // ─── Boundaries ───────────────────────────────────────────────────────────
 
-  async searchBoundaries(polygon: GeoJSON.Polygon): Promise<BoundaryFeature[]> {
+  async searchBoundaries(polygon: GeoJSON.Polygon, limit?: number): Promise<BoundaryFeature[]> {
     const [west, south, east, north] = this.calculateBBox(polygon);
 
     /**
      * Uses `out geom` for Ways to get real polygon boundaries for map rendering.
-     * Nodes (point features) are approximated as circles since they have no polygon.
-     * Boundary queries return few elements (20-40 per city) so the payload is small
-     * even with full geometry — unlike POI queries which can return 10,000+ items.
+     * When `limit` is provided (free-tier), we request more candidates from Overpass
+     * than we will return, so that after point-in-polygon filtering we still have
+     * enough neighborhoods inside the isochrone (cap at 80 to keep payload small).
      */
+    const overpassLimit = limit ? Math.min(Math.max(limit * 3, 50), 80) : undefined;
+    const outClause = overpassLimit ? `out geom ${overpassLimit};` : `out geom;`;
+    // Include place tags (neighbourhood, suburb, quarter) plus administrative
+    // boundaries at neighbourhood/district level (admin_level 9–10) so we get
+    // more coverage in areas like Orlando where OSM has few place=* but many admin boundaries.
     const query = [
       `[out:json]`,
       `[timeout:${OVERPASS_CONFIG.timeoutSeconds}]`,
@@ -64,8 +69,9 @@ export class OsmService {
       `(`,
       `  node["place"~"^(neighbourhood|suburb|quarter)$"];`,
       `  way["place"~"^(neighbourhood|suburb|quarter)$"];`,
+      `  way["boundary"="administrative"]["admin_level"~"^(9|10)$"];`,
       `);`,
-      `out geom;`,
+      outClause,
     ].join('\n');
 
     this.logger.log(

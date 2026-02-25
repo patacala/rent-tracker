@@ -13,6 +13,7 @@ import { Button, MapPlaceholder, ProgressBar } from '@shared/components';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { useAnalysis } from './context/AnalysisContext';
 import { apiClient } from '@shared/api/apiClient';
+import { supabase } from '@shared/lib/supabase';
 
 const STEPS = [
   'Calculating commute efficiencies...',
@@ -76,12 +77,16 @@ export function AnalysisScreen(): JSX.Element {
       animateStep(1);
       setProgress(66);
 
-      const result = await apiClient.analyzeLocation({
-        longitude: data.workCoordinates.longitude,
-        latitude: data.workCoordinates.latitude,
-        timeMinutes: data.commute,
-        mode: 'driving',
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      const result = await apiClient.analyzeLocation(
+        {
+          longitude: data.workCoordinates.longitude,
+          latitude: data.workCoordinates.latitude,
+          timeMinutes: data.commute,
+          mode: 'driving',
+        },
+        session?.access_token,
+      );
 
       animateStep(2);
       setProgress(100);
