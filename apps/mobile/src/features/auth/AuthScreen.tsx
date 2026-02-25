@@ -312,34 +312,35 @@ export function AuthScreen(): JSX.Element {
 
     try {
       const result = await login(values.email, values.password);
-      if (result.error) { setServerError(result.error); return; }
+      if (result.error) {
+        setServerError(result.error);
+        return;
+      }
 
       const existingResult = await fetchOnboarding();
       const hasOnboarding = existingResult.data?.id;
       const hasLocalOnboarding = onboardingData.workAddress.trim().length > 0;
 
       if (!hasOnboarding && !hasLocalOnboarding) {
-        resetAnalysis(); // 👈
+        resetAnalysis();
         router.replace('/onboarding/step1?fromAuth=true');
         return;
       }
 
       if (!hasOnboarding && hasLocalOnboarding) {
         try {
-          await syncToBackend();
+          await syncToBackend();          
+          await persistAnalysisSession(); 
+          router.replace('/(tabs)/explore');
+          return;
         } catch (error) {
           setServerError('Something went wrong while syncing your account.');
           return;
         }
-        persistAnalysisSession();
-        resetAnalysis(); // 👈
-        router.replace('/(tabs)/explore');
-        return;
       }
 
       if (hasOnboarding && !hasLocalOnboarding) {
-        persistAnalysisSession();
-        resetAnalysis(); // 👈
+        await persistAnalysisSession(); 
         router.replace('/(tabs)/explore');
         return;
       }
@@ -351,18 +352,20 @@ export function AuthScreen(): JSX.Element {
           {
             text: 'No, keep existing',
             style: 'cancel',
-            onPress: () => {
-              persistAnalysisSession();
-              resetAnalysis(); // 👈
+            onPress: async () => {
+              await persistAnalysisSession();
               router.replace('/(tabs)/explore');
             },
           },
           {
             text: 'Yes, update',
             onPress: async () => {
-              try { await updateToBackend(); } catch (e) { console.warn('Update failed:', e); }
-              persistAnalysisSession();
-              resetAnalysis(); // 👈
+              try {
+                await updateToBackend();
+              } catch (e) {
+                console.warn('Update failed:', e);
+              }
+              await persistAnalysisSession();
               router.replace('/(tabs)/explore');
             },
           },

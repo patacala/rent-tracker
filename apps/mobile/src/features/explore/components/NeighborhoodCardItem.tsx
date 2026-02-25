@@ -208,13 +208,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: THEME.spacing.md,
     left: THEME.spacing.md,
+    width: '100%'
   },
 
   cardName: {
     fontSize: THEME.fontSize.lg,
     fontWeight: THEME.fontWeight.bold,
     color: '#FFFFFF',
-    width: '96%',
+    width: '92%',
   },
 
   cardTagline: {

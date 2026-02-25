@@ -37,16 +37,18 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
     skip: !isLoggedIn,
   });
 
-  const source = isLoggedIn
-    ? apiNeighborhoods?.neighborhoods ?? []
-    : analysisResult?.neighborhoods ?? [];
+  const source = useMemo(() => {
+    if (analysisResult?.neighborhoods?.length) return analysisResult.neighborhoods;
+    if (isLoggedIn && apiNeighborhoods?.neighborhoods?.length) return apiNeighborhoods.neighborhoods;
+    return [];
+  }, [analysisResult, apiNeighborhoods, isLoggedIn]);
 
   const data = useMemo(() => {
     if (source.length === 0) return [];
 
     return source.map((item, idx) => {
       const uniqueCategories = Array.from(
-        new Set(item.pois.map((p) => p.category.toUpperCase())),
+        new Set(item.pois.map((p) => p.category.toUpperCase()))
       );
 
       const score = item.neighborhood.score ?? calculateScore(item.pois.length);
