@@ -14,11 +14,13 @@ export function useSavedNeighborhoods(): UseSavedNeighborhoodsReturn {
   const [toggleFavorite] = useToggleFavoriteMutation();
   const { data: allNeighborhoods } = useExploreNeighborhoods();
 
-  const favoriteIds = new Set(
-    favoritesData?.neighborhoods?.map((n) => n.id) ?? [],
+  const favoriteIds = new Map(
+    favoritesData?.neighborhoods?.map((n, idx) => [n.id, idx]) ?? [],
   );
 
-  const data = allNeighborhoods.filter((n) => favoriteIds.has(n.id));
+  const data = allNeighborhoods
+    .filter((n) => favoriteIds.has(n.id))
+    .sort((a, b) => (favoriteIds.get(a.id) ?? 0) - (favoriteIds.get(b.id) ?? 0));
 
   const remove = async (id: string) => {
     try {
