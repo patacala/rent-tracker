@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { supabase } from '@shared/lib/supabase';
 import { THEME } from '@shared/theme';
 import { Button, HeaderBackButton, Input } from '@shared/components';
+import { useToast } from '@shared/context/ToastContext';
 
 export function ChangePasswordScreen(): JSX.Element {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -17,6 +17,7 @@ export function ChangePasswordScreen(): JSX.Element {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   const handleChange = async () => {
     setError(null);
@@ -51,14 +52,14 @@ export function ChangePasswordScreen(): JSX.Element {
 
       if (updateError) {
         setError(updateError.message);
+        toast.error(updateError.message);
         return;
       }
 
-      Alert.alert(
-        'Password Updated',
-        'Your password has been changed successfully.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      toast.success('Password updated successfully');
+      router.back();
+    } catch {
+      toast.error('Something went wrong, please try again');
     } finally {
       setIsLoading(false);
     }

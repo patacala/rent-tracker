@@ -31,12 +31,13 @@ import {
   useUpdateOnboardingMutation,
 } from '@features/onboarding/store/onboardingApi';
 import { NeighborhoodCardItem } from './components/NeighborhoodCardItem';
+import { useToast } from '@shared/context/ToastContext';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
+  const toast = useToast();
   const { isLoggedIn } = useAuth();
   const { data: localOnboarding } = useOnboarding();
-
   const { data: neighborhoods, isEmpty, isLoading: apiLoading } = useExploreNeighborhoods();
 
   const [search, setSearch] = useState('');
@@ -83,8 +84,14 @@ export function ExploreScreen(): JSX.Element {
   };
 
   const handleUpdate = async (payload: SaveOnboardingRequest) => {
-    await updateOnboarding(payload);
-    setFormKey((k) => k + 1);
+    try {
+      await updateOnboarding(payload).unwrap();
+      setPrefsOpen(false);
+      setFormKey((k) => k + 1);
+      toast.success('Preferences updated successfully');
+    } catch {
+      toast.error('Failed to update preferences, please try again');
+    }
   };
 
   return (
@@ -213,7 +220,7 @@ export function ExploreScreen(): JSX.Element {
           key={formKey}
           initialData={formInitialData}
           loading={onboardingLoading}
-          onSave={() => setPrefsOpen(false)}
+          onSave={() => {}}
           onUpdate={handleUpdate}
         />
       </BottomSheet>

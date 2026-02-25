@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@shared/lib/supabase';
 import { THEME } from '@shared/theme';
+import { useToast } from '@shared/context/ToastContext';
 
 interface AvatarEditorProps {
   userId: string;
@@ -19,6 +20,7 @@ interface AvatarEditorProps {
 
 export function AvatarEditor({ userId, avatarUrl, onUpdated }: AvatarEditorProps): JSX.Element {
   const [isUploading, setIsUploading] = useState(false);
+  const toast = useToast();
 
   const handlePick = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -50,9 +52,11 @@ export function AvatarEditor({ userId, avatarUrl, onUpdated }: AvatarEditorProps
           upsert: true,
         });
 
-      if (uploadError) { console.warn('Upload error:', uploadError); return; }
+      if (uploadError) {
+        toast.error('Failed to upload avatar, please try again');
+        return;
+      }
 
-      // Fuerza cache-bust para que la imagen nueva se muestre
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
       const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
@@ -61,6 +65,9 @@ export function AvatarEditor({ userId, avatarUrl, onUpdated }: AvatarEditorProps
       });
 
       onUpdated(publicUrl);
+      toast.success('Avatar updated successfully');
+    } catch {
+      toast.error('Something went wrong, please try again');
     } finally {
       setIsUploading(false);
     }

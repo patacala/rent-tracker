@@ -6,13 +6,14 @@ import {
   Modal,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@shared/lib/supabase';
 import { THEME } from '@shared/theme';
 import { Button, Input } from '@shared/components';
 import { useUpdateProfileMutation } from '@features/auth/store/authApi';
+import { useToast } from '@shared/context/ToastContext';
 
 interface EditNameModalProps {
   visible: boolean;
@@ -29,12 +30,13 @@ export function EditNameModal({
 }: EditNameModalProps): JSX.Element {
   const [name, setName] = useState(currentName);
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
+  const toast = useToast();
 
   const handleSave = async () => {
     if (!name.trim() || name === currentName) { onClose(); return; }
 
     try {
-      await updateProfile({ name: name.trim() });
+      await updateProfile({ name: name.trim() }).unwrap();
 
       await supabase.auth.updateUser({
         data: { full_name: name.trim() },
@@ -42,8 +44,9 @@ export function EditNameModal({
 
       onSaved(name.trim());
       onClose();
-    } catch (e) {
-      console.warn('Failed to update name:', e);
+      toast.success('Name updated successfully');
+    } catch {
+      toast.error('Failed to update name, please try again');
     }
   };
 
