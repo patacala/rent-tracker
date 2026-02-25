@@ -54,4 +54,5 @@ export interface NeighborhoodDetail {
   crimeYoYValue: number;
   lat: number;
   lng: number;
+  photoUrl?: string | null;
 }

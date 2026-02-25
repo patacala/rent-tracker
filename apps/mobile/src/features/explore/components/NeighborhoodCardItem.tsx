@@ -102,7 +102,11 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
         <View style={styles.overlay} />
 
         <View style={styles.scoreContainer}>
-          <NeighborhoodCard.Score score={item.score} />
+          {item.score > 0 && (
+            <>
+              <NeighborhoodCard.Score score={item.score} />
+            </>
+          )}
         </View>
 
         {isLoggedIn && (

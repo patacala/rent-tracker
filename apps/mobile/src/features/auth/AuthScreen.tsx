@@ -331,7 +331,7 @@ export function AuthScreen(): JSX.Element {
         try {
           await syncToBackend();          
           await persistAnalysisSession(); 
-          router.replace('/(tabs)/explore');
+          router.replace('/purchase/purchase');
           return;
         } catch (error) {
           setServerError('Something went wrong while syncing your account.');

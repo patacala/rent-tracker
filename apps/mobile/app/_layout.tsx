@@ -72,6 +72,8 @@ function RootLayoutContent(): JSX.Element {
       <Stack.Screen name="map" options={{ gestureEnabled: false }} />
       <Stack.Screen name="neighborhood/[id]" />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="purchase/purchase" />
+      <Stack.Screen name="purchase/detail" />
     </Stack>
   );
 }

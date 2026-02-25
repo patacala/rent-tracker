@@ -45,8 +45,6 @@ export function ExploreScreen(): JSX.Element {
   const { data: neighborhoods, isEmpty, isLoading: apiLoading, searchParams } = useExploreNeighborhoods();
   const { setAnalysisResult } = useAnalysis();
 
-  // When logged in with saved search params, run one full analysis with token (no free-tier cap).
-  // Runs once per searchParams so opening Explore with "Downtown Orlando" gets full results.
   const lastRefreshedParamsRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -64,7 +62,7 @@ export function ExploreScreen(): JSX.Element {
         const result = await apiClient.analyzeLocation(searchParams, session.access_token);
         setAnalysisResult(result);
       } catch {
-        lastRefreshedParamsRef.current = null; // allow retry on next mount/params change
+        lastRefreshedParamsRef.current = null;
       }
     };
 

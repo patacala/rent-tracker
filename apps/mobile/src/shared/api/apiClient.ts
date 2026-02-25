@@ -1,19 +1,7 @@
 import { BASE_URL } from '@shared/api/baseUrl';
+import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 
-/* async function post<T>(endpoint: string, body: unknown) {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error((error as { message?: string }).message ?? `HTTP ${response.status}`);
-  }
-
-  return response.json() as Promise<T>;
-} */
+export type { NeighborhoodEntity, POIEntity };
 
 async function postWithAuth<T>(endpoint: string, body: unknown, token: string) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -33,38 +21,6 @@ async function postWithAuth<T>(endpoint: string, body: unknown, token: string) {
   return response.json() as Promise<T>;
 }
 
-export interface AnalyzeLocationRequest {
-  longitude: number;
-  latitude: number;
-  timeMinutes: number;
-  mode: 'driving' | 'walking' | 'cycling';
-}
-
-export interface POIEntity {
-  id: string;
-  name: string;
-  category: string;
-  latitude: number;
-  longitude: number;
-}
-
-export interface NeighborhoodEntity {
-  id: string;
-  name: string;
-  score?: number;
-  boundary?: any;
-  photoUrl?: string | null;
-}
-
-export interface AnalyzeLocationResponse {
-  neighborhoods: Array<{
-    neighborhood: NeighborhoodEntity;
-    pois: POIEntity[];
-  }>;
-  /** Isochrone polygon of the reachable area — for map rendering */
-  isochrone?: any;
-}
-
 async function postPublic<T>(endpoint: string, body: unknown) {
   const url = `${BASE_URL}${endpoint}`;
   console.log('API Request:', url);
@@ -72,9 +28,7 @@ async function postPublic<T>(endpoint: string, body: unknown) {
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 
@@ -91,10 +45,22 @@ async function postPublic<T>(endpoint: string, body: unknown) {
   return data as T;
 }
 
+export interface AnalyzeLocationRequest {
+  longitude: number;
+  latitude: number;
+  timeMinutes: number;
+  mode: 'driving' | 'walking' | 'cycling';
+}
+
+export interface AnalyzeLocationResponse {
+  neighborhoods: Array<{
+    neighborhood: NeighborhoodEntity;
+    pois: POIEntity[];
+  }>;
+  isochrone?: any;
+}
+
 export const apiClient = {
-  /* createUser: (body: any) => post('/users', body),
-  savePreferences: (body: any) => post('/preferences', body),
-  calculateLifestyleScore: (body: any) => post('/lifestyle-score', body), */
   analyzeLocation: (body: AnalyzeLocationRequest, token?: string) =>
     token
       ? postWithAuth<AnalyzeLocationResponse>('/api/neighborhoods/analyze', body, token)

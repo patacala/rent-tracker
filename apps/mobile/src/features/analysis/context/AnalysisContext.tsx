@@ -1,29 +1,13 @@
 import React, { createContext, useContext, useState, JSX } from 'react';
+import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 
-export interface POIEntity {
-  id: string;
-  name: string;
-  category: string;
-  latitude: number;
-  longitude: number;
-}
-
-export interface NeighborhoodEntity {
-  id: string;
-  name: string;
-  score?: number;
-  boundary?: any;
-  centerLat?: number;
-  centerLng?: number;
-  photoUrl?: string | null;
-}
+export type { NeighborhoodEntity, POIEntity };
 
 export interface AnalyzeLocationOutput {
   neighborhoods: Array<{
     neighborhood: NeighborhoodEntity;
     pois: POIEntity[];
   }>;
-  /** Isochrone polygon returned by the backend — used for map rendering */
   isochrone?: any;
 }
 
