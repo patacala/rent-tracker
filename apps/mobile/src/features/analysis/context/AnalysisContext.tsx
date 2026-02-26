@@ -1,7 +1,10 @@
-import React, { createContext, useContext, useState, JSX } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, JSX } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 
 export type { NeighborhoodEntity, POIEntity };
+
+const STORAGE_KEY = '@analysis_result';
 
 export interface AnalyzeLocationOutput {
   neighborhoods: Array<{
@@ -20,11 +23,29 @@ interface AnalysisContextValue {
 const AnalysisContext = createContext<AnalysisContextValue | null>(null);
 
 export function AnalysisProvider({ children }: { children: React.ReactNode }): JSX.Element {
-  const [analysisResult, setAnalysisResult] = useState<AnalyzeLocationOutput | null>(null);
+  const [analysisResult, setAnalysisResultState] = useState<AnalyzeLocationOutput | null>(null);
 
-  const reset = () => {
+  // Rehidrata desde AsyncStorage al iniciar
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((raw) => {
+        if (raw) setAnalysisResultState(JSON.parse(raw));
+      })
+      .catch(() => {});
+  }, []);
+
+  const setAnalysisResult = useCallback((result: AnalyzeLocationOutput | null) => {
+    setAnalysisResultState(result);
+    if (result) {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(result)).catch(() => {});
+    } else {
+      AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    }
+  }, []);
+
+  const reset = useCallback(() => {
     setAnalysisResult(null);
-  };
+  }, [setAnalysisResult]);
 
   return (
     <AnalysisContext.Provider value={{ analysisResult, setAnalysisResult, reset }}>

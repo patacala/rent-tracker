@@ -2,35 +2,16 @@ import { useMemo } from 'react';
 import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 import { useAuth } from '@shared/context/AuthContext';
 import { useGetNeighborhoodsQuery } from '@features/analysis/store/analysisApi';
-import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { OnboardingData, useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { calculateWeightedScore } from '@rent-tracker/utils';
 import type { POIEntity } from '@features/analysis/store/analysisApi';
-import type { OnboardingData } from '@features/onboarding/context/OnboardingContext';
 import type { NeighborhoodListItem } from '../types';
 
 const TAGLINES = [
-  'THE CITY BEAUTIFUL',
-  'FINANCIAL DISTRICT',
-  'ARTS DISTRICT',
-  'BAYSIDE LIVING',
-  'CULTURAL HUB',
-  'DESIGN DISTRICT',
-  'DOWNTOWN CORE',
-  'BEACH CITY',
-  'URBAN OASIS',
-  'HISTORIC CHARM',
+  'THE CITY BEAUTIFUL', 'FINANCIAL DISTRICT', 'ARTS DISTRICT',
+  'BAYSIDE LIVING', 'CULTURAL HUB', 'DESIGN DISTRICT',
+  'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
 ];
-
-const PRIORITY_CATEGORY_MAP: Record<string, string[]> = {
-  commute: ['transit'],
-  schools: ['school'],
-  safety: ['hospital', 'police'],
-  dining: ['bar', 'restaurant'],
-  parks: ['park'],
-  shopping: ['shop', 'grocery'],
-  healthcare: ['hospital', 'medical'],
-  transit: ['transit', 'bus'],
-};
 
 interface UseExploreNeighborhoodsReturn {
   data: NeighborhoodListItem[];
@@ -42,24 +23,24 @@ interface UseExploreNeighborhoodsReturn {
 function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
   const categories = pois.map((p) => p.category.toLowerCase());
 
-  // Commute score: 100 si commute=15, 50 si commute=45
   const commuteScore = Math.max(0, Math.min(100, 100 - (onboarding.commute - 15) * (50 / 30)));
 
-  // Amenities score: diversidad + cantidad de POIs
   const uniqueCategories = new Set(categories).size;
   const amenitiesScore = Math.min(100, uniqueCategories * 12 + pois.length * 1.5);
 
-  // Family score: basado en priorities del usuario + hasChildren + hasPets
   const autoPriorities: string[] = [];
   if (onboarding.hasChildren === 'yes') autoPriorities.push('school', 'park');
   if (onboarding.hasPets === 'yes') autoPriorities.push('park');
 
-  const relevantCategories = [
-    ...onboarding.priorities.flatMap((p) => PRIORITY_CATEGORY_MAP[p] ?? []),
+  const userPriorityTerms = [
+    ...onboarding.priorities.map((p) => p.toLowerCase()),
     ...autoPriorities,
   ];
 
-  const familyPOIs = categories.filter((c) => relevantCategories.includes(c)).length;
+  const familyPOIs = categories.filter((cat) =>
+    userPriorityTerms.some((term) => cat.includes(term) || term.includes(cat))
+  ).length;
+
   const familyScore = Math.min(100, familyPOIs * 20);
 
   return calculateWeightedScore({
@@ -67,6 +48,28 @@ function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): 
     amenities: Math.round(amenitiesScore),
     family: Math.round(familyScore),
   });
+}
+
+function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
+  const uniqueCategories = Array.from(new Set(pois.map((p) => p.category.toLowerCase())));
+
+  const userPriorityTerms = [
+    ...onboarding.priorities.map((p) => p.toLowerCase()),
+    ...(onboarding.hasChildren === 'yes' ? ['school', 'park'] : []),
+    ...(onboarding.hasPets === 'yes' ? ['park'] : []),
+  ];
+
+  const matched = uniqueCategories.filter((cat) =>
+    userPriorityTerms.some((term) => cat.includes(term) || term.includes(cat))
+  );
+
+  const unmatched = uniqueCategories.filter((cat) =>
+    !userPriorityTerms.some((term) => cat.includes(term) || term.includes(cat))
+  );
+
+  return [...matched, ...unmatched]
+    .slice(0, 3)
+    .map((c) => c.charAt(0).toUpperCase() + c.slice(1));
 }
 
 export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
@@ -84,27 +87,42 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
     return [];
   }, [analysisResult, apiNeighborhoods, isLoggedIn]);
 
+  function countMatches(pois: POIEntity[], onboarding: OnboardingData): number {
+    const categories = pois.map((p) => p.category.toLowerCase());
+    let count = 1; // Commute siempre cuenta
+
+    for (const priority of onboarding.priorities) {
+      const term = priority.toLowerCase();
+      const hasMatch = categories.some((cat) => cat.includes(term) || term.includes(cat));
+      if (hasMatch) count++;
+    }
+
+    if (onboarding.hasChildren === 'yes' && !onboarding.priorities.includes('schools')) {
+      const hasSchools = categories.some((c) => c.includes('school') || 'school'.includes(c));
+      if (hasSchools) count++;
+    }
+
+    if (onboarding.hasPets === 'yes' && !onboarding.priorities.includes('parks')) {
+      const hasParks = categories.some((c) => c.includes('park') || 'park'.includes(c));
+      if (hasParks) count++;
+    }
+
+    return count;
+  }
+
   const data = useMemo(() => {
     if (source.length === 0) return [];
 
-    return source.map((item, idx) => {
-      const uniqueCategories = Array.from(
-        new Set(item.pois.map((p) => p.category.toUpperCase()))
-      );
-
-      const score = calculateScoreFromPOIs(item.pois, onboarding);
-
-      return {
-        id: item.neighborhood.id,
-        name: item.neighborhood.name,
-        score,
-        tagline: TAGLINES[idx % TAGLINES.length] ?? 'NEIGHBORHOOD',
-        tags: uniqueCategories.slice(0, 3),
-        matchCount: Math.max(1, Math.floor(item.pois.length / 3)),
-        commuteMinutes: onboarding.commute,
-        photoUrl: item.neighborhood.photoUrl ?? null,
-      };
-    });
+    return source.map((item, idx) => ({
+      id: item.neighborhood.id,
+      name: item.neighborhood.name,
+      score: calculateScoreFromPOIs(item.pois, onboarding),
+      tagline: TAGLINES[idx % TAGLINES.length] ?? 'NEIGHBORHOOD',
+      tags: buildTags(item.pois, onboarding),
+      matchCount: countMatches(item.pois, onboarding),
+      commuteMinutes: onboarding.commute,
+      photoUrl: item.neighborhood.photoUrl ?? null,
+    }));
   }, [source, onboarding]);
 
   return {

@@ -3,18 +3,14 @@ import type { OnboardingData } from '@features/onboarding/context/OnboardingCont
 import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 import { calculateWeightedScore } from '@rent-tracker/utils';
 
-const PRIORITY_CATEGORY_MAP: Record<string, string[]> = {
-  commute: ['transit'],
-  schools: ['school'],
-  safety: ['hospital', 'police'],
-  dining: ['bar', 'restaurant'],
-  parks: ['park'],
-  shopping: ['shop', 'grocery'],
-  healthcare: ['hospital', 'medical'],
-  transit: ['transit', 'bus'],
-};
+const TAGLINES = [
+  'THE CITY BEAUTIFUL', 'FINANCIAL DISTRICT', 'ARTS DISTRICT',
+  'BAYSIDE LIVING', 'CULTURAL HUB', 'DESIGN DISTRICT',
+  'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
+];
 
-const CATEGORY_ICON_MAP: Record<string, any> = {
+// Solo iconos por categoria real del servidor — se expande según lo que llegue
+const CATEGORY_ICON_MAP: Record<string, string> = {
   school: 'school-outline',
   park: 'leaf-outline',
   gym: 'barbell-outline',
@@ -23,41 +19,11 @@ const CATEGORY_ICON_MAP: Record<string, any> = {
   bar: 'wine-outline',
   shop: 'cart-outline',
   transit: 'bus-outline',
-  grocery: 'cart-outline',
+  supermarket: 'cart-outline',
   cafe: 'cafe-outline',
-  medical: 'medical-outline',
-  police: 'shield-outline',
-  bus: 'bus-outline',
 };
 
-const CATEGORY_DISPLAY: Record<string, string> = {
-  school: 'School',
-  park: 'Park',
-  gym: 'Gym',
-  hospital: 'Hospital',
-  restaurant: 'Restaurant',
-  bar: 'Bar',
-  shop: 'Shop',
-  transit: 'Transit',
-  grocery: 'Grocery',
-  cafe: 'Café',
-  medical: 'Medical Center',
-  police: 'Police Station',
-  bus: 'Bus Stop',
-};
-
-const TAGLINES = [
-  'THE CITY BEAUTIFUL',
-  'FINANCIAL DISTRICT',
-  'ARTS DISTRICT',
-  'BAYSIDE LIVING',
-  'CULTURAL HUB',
-  'DESIGN DISTRICT',
-  'DOWNTOWN CORE',
-  'BEACH CITY',
-  'URBAN OASIS',
-  'HISTORIC CHARM',
-];
+// ─── Helpers ─────────────────────────────────
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -76,6 +42,10 @@ function formatDistance(km: number): string {
   return `${km.toFixed(1)}km`;
 }
 
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 function walkScoreLabel(score: number): string {
   if (score >= 90) return "Walker's Paradise";
   if (score >= 70) return 'Very Walkable';
@@ -91,25 +61,52 @@ function estimateWalkScore(pois: POIEntity[], centerLat: number, centerLng: numb
   return Math.min(40 + nearby.length * 3, 99);
 }
 
+// Términos de búsqueda derivados del onboarding del usuario
+function getUserPriorityTerms(onboarding: OnboardingData): string[] {
+  const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]> = {
+    healthcare: ['hospital', 'medical'],
+    dining: ['restaurant', 'bar', 'cafe'],
+    schools: ['school'],
+    parks: ['park'],
+    shopping: ['shop', 'supermarket'],
+    transit: ['transit', 'bus'],
+    commute: ['transit'],
+    safety: ['hospital', 'police'],
+  };
+
+  const terms = onboarding.priorities.flatMap(
+    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
+  );
+
+  if (onboarding.hasChildren === 'yes') terms.push('school', 'park');
+  if (onboarding.hasPets === 'yes') terms.push('park');
+
+  return [...new Set(terms)];
+}
+
+// Compara si una categoría de POI es relevante para un término de priority del usuario
+// Ej: 'schools' matchea 'school', 'dining' matchea 'restaurant'/'bar', 'parks' matchea 'park'
+function categoryMatchesTerm(category: string, term: string): boolean {
+  return category.includes(term) || term.includes(category);
+}
+
+function isRelevantCategory(category: string, priorityTerms: string[]): boolean {
+  return priorityTerms.some((term) => categoryMatchesTerm(category, term));
+}
+
+// ─── Score ───────────────────────────────────
+
 function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
   const categories = pois.map((p) => p.category.toLowerCase());
+  const priorityTerms = getUserPriorityTerms(onboarding);
 
   const commuteScore = Math.max(0, Math.min(100, 100 - (onboarding.commute - 15) * (50 / 30)));
 
   const uniqueCategories = new Set(categories).size;
   const amenitiesScore = Math.min(100, uniqueCategories * 12 + pois.length * 1.5);
 
-  const autoPriorities: string[] = [];
-  if (onboarding.hasChildren === 'yes') autoPriorities.push('school', 'park');
-  if (onboarding.hasPets === 'yes') autoPriorities.push('park');
-
-  const relevantCategories = [
-    ...onboarding.priorities.flatMap((p) => PRIORITY_CATEGORY_MAP[p] ?? []),
-    ...autoPriorities,
-  ];
-
-  const familyPOIs = categories.filter((c) => relevantCategories.includes(c)).length;
-  const familyScore = Math.min(100, familyPOIs * 20);
+  const relevantPOIs = categories.filter((cat) => isRelevantCategory(cat, priorityTerms)).length;
+  const familyScore = Math.min(100, relevantPOIs * 20);
 
   return calculateWeightedScore({
     commute: Math.round(commuteScore),
@@ -118,46 +115,42 @@ function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): 
   });
 }
 
+// ─── Matches ─────────────────────────────────
+
 function buildMatches(pois: POIEntity[], onboarding: OnboardingData): Array<{ label: string; value: number }> {
   const categories = pois.map((p) => p.category.toLowerCase());
   const matches: Array<{ label: string; value: number }> = [];
 
+  // Commute siempre va primero
   const commuteScore = Math.max(40, 100 - onboarding.commute);
   matches.push({ label: 'Commute Match', value: commuteScore });
 
-  if (onboarding.priorities.includes('schools') || onboarding.hasChildren === 'yes') {
-    const count = categories.filter((c) => c === 'school').length;
-    matches.push({ label: 'School Quality', value: Math.min(50 + count * 15, 99) });
-  }
-  if (onboarding.priorities.includes('parks') || onboarding.hasPets === 'yes') {
-    const count = categories.filter((c) => c === 'park').length;
-    matches.push({ label: 'Parks & Greenery', value: Math.min(50 + count * 12, 99) });
-  }
-  if (onboarding.priorities.includes('dining')) {
-    const count = categories.filter((c) => c.includes('bar') || c.includes('restaurant')).length;
-    matches.push({ label: 'Dining & Bars', value: Math.min(40 + count * 8, 99) });
-  }
-  if (onboarding.priorities.includes('safety')) {
-    const count = categories.filter((c) => c === 'hospital' || c === 'police').length;
-    matches.push({ label: 'Safety', value: Math.min(60 + count * 10, 95) });
-  }
-  if (onboarding.priorities.includes('shopping')) {
-    const count = categories.filter((c) => c === 'shop' || c === 'grocery').length;
-    matches.push({ label: 'Shopping', value: Math.min(40 + count * 10, 99) });
-  }
-  if (onboarding.priorities.includes('healthcare')) {
-    const count = categories.filter((c) => c === 'hospital' || c === 'medical').length;
-    matches.push({ label: 'Healthcare', value: Math.min(50 + count * 15, 99) });
-  }
-  if (onboarding.priorities.includes('transit')) {
-    const count = categories.filter((c) => c === 'transit' || c === 'bus').length;
-    matches.push({ label: 'Public Transit', value: Math.min(40 + count * 12, 99) });
+  // Una entrada por cada priority del usuario basada en POIs reales
+  for (const priority of onboarding.priorities) {
+    const term = priority.toLowerCase();
+    const matchingPOIs = categories.filter((cat) => categoryMatchesTerm(cat, term));
+    if (matchingPOIs.length === 0) continue;
+
+    const value = Math.min(50 + matchingPOIs.length * 10, 99);
+    matches.push({ label: capitalize(priority), value });
   }
 
-  matches.push({ label: 'Budget Alignment', value: 72 });
+  // hasChildren → schools
+  if (onboarding.hasChildren === 'yes' && !onboarding.priorities.includes('schools')) {
+    const count = categories.filter((c) => categoryMatchesTerm(c, 'school')).length;
+    if (count > 0) matches.push({ label: 'Schools Nearby', value: Math.min(50 + count * 15, 99) });
+  }
 
-  return matches.slice(0, 4);
+  // hasPets → parks
+  if (onboarding.hasPets === 'yes' && !onboarding.priorities.includes('parks')) {
+    const count = categories.filter((c) => categoryMatchesTerm(c, 'park')).length;
+    if (count > 0) matches.push({ label: 'Parks Nearby', value: Math.min(50 + count * 12, 99) });
+  }
+
+  return matches;
 }
+
+// ─── Stats ───────────────────────────────────
 
 function buildStats(
   pois: POIEntity[],
@@ -166,64 +159,180 @@ function buildStats(
   centerLng: number,
 ): Array<{ icon: any; value: string; description: string }> {
   const categories = pois.map((p) => p.category.toLowerCase());
-  const schools = categories.filter((c) => c === 'school').length;
   const walkScore = estimateWalkScore(pois, centerLat, centerLng);
+  const priorityTerms = getUserPriorityTerms(onboarding);
 
-  return [
+  // Función que calcula la prioridad de una stat según si su categoría matchea el onboarding
+  function statPriority(categoryTerms: string[]): number {
+    return categoryTerms.some((term) =>
+      priorityTerms.some((pt) => categoryMatchesTerm(term, pt))
+    ) ? 10 : 1;
+  }
+
+  const all: Array<{ icon: any; value: string; description: string; priority: number }> = [];
+
+  all.push({
+    icon: 'car-outline',
+    value: `${onboarding.commute} mins`,
+    description: 'Commute Time',
+    priority: statPriority(['commute', 'transit']),
+  });
+
+  all.push({
+    icon: 'walk-outline',
+    value: walkScore >= 70 ? 'Very High' : walkScore >= 50 ? 'High' : 'Moderate',
+    description: 'Walkability',
+    priority: statPriority(['walk', 'transit']),
+  });
+
+  all.push({
+    icon: 'shield-checkmark-outline',
+    value: pois.length > 10 ? 'Top 10%' : 'Top 25%',
+    description: 'Safety in area',
+    priority: statPriority(['safety']),
+  });
+
+  // Stats dinámicas — solo si hay POIs reales de esa categoría
+  const dynamicStats: Array<{
+    categoryTerms: string[];
+    icon: string;
+    getValue: () => string;
+    description: string;
+  }> = [
     {
-      icon: 'car-outline',
-      value: `${onboarding.commute} mins`,
-      description: 'Commute Time',
-    },
-    {
-      icon: 'shield-checkmark-outline',
-      value: pois.length > 10 ? 'Top 10%' : 'Top 25%',
-      description: 'Safety in area',
-    },
-    {
+      categoryTerms: ['school'],
       icon: 'school-outline',
-      value: schools > 3 ? '9/10' : schools > 1 ? '7/10' : '6/10',
+      getValue: () => {
+        const count = categories.filter((c) => categoryMatchesTerm(c, 'school')).length;
+        return count > 3 ? '9/10' : count > 1 ? '7/10' : '6/10';
+      },
       description: 'School Rating',
     },
     {
-      icon: 'walk-outline',
-      value: walkScore >= 70 ? 'Very High' : walkScore >= 50 ? 'High' : 'Moderate',
-      description: 'Walkability',
+      categoryTerms: ['restaurant', 'bar', 'cafe', 'dining'],
+      icon: 'restaurant-outline',
+      getValue: () => {
+        const count = categories.filter((c) =>
+          categoryMatchesTerm(c, 'restaurant') || categoryMatchesTerm(c, 'bar') || categoryMatchesTerm(c, 'cafe')
+        ).length;
+        return `${count}`;
+      },
+      description: 'Dining Spots',
     },
+    {
+      categoryTerms: ['transit', 'bus'],
+      icon: 'bus-outline',
+      getValue: () => {
+        const count = categories.filter((c) => categoryMatchesTerm(c, 'transit') || categoryMatchesTerm(c, 'bus')).length;
+        return `${count} stops`;
+      },
+      description: 'Transit Options',
+    },
+    {
+      categoryTerms: ['park'],
+      icon: 'leaf-outline',
+      getValue: () => `${categories.filter((c) => categoryMatchesTerm(c, 'park')).length}`,
+      description: 'Parks Nearby',
+    },
+    {
+      categoryTerms: ['hospital', 'healthcare', 'medical'],
+      icon: 'medical-outline',
+      getValue: () => `${categories.filter((c) => categoryMatchesTerm(c, 'hospital')).length}`,
+      description: 'Healthcare',
+    },
+    {
+      categoryTerms: ['shop', 'supermarket', 'shopping'],
+      icon: 'cart-outline',
+      getValue: () => {
+        const count = categories.filter((c) =>
+          categoryMatchesTerm(c, 'shop') || categoryMatchesTerm(c, 'supermarket')
+        ).length;
+        return `${count}`;
+      },
+      description: 'Shopping',
+    },
+    {
+      categoryTerms: ['gym'],
+      icon: 'barbell-outline',
+      getValue: () => `${categories.filter((c) => categoryMatchesTerm(c, 'gym')).length}`,
+      description: 'Fitness',
+    }
   ];
+
+  for (const stat of dynamicStats) {
+    const hasPOIs = categories.some((c) =>
+      stat.categoryTerms.some((term) => categoryMatchesTerm(c, term))
+    );
+    if (!hasPOIs) continue;
+
+    all.push({
+      icon: stat.icon,
+      value: stat.getValue(),
+      description: stat.description,
+      priority: statPriority(stat.categoryTerms),
+    });
+  }
+
+  return all
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, 8)
+    .map(({ icon, value, description }) => ({ icon, value, description }));
 }
+
+// ─── Amenities ───────────────────────────────
 
 function buildAmenities(
   pois: POIEntity[],
+  onboarding: OnboardingData,
   centerLat: number,
   centerLng: number,
 ): Array<{ icon: any; name: string; distance: string }> {
-  const sorted = [...pois].sort((a, b) => {
-    const da = haversineKm(centerLat, centerLng, a.latitude, a.longitude);
-    const db = haversineKm(centerLat, centerLng, b.latitude, b.longitude);
-    return da - db;
-  });
+  const priorityTerms = getUserPriorityTerms(onboarding);
 
-  const seen = new Set<string>();
-  const result: Array<{ icon: any; name: string; distance: string }> = [];
+  const sorted = [...pois].sort((a, b) =>
+    haversineKm(centerLat, centerLng, a.latitude, a.longitude) -
+    haversineKm(centerLat, centerLng, b.latitude, b.longitude)
+  );
+
+  // Primero: el POI más cercano de cada categoría relevante para el usuario
+  const seenRelevant = new Set<string>();
+  const relevant: Array<{ icon: any; name: string; distance: string }> = [];
 
   for (const poi of sorted) {
     const cat = poi.category.toLowerCase();
-    if (seen.has(cat)) continue;
-    seen.add(cat);
+    if (!isRelevantCategory(cat, priorityTerms)) continue;
+    if (seenRelevant.has(cat)) continue;
+    seenRelevant.add(cat);
 
     const km = haversineKm(centerLat, centerLng, poi.latitude, poi.longitude);
-    result.push({
+    relevant.push({
       icon: CATEGORY_ICON_MAP[cat] ?? 'location-outline',
-      name: poi.name || CATEGORY_DISPLAY[cat] || cat,
+      name: poi.name?.trim() || capitalize(cat),
       distance: formatDistance(km),
     });
-
-    if (result.length >= 5) break;
   }
 
-  return result;
+  // Segundo: rellena con POIs de otras categorías hasta llegar a 5
+  const seenAll = new Set<string>(seenRelevant);
+  const others: Array<{ icon: any; name: string; distance: string }> = [];
+
+  for (const poi of sorted) {
+    const cat = poi.category.toLowerCase();
+    if (seenAll.has(cat)) continue;
+    seenAll.add(cat);
+
+    const km = haversineKm(centerLat, centerLng, poi.latitude, poi.longitude);
+    others.push({
+      icon: CATEGORY_ICON_MAP[cat] ?? 'location-outline',
+      name: poi.name?.trim() || capitalize(cat),
+      distance: formatDistance(km),
+    });
+  }
+
+  return [...relevant, ...others].slice(0, 20);
 }
+
+// ─── Insights ────────────────────────────────
 
 function buildInsights(
   pois: POIEntity[],
@@ -233,61 +342,72 @@ function buildInsights(
   const insights: Array<{ variant: 'success' | 'warning' | 'info'; title: string; description: string }> = [];
   const categories = pois.map((p) => p.category.toLowerCase());
 
-  if (onboarding.hasChildren === 'yes' || onboarding.priorities.includes('schools')) {
-    const count = categories.filter((c) => c === 'school').length;
+  // Insight por cada priority del usuario basado en POIs reales
+  for (const priority of onboarding.priorities) {
+    const term = priority.toLowerCase();
+    const count = categories.filter((cat) => categoryMatchesTerm(cat, term)).length;
+
+    if (term.includes('school') || (term === 'schools' && onboarding.hasChildren === 'yes')) {
+      insights.push(
+        count > 2
+          ? { variant: 'success', title: 'Top-tier Education', description: `${count} schools found nearby.` }
+          : { variant: 'warning', title: 'Limited School Options', description: 'Fewer schools nearby — worth checking district options.' },
+      );
+      continue;
+    }
+
+    if (term.includes('safety')) {
+      insights.push({
+        variant: score >= 80 ? 'success' : 'info',
+        title: score >= 80 ? 'Safe Neighborhood' : 'Average Safety',
+        description: score >= 80
+          ? 'This area scores well on safety indicators.'
+          : 'Safety is average — review local crime data.',
+      });
+      continue;
+    }
+
+    if (count > 0) {
+      insights.push({
+        variant: count > 3 ? 'success' : 'info',
+        title: count > 3 ? `Great ${capitalize(priority)}` : `Some ${capitalize(priority)} Options`,
+        description: count > 3
+          ? `${count} ${priority} options found nearby.`
+          : `Limited ${priority} options in the immediate area.`,
+      });
+    }
+  }
+
+  // hasChildren sin schools en priorities
+  if (onboarding.hasChildren === 'yes' && !onboarding.priorities.includes('schools')) {
+    const count = categories.filter((c) => categoryMatchesTerm(c, 'school')).length;
     insights.push(
       count > 2
-        ? { variant: 'success', title: 'Top-tier Education', description: `${count} schools found nearby, great for your family.` }
-        : { variant: 'warning', title: 'Limited School Options', description: 'Fewer schools nearby — worth checking district options.' },
+        ? { variant: 'success', title: 'Family Friendly', description: `${count} schools nearby, great for your kids.` }
+        : { variant: 'info', title: 'Family Note', description: 'Check local school options for your family.' },
     );
   }
 
-  if (onboarding.priorities.includes('safety') || onboarding.hasChildren === 'yes') {
-    insights.push({
-      variant: score >= 80 ? 'success' : 'info',
-      title: score >= 80 ? 'Safe Neighborhood' : 'Average Safety',
-      description: score >= 80
-        ? 'This area scores well on safety indicators based on POI density.'
-        : 'Safety is average for this area — review local crime data.',
-    });
-  }
-
-  if (onboarding.priorities.includes('dining')) {
-    const count = categories.filter((c) => c.includes('bar') || c.includes('restaurant')).length;
-    insights.push({
-      variant: count > 3 ? 'success' : 'info',
-      title: count > 3 ? 'Great Dining Scene' : 'Moderate Dining Options',
-      description: count > 3
-        ? `${count} dining spots found nearby.`
-        : 'Limited dining options in the immediate area.',
-    });
-  }
-
-  if (onboarding.priorities.includes('transit') || onboarding.priorities.includes('commute')) {
-    const count = categories.filter((c) => c === 'transit' || c === 'bus').length;
-    insights.push({
-      variant: count > 2 ? 'success' : 'info',
-      title: count > 2 ? 'Great Transit Access' : 'Limited Transit',
-      description: count > 2
-        ? `${count} transit options nearby.`
-        : `Expected commute around ${onboarding.commute} mins. May vary during peak hours.`,
-    });
-  } else {
-    insights.push({
-      variant: 'info',
-      title: 'Commute Note',
-      description: `Expected commute around ${onboarding.commute} mins. May vary during peak hours.`,
-    });
-  }
-
+  // Commute siempre
   insights.push({
     variant: 'info',
-    title: 'Growing Area',
-    description: 'Property values in this area have been trending upward over the past year.',
+    title: 'Commute Note',
+    description: `Expected commute around ${onboarding.commute} mins. May vary during peak hours.`,
   });
 
   return insights.slice(0, 3);
 }
+
+// ─── Match Quote ─────────────────────────────
+
+function buildMatchQuote(onboarding: OnboardingData, score: number): string {
+  if (score >= 90) return '"An excellent match for your lifestyle and priorities."';
+  if (score >= 75) return '"A great choice that aligns well with your preferences."';
+  if (onboarding.hasChildren === 'yes') return '"A family-friendly area worth exploring."';
+  return '"This neighborhood aligns with several of your priorities."';
+}
+
+// ─── Market Trends (datos estáticos hasta que el servidor los devuelva) ──────
 
 function buildMarketTrends(): Array<{ label: string; value: number; highlighted: boolean }> {
   return [
@@ -299,12 +419,7 @@ function buildMarketTrends(): Array<{ label: string; value: number; highlighted:
   ];
 }
 
-function buildMatchQuote(onboarding: OnboardingData, score: number): string {
-  if (score >= 90) return '"An excellent match for your lifestyle and priorities."';
-  if (score >= 75) return '"A great choice that aligns well with your preferences."';
-  if (onboarding.hasChildren === 'yes') return '"A family-friendly area worth exploring."';
-  return '"This neighborhood aligns with several of your priorities."';
-}
+// ─── Main Export ─────────────────────────────
 
 export function mapNeighborhoodDetail(
   neighborhood: NeighborhoodEntity,
@@ -314,7 +429,6 @@ export function mapNeighborhoodDetail(
 ): NeighborhoodDetail {
   const centerLat = neighborhood.centerLat ?? 25.7617;
   const centerLng = neighborhood.centerLng ?? -80.1918;
-
   const score = calculateScoreFromPOIs(pois, onboarding);
   const walkScore = estimateWalkScore(pois, centerLat, centerLng);
 
@@ -327,7 +441,7 @@ export function mapNeighborhoodDetail(
     matchQuote: buildMatchQuote(onboarding, score),
     matches: buildMatches(pois, onboarding),
     stats: buildStats(pois, onboarding, centerLat, centerLng),
-    amenities: buildAmenities(pois, centerLat, centerLng),
+    amenities: buildAmenities(pois, onboarding, centerLat, centerLng),
     insights: buildInsights(pois, onboarding, score),
     marketTrends: buildMarketTrends(),
     marketTrendChange: '+6.2%',

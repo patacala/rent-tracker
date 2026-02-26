@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import React, { JSX, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,9 @@ import { InsightsSection } from './components/InsightsSection';
 import { MarketTrendsSection } from './components/MarketTrendsSection';
 import { PriceWalkSection } from './components/PriceWalkSection';
 import { SafetySection } from './components/SafetySection';
+import { useAuth } from '@shared/context/AuthContext';
+import { useToggleFavoriteMutation, useGetFavoritesQuery } from '@features/saved/store/savedApi';
+import { useToast } from '@shared/context/ToastContext';
 
 export function NeighborhoodDetailScreen(): JSX.Element {
   const router = useRouter();
@@ -27,6 +30,31 @@ export function NeighborhoodDetailScreen(): JSX.Element {
   const { data: detail } = useNeighborhoodDetail(id ?? '');
 
   if (!detail) return <View />;
+
+  const { isLoggedIn } = useAuth();
+  const toast = useToast();
+  const [toggleFavorite, { isLoading: isToggling }] = useToggleFavoriteMutation();
+  const { data: favoritesData } = useGetFavoritesQuery(undefined, { skip: !isLoggedIn });
+
+  const isFavorite = favoritesData?.neighborhoods?.some((n) => n.id === id) ?? false;
+  const [localFavorite, setLocalFavorite] = useState(isFavorite);
+
+  useEffect(() => {
+    setLocalFavorite(isFavorite);
+  }, [isFavorite]);
+
+  const handleToggleFavorite = async () => {
+    if (!isLoggedIn || isToggling) return;
+    const next = !localFavorite;
+    setLocalFavorite(next);
+    try {
+      await toggleFavorite(id!).unwrap();
+      toast.success(next ? 'Added to favorites' : 'Removed from favorites');
+    } catch {
+      setLocalFavorite(!next);
+      toast.error('Something went wrong, please try again');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -68,9 +96,19 @@ export function NeighborhoodDetailScreen(): JSX.Element {
               <View style={styles.taglineBadge}>
                 <Text style={styles.taglineText}>{detail.tagline}</Text>
               </View>
-              <TouchableOpacity style={styles.favoriteBtn}>
-                <Ionicons name="heart-outline" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
+              {isLoggedIn ? (
+                <TouchableOpacity
+                  style={styles.favoriteBtn}
+                  onPress={handleToggleFavorite}
+                  disabled={isToggling}
+                >
+                  <Ionicons
+                    name={localFavorite ? 'heart' : 'heart-outline'}
+                    size={18}
+                    color={localFavorite ? THEME.colors.primary : '#FFFFFF'}
+                  />
+                </TouchableOpacity>
+              ) : null}
             </View>
 
             <View style={styles.heroBottom}>
