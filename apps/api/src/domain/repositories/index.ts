@@ -5,6 +5,7 @@ import type { NeighborhoodEntity } from '../entities/neighborhood.entity';
 import type { POIEntity, POICategory } from '../entities/poi.entity';
 import type { AmenityType, CommuteOption } from '@rent-tracker/types';
 import { GeoJSON } from 'geojson';
+import { NeighborhoodSafetyEntity } from '@domain/entities/neighborhood-safety.entity';
 
 // ─── Repository Interfaces (Domain Layer) ────
 // Defined in domain, implemented in infrastructure
@@ -126,6 +127,12 @@ export interface IFavoriteNeighborhoodRepository {
   isFavorite(params: { userId: string; neighborhoodId: string }): Promise<boolean>;
 }
 
+export interface INeighborhoodSafetyRepository {
+  findByName(neighborhoodName: string): Promise<NeighborhoodSafetyEntity | null>;
+  upsert(data: Omit<NeighborhoodSafetyEntity, 'id' | 'createdAt' | 'updatedAt'>): Promise<NeighborhoodSafetyEntity>;
+  isExpired(cachedAt: Date, ttlDays?: number): boolean;
+}
+
 // ─── Injection Tokens ────────────────────────
 export const USER_REPOSITORY = 'IUserRepository';
 export const USER_PREFERENCES_REPOSITORY = 'IUserPreferencesRepository';
@@ -133,3 +140,4 @@ export const SEARCH_SESSION_REPOSITORY = 'ISearchSessionRepository';
 export const NEIGHBORHOOD_REPOSITORY = 'INeighborhoodRepository';
 export const POI_REPOSITORY = 'IPOIRepository';
 export const FAVORITE_NEIGHBORHOOD_REPOSITORY = 'IFavoriteNeighborhoodRepository';
+export const NEIGHBORHOOD_SAFETY_REPOSITORY = 'NEIGHBORHOOD_SAFETY_REPOSITORY';

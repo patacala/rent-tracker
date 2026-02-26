@@ -11,7 +11,7 @@ interface AmenitiesSectionProps {
 export function AmenitiesSection({ amenities }: AmenitiesSectionProps): JSX.Element {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Local Amenities</Text>
+      <Text style={styles.sectionTitle}>Local Amenities - 1 Per Category</Text>
       <View style={styles.amenitiesList}>
         {amenities.map((amenity) => (
           <AmenityRow key={amenity.name}>

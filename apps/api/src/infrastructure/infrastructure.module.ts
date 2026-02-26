@@ -19,9 +19,11 @@ import {
   POI_REPOSITORY,
   SEARCH_SESSION_REPOSITORY,
   FAVORITE_NEIGHBORHOOD_REPOSITORY,
+  NEIGHBORHOOD_SAFETY_REPOSITORY,
 } from '@domain/repositories';
 import { PLACES_SERVICE, DISTANCE_SERVICE, MAPBOX_SERVICE } from '@domain/services/external-services.interface';
 import { PrismaFavoriteNeighborhoodRepository } from './repositories/prisma-favorite-neighborhood.repository';
+import { NeighborhoodSafetyRepository } from './repositories/neighborhood-safety.repository';
 
 @Module({
   imports: [PrismaModule, HttpModule],
@@ -35,6 +37,7 @@ import { PrismaFavoriteNeighborhoodRepository } from './repositories/prisma-favo
     // External service bindings
     { provide: PLACES_SERVICE, useClass: MockPlacesService },
     { provide: DISTANCE_SERVICE, useClass: MockDistanceService },
+    { provide: NEIGHBORHOOD_SAFETY_REPOSITORY, useClass: NeighborhoodSafetyRepository },
     // Geo services: MapboxService (isochrone) + OsmService (boundaries/POIs)
     // GeoService is the composite bound to MAPBOX_SERVICE
     MapboxService,
@@ -57,6 +60,7 @@ import { PrismaFavoriteNeighborhoodRepository } from './repositories/prisma-favo
     MAPBOX_SERVICE,
     FAVORITE_NEIGHBORHOOD_REPOSITORY,
     GoogleStreetViewService,
+    NEIGHBORHOOD_SAFETY_REPOSITORY,
   ],
 })
 export class InfrastructureModule {}

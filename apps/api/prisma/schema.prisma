@@ -127,3 +127,29 @@ model FavoriteNeighborhood {
   @@unique([userId, neighborhoodId])
   @@index([userId])
 }
+
+model NeighborhoodSafety {
+  id                  String   @id @default(cuid())
+  neighborhoodName    String   @unique // clave de búsqueda
+  
+  // Crime scores
+  crimeScore          String   // "C+", "A-", etc.
+  crimeNumeric        Float    // 0.0 - 1.0, lower = safer
+  crimeDescription    String   // "Higher than average"
+  
+  // Crime breakdown (stored as JSON)
+  crimeBreakdown      Json     // { overall, assault, theft, robbery, burglary }
+  
+  // Top incidents (máx 10, 1 por tipo)
+  incidents           Json     // { radius_feet, date_from, date_to, count, data[] }
+  
+  // Cache TTL — se refresca cada 7 días
+  cachedAt            DateTime @default(now())
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([neighborhoodName])
+  @@index([cachedAt])
+  @@map("NeighborhoodSafety")
+}

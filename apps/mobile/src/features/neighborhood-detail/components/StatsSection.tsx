@@ -19,7 +19,7 @@ export function StatsSection({ stats }: StatsSectionProps): JSX.Element {
         {stats.map((stat) => (
           <StatCard key={stat.description} style={{ width: STAT_WIDTH }}>
             <StatCard.Icon name={stat.icon} />
-            <StatCard.Value>{stat.value}</StatCard.Value>
+            <StatCard.Value style={styles.spacingValue}>{stat.value}</StatCard.Value>
             <StatCard.Description>{stat.description}</StatCard.Description>
           </StatCard>
         ))}
@@ -44,4 +44,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: THEME.spacing.sm,
   },
+  spacingValue: {
+    paddingLeft: 5,
+  }
 });

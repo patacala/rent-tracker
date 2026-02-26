@@ -18,6 +18,9 @@ import { NeighborhoodsController } from './presentation/neighborhoods/neighborho
 import { ToggleFavoriteUseCase } from '@application/use-cases/toggle-favorite.use-case';
 import { GetFavoritesUseCase } from '@application/use-cases/get-favorites.use-case';
 import { FavoritesController } from '@presentation/favorites/favorites.controller';
+import { GetNeighborhoodSafetyUseCase } from '@application/use-cases/get-neighborhood-safety.use-case';
+import { DoorProfitService } from '@infrastructure/external/doorprofit/doorprofit.service';
+import { SafetyController } from '@presentation/safety/safety.controller';
 
 @Module({
   imports: [
@@ -31,6 +34,7 @@ import { FavoritesController } from '@presentation/favorites/favorites.controlle
     JwtStrategy,
     AuthService,
     OnboardingService,
+    DoorProfitService,
     // Use Cases
     GetIsochroneUseCase,
     SearchNeighborhoodsUseCase,
@@ -39,12 +43,14 @@ import { FavoritesController } from '@presentation/favorites/favorites.controlle
     GetMyAnalysisUseCase,
     ToggleFavoriteUseCase,
     GetFavoritesUseCase,
+    GetNeighborhoodSafetyUseCase,
   ],
   controllers: [
     AuthController,
     OnboardingController,
     NeighborhoodsController,
     FavoritesController,
+    SafetyController
   ],
 })
 export class AppModule {}

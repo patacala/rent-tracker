@@ -5,6 +5,7 @@ import {
   StyleSheet,
   type StyleProp,
   type ViewStyle,
+  TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '../theme';
@@ -40,8 +41,8 @@ function StatCardIcon({
   );
 }
 
-function StatCardValue({ children }: { children: string }): JSX.Element {
-  return <Text style={styles.value}>{children}</Text>;
+function StatCardValue({ children, style }: { children: string, style?: StyleProp<TextStyle> }): JSX.Element {
+  return <Text style={[styles.value, style]}>{children}</Text>;
 }
 
 function StatCardDescription({ children }: { children: string }): JSX.Element {

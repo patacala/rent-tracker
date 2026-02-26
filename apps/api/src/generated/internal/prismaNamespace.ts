@@ -389,7 +389,8 @@ export const ModelName = {
   OnboardingProfile: 'OnboardingProfile',
   Neighborhood: 'Neighborhood',
   POI: 'POI',
-  FavoriteNeighborhood: 'FavoriteNeighborhood'
+  FavoriteNeighborhood: 'FavoriteNeighborhood',
+  NeighborhoodSafety: 'NeighborhoodSafety'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "searchSession" | "onboardingProfile" | "neighborhood" | "pOI" | "favoriteNeighborhood"
+    modelProps: "user" | "searchSession" | "onboardingProfile" | "neighborhood" | "pOI" | "favoriteNeighborhood" | "neighborhoodSafety"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -853,6 +854,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    NeighborhoodSafety: {
+      payload: Prisma.$NeighborhoodSafetyPayload<ExtArgs>
+      fields: Prisma.NeighborhoodSafetyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NeighborhoodSafetyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NeighborhoodSafetyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>
+        }
+        findFirst: {
+          args: Prisma.NeighborhoodSafetyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NeighborhoodSafetyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>
+        }
+        findMany: {
+          args: Prisma.NeighborhoodSafetyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>[]
+        }
+        create: {
+          args: Prisma.NeighborhoodSafetyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>
+        }
+        createMany: {
+          args: Prisma.NeighborhoodSafetyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NeighborhoodSafetyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>[]
+        }
+        delete: {
+          args: Prisma.NeighborhoodSafetyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>
+        }
+        update: {
+          args: Prisma.NeighborhoodSafetyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>
+        }
+        deleteMany: {
+          args: Prisma.NeighborhoodSafetyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NeighborhoodSafetyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NeighborhoodSafetyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>[]
+        }
+        upsert: {
+          args: Prisma.NeighborhoodSafetyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NeighborhoodSafetyPayload>
+        }
+        aggregate: {
+          args: Prisma.NeighborhoodSafetyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNeighborhoodSafety>
+        }
+        groupBy: {
+          args: Prisma.NeighborhoodSafetyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NeighborhoodSafetyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NeighborhoodSafetyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NeighborhoodSafetyCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -976,6 +1051,22 @@ export const FavoriteNeighborhoodScalarFieldEnum = {
 } as const
 
 export type FavoriteNeighborhoodScalarFieldEnum = (typeof FavoriteNeighborhoodScalarFieldEnum)[keyof typeof FavoriteNeighborhoodScalarFieldEnum]
+
+
+export const NeighborhoodSafetyScalarFieldEnum = {
+  id: 'id',
+  neighborhoodName: 'neighborhoodName',
+  crimeScore: 'crimeScore',
+  crimeNumeric: 'crimeNumeric',
+  crimeDescription: 'crimeDescription',
+  crimeBreakdown: 'crimeBreakdown',
+  incidents: 'incidents',
+  cachedAt: 'cachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NeighborhoodSafetyScalarFieldEnum = (typeof NeighborhoodSafetyScalarFieldEnum)[keyof typeof NeighborhoodSafetyScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1202,6 +1293,7 @@ export type GlobalOmitConfig = {
   neighborhood?: Prisma.NeighborhoodOmit
   pOI?: Prisma.POIOmit
   favoriteNeighborhood?: Prisma.FavoriteNeighborhoodOmit
+  neighborhoodSafety?: Prisma.NeighborhoodSafetyOmit
 }
 
 /* Types for Logging */

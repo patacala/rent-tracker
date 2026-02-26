@@ -208,9 +208,9 @@ function buildStats(
       icon: 'school-outline',
       getValue: () => {
         const count = categories.filter((c) => categoryMatchesTerm(c, 'school')).length;
-        return count > 3 ? '9/10' : count > 1 ? '7/10' : '6/10';
+        return count.toString();
       },
-      description: 'School Rating',
+      description: 'Schools',
     },
     {
       categoryTerms: ['restaurant', 'bar', 'cafe', 'dining'],

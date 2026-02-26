@@ -56,7 +56,8 @@ export const ModelName = {
   OnboardingProfile: 'OnboardingProfile',
   Neighborhood: 'Neighborhood',
   POI: 'POI',
-  FavoriteNeighborhood: 'FavoriteNeighborhood'
+  FavoriteNeighborhood: 'FavoriteNeighborhood',
+  NeighborhoodSafety: 'NeighborhoodSafety'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -159,6 +160,22 @@ export const FavoriteNeighborhoodScalarFieldEnum = {
 } as const
 
 export type FavoriteNeighborhoodScalarFieldEnum = (typeof FavoriteNeighborhoodScalarFieldEnum)[keyof typeof FavoriteNeighborhoodScalarFieldEnum]
+
+
+export const NeighborhoodSafetyScalarFieldEnum = {
+  id: 'id',
+  neighborhoodName: 'neighborhoodName',
+  crimeScore: 'crimeScore',
+  crimeNumeric: 'crimeNumeric',
+  crimeDescription: 'crimeDescription',
+  crimeBreakdown: 'crimeBreakdown',
+  incidents: 'incidents',
+  cachedAt: 'cachedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NeighborhoodSafetyScalarFieldEnum = (typeof NeighborhoodSafetyScalarFieldEnum)[keyof typeof NeighborhoodSafetyScalarFieldEnum]
 
 
 export const SortOrder = {

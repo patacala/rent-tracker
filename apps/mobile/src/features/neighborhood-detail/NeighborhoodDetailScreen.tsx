@@ -23,6 +23,7 @@ import { SafetySection } from './components/SafetySection';
 import { useAuth } from '@shared/context/AuthContext';
 import { useToggleFavoriteMutation, useGetFavoritesQuery } from '@features/saved/store/savedApi';
 import { useToast } from '@shared/context/ToastContext';
+import { useNeighborhoodSafety } from './hooks/useNeighborhoodSafety';
 
 export function NeighborhoodDetailScreen(): JSX.Element {
   const router = useRouter();
@@ -38,6 +39,12 @@ export function NeighborhoodDetailScreen(): JSX.Element {
 
   const isFavorite = favoritesData?.neighborhoods?.some((n) => n.id === id) ?? false;
   const [localFavorite, setLocalFavorite] = useState(isFavorite);
+
+  const { safety, isLoading: safetyLoading } = useNeighborhoodSafety(
+    detail?.name ?? '',
+    detail?.lat ?? 0,
+    detail?.lng ?? 0,
+  );
 
   useEffect(() => {
     setLocalFavorite(isFavorite);
@@ -161,11 +168,9 @@ export function NeighborhoodDetailScreen(): JSX.Element {
         />
 
         <SafetySection
-          grade={detail.safetyGrade}
-          rank={detail.safetyRank}
-          crimeComparison={detail.crimeComparison}
-          crimeYoY={detail.crimeYoY}
-          crimeYoYValue={detail.crimeYoYValue}
+          isLoggedIn={isLoggedIn}
+          isLoading={safetyLoading}
+          safety={safety}
         />
       </ScrollView>
     </SafeAreaView>
