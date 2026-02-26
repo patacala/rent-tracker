@@ -64,8 +64,12 @@ function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): 
 function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
   const uniqueCategories = Array.from(new Set(pois.map((p) => p.category.toLowerCase())));
 
+  const priorities = onboarding.priorities.flatMap(
+    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
+  );
+
   const userPriorityTerms = [
-    ...onboarding.priorities.map((p) => p.toLowerCase()),
+    ...priorities.map((p) => p.toLowerCase()),
     ...(onboarding.hasChildren === 'yes' ? ['school', 'park'] : []),
     ...(onboarding.hasPets === 'yes' ? ['park'] : []),
   ];
@@ -79,7 +83,7 @@ function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
   );
 
   return [...matched, ...unmatched]
-    .slice(0, 3)
+    .slice(0, 8)
     .map((c) => c.charAt(0).toUpperCase() + c.slice(1));
 }
 

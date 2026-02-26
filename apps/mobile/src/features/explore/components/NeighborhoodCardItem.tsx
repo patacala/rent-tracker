@@ -134,7 +134,7 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
 
       <View style={styles.cardBody}>
         <NeighborhoodCard.Tags>
-          {item.tags.slice(0, 3).map((tag) => (
+          {item.tags.slice(0, 8).map((tag) => (
             <Tag key={tag} variant="neutral">
               <Tag.Label>{tag}</Tag.Label>
             </Tag>
