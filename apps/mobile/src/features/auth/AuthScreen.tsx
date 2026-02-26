@@ -334,8 +334,8 @@ export function AuthScreen(): JSX.Element {
       if (!hasOnboarding && hasLocalOnboarding) {
         try {
           await syncToBackend();          
-          await persistAnalysisSession(); 
           router.push('/purchase/purchase');
+          persistAnalysisSession().catch(() => {});
           return;
         } catch (error) {
           setServerError('Something went wrong while syncing your account.');
