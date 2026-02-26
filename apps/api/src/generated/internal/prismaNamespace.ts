@@ -1055,7 +1055,7 @@ export type FavoriteNeighborhoodScalarFieldEnum = (typeof FavoriteNeighborhoodSc
 
 export const NeighborhoodSafetyScalarFieldEnum = {
   id: 'id',
-  neighborhoodName: 'neighborhoodName',
+  neighborhoodId: 'neighborhoodId',
   crimeScore: 'crimeScore',
   crimeNumeric: 'crimeNumeric',
   crimeDescription: 'crimeDescription',

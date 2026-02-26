@@ -73,6 +73,7 @@ model Neighborhood {
   // Relations
   pois POI[]
   favoriteNeighborhoods FavoriteNeighborhood[]
+  safety NeighborhoodSafety?
 
   // Indexes for performance
   @@index([centerLat, centerLng])
@@ -130,7 +131,8 @@ model FavoriteNeighborhood {
 
 model NeighborhoodSafety {
   id                  String   @id @default(cuid())
-  neighborhoodName    String   @unique // clave de búsqueda
+  neighborhoodId      String       @unique
+  neighborhood        Neighborhood @relation(fields: [neighborhoodId], references: [id], onDelete: Cascade)
   
   // Crime scores
   crimeScore          String   // "C+", "A-", etc.
@@ -149,7 +151,7 @@ model NeighborhoodSafety {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  @@index([neighborhoodName])
+  @@index([neighborhoodId])
   @@index([cachedAt])
   @@map("NeighborhoodSafety")
 }

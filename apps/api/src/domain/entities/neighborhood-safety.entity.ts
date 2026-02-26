@@ -25,7 +25,7 @@ export interface CrimeIncidents {
 
 export interface NeighborhoodSafetyEntity {
   id: string;
-  neighborhoodName: string;
+  neighborhoodId: string;
   crimeScore: string;
   crimeNumeric: number;
   crimeDescription: string;

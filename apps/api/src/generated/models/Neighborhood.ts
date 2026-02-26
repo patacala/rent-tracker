@@ -258,6 +258,7 @@ export type NeighborhoodWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
   pois?: Prisma.POIListRelationFilter
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodListRelationFilter
+  safety?: Prisma.XOR<Prisma.NeighborhoodSafetyNullableScalarRelationFilter, Prisma.NeighborhoodSafetyWhereInput> | null
 }
 
 export type NeighborhoodOrderByWithRelationInput = {
@@ -273,6 +274,7 @@ export type NeighborhoodOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   pois?: Prisma.POIOrderByRelationAggregateInput
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodOrderByRelationAggregateInput
+  safety?: Prisma.NeighborhoodSafetyOrderByWithRelationInput
 }
 
 export type NeighborhoodWhereUniqueInput = Prisma.AtLeast<{
@@ -291,6 +293,7 @@ export type NeighborhoodWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Neighborhood"> | Date | string
   pois?: Prisma.POIListRelationFilter
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodListRelationFilter
+  safety?: Prisma.XOR<Prisma.NeighborhoodSafetyNullableScalarRelationFilter, Prisma.NeighborhoodSafetyWhereInput> | null
 }, "id">
 
 export type NeighborhoodOrderByWithAggregationInput = {
@@ -340,6 +343,7 @@ export type NeighborhoodCreateInput = {
   updatedAt?: Date | string
   pois?: Prisma.POICreateNestedManyWithoutNeighborhoodInput
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodCreateNestedManyWithoutNeighborhoodInput
+  safety?: Prisma.NeighborhoodSafetyCreateNestedOneWithoutNeighborhoodInput
 }
 
 export type NeighborhoodUncheckedCreateInput = {
@@ -355,6 +359,7 @@ export type NeighborhoodUncheckedCreateInput = {
   updatedAt?: Date | string
   pois?: Prisma.POIUncheckedCreateNestedManyWithoutNeighborhoodInput
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedCreateNestedManyWithoutNeighborhoodInput
+  safety?: Prisma.NeighborhoodSafetyUncheckedCreateNestedOneWithoutNeighborhoodInput
 }
 
 export type NeighborhoodUpdateInput = {
@@ -370,6 +375,7 @@ export type NeighborhoodUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pois?: Prisma.POIUpdateManyWithoutNeighborhoodNestedInput
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUpdateManyWithoutNeighborhoodNestedInput
+  safety?: Prisma.NeighborhoodSafetyUpdateOneWithoutNeighborhoodNestedInput
 }
 
 export type NeighborhoodUncheckedUpdateInput = {
@@ -385,6 +391,7 @@ export type NeighborhoodUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pois?: Prisma.POIUncheckedUpdateManyWithoutNeighborhoodNestedInput
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedUpdateManyWithoutNeighborhoodNestedInput
+  safety?: Prisma.NeighborhoodSafetyUncheckedUpdateOneWithoutNeighborhoodNestedInput
 }
 
 export type NeighborhoodCreateManyInput = {
@@ -506,6 +513,20 @@ export type NeighborhoodUpdateOneRequiredWithoutFavoriteNeighborhoodsNestedInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.NeighborhoodUpdateToOneWithWhereWithoutFavoriteNeighborhoodsInput, Prisma.NeighborhoodUpdateWithoutFavoriteNeighborhoodsInput>, Prisma.NeighborhoodUncheckedUpdateWithoutFavoriteNeighborhoodsInput>
 }
 
+export type NeighborhoodCreateNestedOneWithoutSafetyInput = {
+  create?: Prisma.XOR<Prisma.NeighborhoodCreateWithoutSafetyInput, Prisma.NeighborhoodUncheckedCreateWithoutSafetyInput>
+  connectOrCreate?: Prisma.NeighborhoodCreateOrConnectWithoutSafetyInput
+  connect?: Prisma.NeighborhoodWhereUniqueInput
+}
+
+export type NeighborhoodUpdateOneRequiredWithoutSafetyNestedInput = {
+  create?: Prisma.XOR<Prisma.NeighborhoodCreateWithoutSafetyInput, Prisma.NeighborhoodUncheckedCreateWithoutSafetyInput>
+  connectOrCreate?: Prisma.NeighborhoodCreateOrConnectWithoutSafetyInput
+  upsert?: Prisma.NeighborhoodUpsertWithoutSafetyInput
+  connect?: Prisma.NeighborhoodWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.NeighborhoodUpdateToOneWithWhereWithoutSafetyInput, Prisma.NeighborhoodUpdateWithoutSafetyInput>, Prisma.NeighborhoodUncheckedUpdateWithoutSafetyInput>
+}
+
 export type NeighborhoodCreateWithoutPoisInput = {
   id?: string
   name: string
@@ -518,6 +539,7 @@ export type NeighborhoodCreateWithoutPoisInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodCreateNestedManyWithoutNeighborhoodInput
+  safety?: Prisma.NeighborhoodSafetyCreateNestedOneWithoutNeighborhoodInput
 }
 
 export type NeighborhoodUncheckedCreateWithoutPoisInput = {
@@ -532,6 +554,7 @@ export type NeighborhoodUncheckedCreateWithoutPoisInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedCreateNestedManyWithoutNeighborhoodInput
+  safety?: Prisma.NeighborhoodSafetyUncheckedCreateNestedOneWithoutNeighborhoodInput
 }
 
 export type NeighborhoodCreateOrConnectWithoutPoisInput = {
@@ -562,6 +585,7 @@ export type NeighborhoodUpdateWithoutPoisInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUpdateManyWithoutNeighborhoodNestedInput
+  safety?: Prisma.NeighborhoodSafetyUpdateOneWithoutNeighborhoodNestedInput
 }
 
 export type NeighborhoodUncheckedUpdateWithoutPoisInput = {
@@ -576,6 +600,7 @@ export type NeighborhoodUncheckedUpdateWithoutPoisInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedUpdateManyWithoutNeighborhoodNestedInput
+  safety?: Prisma.NeighborhoodSafetyUncheckedUpdateOneWithoutNeighborhoodNestedInput
 }
 
 export type NeighborhoodCreateWithoutFavoriteNeighborhoodsInput = {
@@ -590,6 +615,7 @@ export type NeighborhoodCreateWithoutFavoriteNeighborhoodsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   pois?: Prisma.POICreateNestedManyWithoutNeighborhoodInput
+  safety?: Prisma.NeighborhoodSafetyCreateNestedOneWithoutNeighborhoodInput
 }
 
 export type NeighborhoodUncheckedCreateWithoutFavoriteNeighborhoodsInput = {
@@ -604,6 +630,7 @@ export type NeighborhoodUncheckedCreateWithoutFavoriteNeighborhoodsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   pois?: Prisma.POIUncheckedCreateNestedManyWithoutNeighborhoodInput
+  safety?: Prisma.NeighborhoodSafetyUncheckedCreateNestedOneWithoutNeighborhoodInput
 }
 
 export type NeighborhoodCreateOrConnectWithoutFavoriteNeighborhoodsInput = {
@@ -634,6 +661,7 @@ export type NeighborhoodUpdateWithoutFavoriteNeighborhoodsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pois?: Prisma.POIUpdateManyWithoutNeighborhoodNestedInput
+  safety?: Prisma.NeighborhoodSafetyUpdateOneWithoutNeighborhoodNestedInput
 }
 
 export type NeighborhoodUncheckedUpdateWithoutFavoriteNeighborhoodsInput = {
@@ -648,6 +676,83 @@ export type NeighborhoodUncheckedUpdateWithoutFavoriteNeighborhoodsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pois?: Prisma.POIUncheckedUpdateManyWithoutNeighborhoodNestedInput
+  safety?: Prisma.NeighborhoodSafetyUncheckedUpdateOneWithoutNeighborhoodNestedInput
+}
+
+export type NeighborhoodCreateWithoutSafetyInput = {
+  id?: string
+  name: string
+  boundary: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  source: string
+  centerLat: number
+  centerLng: number
+  photoUrl?: string | null
+  cachedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pois?: Prisma.POICreateNestedManyWithoutNeighborhoodInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodCreateNestedManyWithoutNeighborhoodInput
+}
+
+export type NeighborhoodUncheckedCreateWithoutSafetyInput = {
+  id?: string
+  name: string
+  boundary: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  source: string
+  centerLat: number
+  centerLng: number
+  photoUrl?: string | null
+  cachedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pois?: Prisma.POIUncheckedCreateNestedManyWithoutNeighborhoodInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedCreateNestedManyWithoutNeighborhoodInput
+}
+
+export type NeighborhoodCreateOrConnectWithoutSafetyInput = {
+  where: Prisma.NeighborhoodWhereUniqueInput
+  create: Prisma.XOR<Prisma.NeighborhoodCreateWithoutSafetyInput, Prisma.NeighborhoodUncheckedCreateWithoutSafetyInput>
+}
+
+export type NeighborhoodUpsertWithoutSafetyInput = {
+  update: Prisma.XOR<Prisma.NeighborhoodUpdateWithoutSafetyInput, Prisma.NeighborhoodUncheckedUpdateWithoutSafetyInput>
+  create: Prisma.XOR<Prisma.NeighborhoodCreateWithoutSafetyInput, Prisma.NeighborhoodUncheckedCreateWithoutSafetyInput>
+  where?: Prisma.NeighborhoodWhereInput
+}
+
+export type NeighborhoodUpdateToOneWithWhereWithoutSafetyInput = {
+  where?: Prisma.NeighborhoodWhereInput
+  data: Prisma.XOR<Prisma.NeighborhoodUpdateWithoutSafetyInput, Prisma.NeighborhoodUncheckedUpdateWithoutSafetyInput>
+}
+
+export type NeighborhoodUpdateWithoutSafetyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  boundary?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
+  centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pois?: Prisma.POIUpdateManyWithoutNeighborhoodNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUpdateManyWithoutNeighborhoodNestedInput
+}
+
+export type NeighborhoodUncheckedUpdateWithoutSafetyInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  boundary?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  centerLat?: Prisma.FloatFieldUpdateOperationsInput | number
+  centerLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pois?: Prisma.POIUncheckedUpdateManyWithoutNeighborhoodNestedInput
+  favoriteNeighborhoods?: Prisma.FavoriteNeighborhoodUncheckedUpdateManyWithoutNeighborhoodNestedInput
 }
 
 
@@ -703,6 +808,7 @@ export type NeighborhoodSelect<ExtArgs extends runtime.Types.Extensions.Internal
   updatedAt?: boolean
   pois?: boolean | Prisma.Neighborhood$poisArgs<ExtArgs>
   favoriteNeighborhoods?: boolean | Prisma.Neighborhood$favoriteNeighborhoodsArgs<ExtArgs>
+  safety?: boolean | Prisma.Neighborhood$safetyArgs<ExtArgs>
   _count?: boolean | Prisma.NeighborhoodCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["neighborhood"]>
 
@@ -749,6 +855,7 @@ export type NeighborhoodOmit<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type NeighborhoodInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   pois?: boolean | Prisma.Neighborhood$poisArgs<ExtArgs>
   favoriteNeighborhoods?: boolean | Prisma.Neighborhood$favoriteNeighborhoodsArgs<ExtArgs>
+  safety?: boolean | Prisma.Neighborhood$safetyArgs<ExtArgs>
   _count?: boolean | Prisma.NeighborhoodCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type NeighborhoodIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -759,6 +866,7 @@ export type $NeighborhoodPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     pois: Prisma.$POIPayload<ExtArgs>[]
     favoriteNeighborhoods: Prisma.$FavoriteNeighborhoodPayload<ExtArgs>[]
+    safety: Prisma.$NeighborhoodSafetyPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1167,6 +1275,7 @@ export interface Prisma__NeighborhoodClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   pois<T extends Prisma.Neighborhood$poisArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Neighborhood$poisArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$POIPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   favoriteNeighborhoods<T extends Prisma.Neighborhood$favoriteNeighborhoodsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Neighborhood$favoriteNeighborhoodsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FavoriteNeighborhoodPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  safety<T extends Prisma.Neighborhood$safetyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Neighborhood$safetyArgs<ExtArgs>>): Prisma.Prisma__NeighborhoodSafetyClient<runtime.Types.Result.GetResult<Prisma.$NeighborhoodSafetyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1639,6 +1748,25 @@ export type Neighborhood$favoriteNeighborhoodsArgs<ExtArgs extends runtime.Types
   take?: number
   skip?: number
   distinct?: Prisma.FavoriteNeighborhoodScalarFieldEnum | Prisma.FavoriteNeighborhoodScalarFieldEnum[]
+}
+
+/**
+ * Neighborhood.safety
+ */
+export type Neighborhood$safetyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NeighborhoodSafety
+   */
+  select?: Prisma.NeighborhoodSafetySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the NeighborhoodSafety
+   */
+  omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
+  where?: Prisma.NeighborhoodSafetyWhereInput
 }
 
 /**

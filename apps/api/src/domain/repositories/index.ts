@@ -128,7 +128,7 @@ export interface IFavoriteNeighborhoodRepository {
 }
 
 export interface INeighborhoodSafetyRepository {
-  findByName(neighborhoodName: string): Promise<NeighborhoodSafetyEntity | null>;
+  findByNeighborhoodId(neighborhoodId: string): Promise<NeighborhoodSafetyEntity | null>;
   upsert(data: Omit<NeighborhoodSafetyEntity, 'id' | 'createdAt' | 'updatedAt'>): Promise<NeighborhoodSafetyEntity>;
   isExpired(cachedAt: Date, ttlDays?: number): boolean;
 }

@@ -36,7 +36,7 @@ export type NeighborhoodSafetySumAggregateOutputType = {
 
 export type NeighborhoodSafetyMinAggregateOutputType = {
   id: string | null
-  neighborhoodName: string | null
+  neighborhoodId: string | null
   crimeScore: string | null
   crimeNumeric: number | null
   crimeDescription: string | null
@@ -47,7 +47,7 @@ export type NeighborhoodSafetyMinAggregateOutputType = {
 
 export type NeighborhoodSafetyMaxAggregateOutputType = {
   id: string | null
-  neighborhoodName: string | null
+  neighborhoodId: string | null
   crimeScore: string | null
   crimeNumeric: number | null
   crimeDescription: string | null
@@ -58,7 +58,7 @@ export type NeighborhoodSafetyMaxAggregateOutputType = {
 
 export type NeighborhoodSafetyCountAggregateOutputType = {
   id: number
-  neighborhoodName: number
+  neighborhoodId: number
   crimeScore: number
   crimeNumeric: number
   crimeDescription: number
@@ -81,7 +81,7 @@ export type NeighborhoodSafetySumAggregateInputType = {
 
 export type NeighborhoodSafetyMinAggregateInputType = {
   id?: true
-  neighborhoodName?: true
+  neighborhoodId?: true
   crimeScore?: true
   crimeNumeric?: true
   crimeDescription?: true
@@ -92,7 +92,7 @@ export type NeighborhoodSafetyMinAggregateInputType = {
 
 export type NeighborhoodSafetyMaxAggregateInputType = {
   id?: true
-  neighborhoodName?: true
+  neighborhoodId?: true
   crimeScore?: true
   crimeNumeric?: true
   crimeDescription?: true
@@ -103,7 +103,7 @@ export type NeighborhoodSafetyMaxAggregateInputType = {
 
 export type NeighborhoodSafetyCountAggregateInputType = {
   id?: true
-  neighborhoodName?: true
+  neighborhoodId?: true
   crimeScore?: true
   crimeNumeric?: true
   crimeDescription?: true
@@ -203,7 +203,7 @@ export type NeighborhoodSafetyGroupByArgs<ExtArgs extends runtime.Types.Extensio
 
 export type NeighborhoodSafetyGroupByOutputType = {
   id: string
-  neighborhoodName: string
+  neighborhoodId: string
   crimeScore: string
   crimeNumeric: number
   crimeDescription: string
@@ -239,7 +239,7 @@ export type NeighborhoodSafetyWhereInput = {
   OR?: Prisma.NeighborhoodSafetyWhereInput[]
   NOT?: Prisma.NeighborhoodSafetyWhereInput | Prisma.NeighborhoodSafetyWhereInput[]
   id?: Prisma.StringFilter<"NeighborhoodSafety"> | string
-  neighborhoodName?: Prisma.StringFilter<"NeighborhoodSafety"> | string
+  neighborhoodId?: Prisma.StringFilter<"NeighborhoodSafety"> | string
   crimeScore?: Prisma.StringFilter<"NeighborhoodSafety"> | string
   crimeNumeric?: Prisma.FloatFilter<"NeighborhoodSafety"> | number
   crimeDescription?: Prisma.StringFilter<"NeighborhoodSafety"> | string
@@ -248,11 +248,12 @@ export type NeighborhoodSafetyWhereInput = {
   cachedAt?: Prisma.DateTimeFilter<"NeighborhoodSafety"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"NeighborhoodSafety"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NeighborhoodSafety"> | Date | string
+  neighborhood?: Prisma.XOR<Prisma.NeighborhoodScalarRelationFilter, Prisma.NeighborhoodWhereInput>
 }
 
 export type NeighborhoodSafetyOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  neighborhoodName?: Prisma.SortOrder
+  neighborhoodId?: Prisma.SortOrder
   crimeScore?: Prisma.SortOrder
   crimeNumeric?: Prisma.SortOrder
   crimeDescription?: Prisma.SortOrder
@@ -261,11 +262,12 @@ export type NeighborhoodSafetyOrderByWithRelationInput = {
   cachedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  neighborhood?: Prisma.NeighborhoodOrderByWithRelationInput
 }
 
 export type NeighborhoodSafetyWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  neighborhoodName?: string
+  neighborhoodId?: string
   AND?: Prisma.NeighborhoodSafetyWhereInput | Prisma.NeighborhoodSafetyWhereInput[]
   OR?: Prisma.NeighborhoodSafetyWhereInput[]
   NOT?: Prisma.NeighborhoodSafetyWhereInput | Prisma.NeighborhoodSafetyWhereInput[]
@@ -277,11 +279,12 @@ export type NeighborhoodSafetyWhereUniqueInput = Prisma.AtLeast<{
   cachedAt?: Prisma.DateTimeFilter<"NeighborhoodSafety"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"NeighborhoodSafety"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NeighborhoodSafety"> | Date | string
-}, "id" | "neighborhoodName">
+  neighborhood?: Prisma.XOR<Prisma.NeighborhoodScalarRelationFilter, Prisma.NeighborhoodWhereInput>
+}, "id" | "neighborhoodId">
 
 export type NeighborhoodSafetyOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  neighborhoodName?: Prisma.SortOrder
+  neighborhoodId?: Prisma.SortOrder
   crimeScore?: Prisma.SortOrder
   crimeNumeric?: Prisma.SortOrder
   crimeDescription?: Prisma.SortOrder
@@ -302,7 +305,7 @@ export type NeighborhoodSafetyScalarWhereWithAggregatesInput = {
   OR?: Prisma.NeighborhoodSafetyScalarWhereWithAggregatesInput[]
   NOT?: Prisma.NeighborhoodSafetyScalarWhereWithAggregatesInput | Prisma.NeighborhoodSafetyScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"NeighborhoodSafety"> | string
-  neighborhoodName?: Prisma.StringWithAggregatesFilter<"NeighborhoodSafety"> | string
+  neighborhoodId?: Prisma.StringWithAggregatesFilter<"NeighborhoodSafety"> | string
   crimeScore?: Prisma.StringWithAggregatesFilter<"NeighborhoodSafety"> | string
   crimeNumeric?: Prisma.FloatWithAggregatesFilter<"NeighborhoodSafety"> | number
   crimeDescription?: Prisma.StringWithAggregatesFilter<"NeighborhoodSafety"> | string
@@ -315,7 +318,6 @@ export type NeighborhoodSafetyScalarWhereWithAggregatesInput = {
 
 export type NeighborhoodSafetyCreateInput = {
   id?: string
-  neighborhoodName: string
   crimeScore: string
   crimeNumeric: number
   crimeDescription: string
@@ -324,11 +326,12 @@ export type NeighborhoodSafetyCreateInput = {
   cachedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
+  neighborhood: Prisma.NeighborhoodCreateNestedOneWithoutSafetyInput
 }
 
 export type NeighborhoodSafetyUncheckedCreateInput = {
   id?: string
-  neighborhoodName: string
+  neighborhoodId: string
   crimeScore: string
   crimeNumeric: number
   crimeDescription: string
@@ -341,7 +344,6 @@ export type NeighborhoodSafetyUncheckedCreateInput = {
 
 export type NeighborhoodSafetyUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  neighborhoodName?: Prisma.StringFieldUpdateOperationsInput | string
   crimeScore?: Prisma.StringFieldUpdateOperationsInput | string
   crimeNumeric?: Prisma.FloatFieldUpdateOperationsInput | number
   crimeDescription?: Prisma.StringFieldUpdateOperationsInput | string
@@ -350,11 +352,12 @@ export type NeighborhoodSafetyUpdateInput = {
   cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  neighborhood?: Prisma.NeighborhoodUpdateOneRequiredWithoutSafetyNestedInput
 }
 
 export type NeighborhoodSafetyUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  neighborhoodName?: Prisma.StringFieldUpdateOperationsInput | string
+  neighborhoodId?: Prisma.StringFieldUpdateOperationsInput | string
   crimeScore?: Prisma.StringFieldUpdateOperationsInput | string
   crimeNumeric?: Prisma.FloatFieldUpdateOperationsInput | number
   crimeDescription?: Prisma.StringFieldUpdateOperationsInput | string
@@ -367,7 +370,7 @@ export type NeighborhoodSafetyUncheckedUpdateInput = {
 
 export type NeighborhoodSafetyCreateManyInput = {
   id?: string
-  neighborhoodName: string
+  neighborhoodId: string
   crimeScore: string
   crimeNumeric: number
   crimeDescription: string
@@ -380,7 +383,6 @@ export type NeighborhoodSafetyCreateManyInput = {
 
 export type NeighborhoodSafetyUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  neighborhoodName?: Prisma.StringFieldUpdateOperationsInput | string
   crimeScore?: Prisma.StringFieldUpdateOperationsInput | string
   crimeNumeric?: Prisma.FloatFieldUpdateOperationsInput | number
   crimeDescription?: Prisma.StringFieldUpdateOperationsInput | string
@@ -393,7 +395,7 @@ export type NeighborhoodSafetyUpdateManyMutationInput = {
 
 export type NeighborhoodSafetyUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  neighborhoodName?: Prisma.StringFieldUpdateOperationsInput | string
+  neighborhoodId?: Prisma.StringFieldUpdateOperationsInput | string
   crimeScore?: Prisma.StringFieldUpdateOperationsInput | string
   crimeNumeric?: Prisma.FloatFieldUpdateOperationsInput | number
   crimeDescription?: Prisma.StringFieldUpdateOperationsInput | string
@@ -404,9 +406,14 @@ export type NeighborhoodSafetyUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type NeighborhoodSafetyNullableScalarRelationFilter = {
+  is?: Prisma.NeighborhoodSafetyWhereInput | null
+  isNot?: Prisma.NeighborhoodSafetyWhereInput | null
+}
+
 export type NeighborhoodSafetyCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  neighborhoodName?: Prisma.SortOrder
+  neighborhoodId?: Prisma.SortOrder
   crimeScore?: Prisma.SortOrder
   crimeNumeric?: Prisma.SortOrder
   crimeDescription?: Prisma.SortOrder
@@ -423,7 +430,7 @@ export type NeighborhoodSafetyAvgOrderByAggregateInput = {
 
 export type NeighborhoodSafetyMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  neighborhoodName?: Prisma.SortOrder
+  neighborhoodId?: Prisma.SortOrder
   crimeScore?: Prisma.SortOrder
   crimeNumeric?: Prisma.SortOrder
   crimeDescription?: Prisma.SortOrder
@@ -434,7 +441,7 @@ export type NeighborhoodSafetyMaxOrderByAggregateInput = {
 
 export type NeighborhoodSafetyMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  neighborhoodName?: Prisma.SortOrder
+  neighborhoodId?: Prisma.SortOrder
   crimeScore?: Prisma.SortOrder
   crimeNumeric?: Prisma.SortOrder
   crimeDescription?: Prisma.SortOrder
@@ -447,11 +454,107 @@ export type NeighborhoodSafetySumOrderByAggregateInput = {
   crimeNumeric?: Prisma.SortOrder
 }
 
+export type NeighborhoodSafetyCreateNestedOneWithoutNeighborhoodInput = {
+  create?: Prisma.XOR<Prisma.NeighborhoodSafetyCreateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedCreateWithoutNeighborhoodInput>
+  connectOrCreate?: Prisma.NeighborhoodSafetyCreateOrConnectWithoutNeighborhoodInput
+  connect?: Prisma.NeighborhoodSafetyWhereUniqueInput
+}
+
+export type NeighborhoodSafetyUncheckedCreateNestedOneWithoutNeighborhoodInput = {
+  create?: Prisma.XOR<Prisma.NeighborhoodSafetyCreateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedCreateWithoutNeighborhoodInput>
+  connectOrCreate?: Prisma.NeighborhoodSafetyCreateOrConnectWithoutNeighborhoodInput
+  connect?: Prisma.NeighborhoodSafetyWhereUniqueInput
+}
+
+export type NeighborhoodSafetyUpdateOneWithoutNeighborhoodNestedInput = {
+  create?: Prisma.XOR<Prisma.NeighborhoodSafetyCreateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedCreateWithoutNeighborhoodInput>
+  connectOrCreate?: Prisma.NeighborhoodSafetyCreateOrConnectWithoutNeighborhoodInput
+  upsert?: Prisma.NeighborhoodSafetyUpsertWithoutNeighborhoodInput
+  disconnect?: Prisma.NeighborhoodSafetyWhereInput | boolean
+  delete?: Prisma.NeighborhoodSafetyWhereInput | boolean
+  connect?: Prisma.NeighborhoodSafetyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.NeighborhoodSafetyUpdateToOneWithWhereWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUpdateWithoutNeighborhoodInput>, Prisma.NeighborhoodSafetyUncheckedUpdateWithoutNeighborhoodInput>
+}
+
+export type NeighborhoodSafetyUncheckedUpdateOneWithoutNeighborhoodNestedInput = {
+  create?: Prisma.XOR<Prisma.NeighborhoodSafetyCreateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedCreateWithoutNeighborhoodInput>
+  connectOrCreate?: Prisma.NeighborhoodSafetyCreateOrConnectWithoutNeighborhoodInput
+  upsert?: Prisma.NeighborhoodSafetyUpsertWithoutNeighborhoodInput
+  disconnect?: Prisma.NeighborhoodSafetyWhereInput | boolean
+  delete?: Prisma.NeighborhoodSafetyWhereInput | boolean
+  connect?: Prisma.NeighborhoodSafetyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.NeighborhoodSafetyUpdateToOneWithWhereWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUpdateWithoutNeighborhoodInput>, Prisma.NeighborhoodSafetyUncheckedUpdateWithoutNeighborhoodInput>
+}
+
+export type NeighborhoodSafetyCreateWithoutNeighborhoodInput = {
+  id?: string
+  crimeScore: string
+  crimeNumeric: number
+  crimeDescription: string
+  crimeBreakdown: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  incidents: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  cachedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type NeighborhoodSafetyUncheckedCreateWithoutNeighborhoodInput = {
+  id?: string
+  crimeScore: string
+  crimeNumeric: number
+  crimeDescription: string
+  crimeBreakdown: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  incidents: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  cachedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type NeighborhoodSafetyCreateOrConnectWithoutNeighborhoodInput = {
+  where: Prisma.NeighborhoodSafetyWhereUniqueInput
+  create: Prisma.XOR<Prisma.NeighborhoodSafetyCreateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedCreateWithoutNeighborhoodInput>
+}
+
+export type NeighborhoodSafetyUpsertWithoutNeighborhoodInput = {
+  update: Prisma.XOR<Prisma.NeighborhoodSafetyUpdateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedUpdateWithoutNeighborhoodInput>
+  create: Prisma.XOR<Prisma.NeighborhoodSafetyCreateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedCreateWithoutNeighborhoodInput>
+  where?: Prisma.NeighborhoodSafetyWhereInput
+}
+
+export type NeighborhoodSafetyUpdateToOneWithWhereWithoutNeighborhoodInput = {
+  where?: Prisma.NeighborhoodSafetyWhereInput
+  data: Prisma.XOR<Prisma.NeighborhoodSafetyUpdateWithoutNeighborhoodInput, Prisma.NeighborhoodSafetyUncheckedUpdateWithoutNeighborhoodInput>
+}
+
+export type NeighborhoodSafetyUpdateWithoutNeighborhoodInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  crimeScore?: Prisma.StringFieldUpdateOperationsInput | string
+  crimeNumeric?: Prisma.FloatFieldUpdateOperationsInput | number
+  crimeDescription?: Prisma.StringFieldUpdateOperationsInput | string
+  crimeBreakdown?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  incidents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type NeighborhoodSafetyUncheckedUpdateWithoutNeighborhoodInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  crimeScore?: Prisma.StringFieldUpdateOperationsInput | string
+  crimeNumeric?: Prisma.FloatFieldUpdateOperationsInput | number
+  crimeDescription?: Prisma.StringFieldUpdateOperationsInput | string
+  crimeBreakdown?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  incidents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  cachedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type NeighborhoodSafetySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  neighborhoodName?: boolean
+  neighborhoodId?: boolean
   crimeScore?: boolean
   crimeNumeric?: boolean
   crimeDescription?: boolean
@@ -460,11 +563,12 @@ export type NeighborhoodSafetySelect<ExtArgs extends runtime.Types.Extensions.In
   cachedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  neighborhood?: boolean | Prisma.NeighborhoodDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["neighborhoodSafety"]>
 
 export type NeighborhoodSafetySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  neighborhoodName?: boolean
+  neighborhoodId?: boolean
   crimeScore?: boolean
   crimeNumeric?: boolean
   crimeDescription?: boolean
@@ -473,11 +577,12 @@ export type NeighborhoodSafetySelectCreateManyAndReturn<ExtArgs extends runtime.
   cachedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  neighborhood?: boolean | Prisma.NeighborhoodDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["neighborhoodSafety"]>
 
 export type NeighborhoodSafetySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  neighborhoodName?: boolean
+  neighborhoodId?: boolean
   crimeScore?: boolean
   crimeNumeric?: boolean
   crimeDescription?: boolean
@@ -486,11 +591,12 @@ export type NeighborhoodSafetySelectUpdateManyAndReturn<ExtArgs extends runtime.
   cachedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  neighborhood?: boolean | Prisma.NeighborhoodDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["neighborhoodSafety"]>
 
 export type NeighborhoodSafetySelectScalar = {
   id?: boolean
-  neighborhoodName?: boolean
+  neighborhoodId?: boolean
   crimeScore?: boolean
   crimeNumeric?: boolean
   crimeDescription?: boolean
@@ -501,14 +607,25 @@ export type NeighborhoodSafetySelectScalar = {
   updatedAt?: boolean
 }
 
-export type NeighborhoodSafetyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "neighborhoodName" | "crimeScore" | "crimeNumeric" | "crimeDescription" | "crimeBreakdown" | "incidents" | "cachedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["neighborhoodSafety"]>
+export type NeighborhoodSafetyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "neighborhoodId" | "crimeScore" | "crimeNumeric" | "crimeDescription" | "crimeBreakdown" | "incidents" | "cachedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["neighborhoodSafety"]>
+export type NeighborhoodSafetyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  neighborhood?: boolean | Prisma.NeighborhoodDefaultArgs<ExtArgs>
+}
+export type NeighborhoodSafetyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  neighborhood?: boolean | Prisma.NeighborhoodDefaultArgs<ExtArgs>
+}
+export type NeighborhoodSafetyIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  neighborhood?: boolean | Prisma.NeighborhoodDefaultArgs<ExtArgs>
+}
 
 export type $NeighborhoodSafetyPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "NeighborhoodSafety"
-  objects: {}
+  objects: {
+    neighborhood: Prisma.$NeighborhoodPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    neighborhoodName: string
+    neighborhoodId: string
     crimeScore: string
     crimeNumeric: number
     crimeDescription: string
@@ -911,6 +1028,7 @@ readonly fields: NeighborhoodSafetyFieldRefs;
  */
 export interface Prisma__NeighborhoodSafetyClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  neighborhood<T extends Prisma.NeighborhoodDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.NeighborhoodDefaultArgs<ExtArgs>>): Prisma.Prisma__NeighborhoodClient<runtime.Types.Result.GetResult<Prisma.$NeighborhoodPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -941,7 +1059,7 @@ export interface Prisma__NeighborhoodSafetyClient<T, Null = never, ExtArgs exten
  */
 export interface NeighborhoodSafetyFieldRefs {
   readonly id: Prisma.FieldRef<"NeighborhoodSafety", 'String'>
-  readonly neighborhoodName: Prisma.FieldRef<"NeighborhoodSafety", 'String'>
+  readonly neighborhoodId: Prisma.FieldRef<"NeighborhoodSafety", 'String'>
   readonly crimeScore: Prisma.FieldRef<"NeighborhoodSafety", 'String'>
   readonly crimeNumeric: Prisma.FieldRef<"NeighborhoodSafety", 'Float'>
   readonly crimeDescription: Prisma.FieldRef<"NeighborhoodSafety", 'String'>
@@ -967,6 +1085,10 @@ export type NeighborhoodSafetyFindUniqueArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
+  /**
    * Filter, which NeighborhoodSafety to fetch.
    */
   where: Prisma.NeighborhoodSafetyWhereUniqueInput
@@ -985,6 +1107,10 @@ export type NeighborhoodSafetyFindUniqueOrThrowArgs<ExtArgs extends runtime.Type
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
+  /**
    * Filter, which NeighborhoodSafety to fetch.
    */
   where: Prisma.NeighborhoodSafetyWhereUniqueInput
@@ -1002,6 +1128,10 @@ export type NeighborhoodSafetyFindFirstArgs<ExtArgs extends runtime.Types.Extens
    * Omit specific fields from the NeighborhoodSafety
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
   /**
    * Filter, which NeighborhoodSafety to fetch.
    */
@@ -1051,6 +1181,10 @@ export type NeighborhoodSafetyFindFirstOrThrowArgs<ExtArgs extends runtime.Types
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
+  /**
    * Filter, which NeighborhoodSafety to fetch.
    */
   where?: Prisma.NeighborhoodSafetyWhereInput
@@ -1099,6 +1233,10 @@ export type NeighborhoodSafetyFindManyArgs<ExtArgs extends runtime.Types.Extensi
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
+  /**
    * Filter, which NeighborhoodSafeties to fetch.
    */
   where?: Prisma.NeighborhoodSafetyWhereInput
@@ -1142,6 +1280,10 @@ export type NeighborhoodSafetyCreateArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
+  /**
    * The data needed to create a NeighborhoodSafety.
    */
   data: Prisma.XOR<Prisma.NeighborhoodSafetyCreateInput, Prisma.NeighborhoodSafetyUncheckedCreateInput>
@@ -1175,6 +1317,10 @@ export type NeighborhoodSafetyCreateManyAndReturnArgs<ExtArgs extends runtime.Ty
    */
   data: Prisma.NeighborhoodSafetyCreateManyInput | Prisma.NeighborhoodSafetyCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1189,6 +1335,10 @@ export type NeighborhoodSafetyUpdateArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the NeighborhoodSafety
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
   /**
    * The data needed to update a NeighborhoodSafety.
    */
@@ -1241,6 +1391,10 @@ export type NeighborhoodSafetyUpdateManyAndReturnArgs<ExtArgs extends runtime.Ty
    * Limit how many NeighborhoodSafeties to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1255,6 +1409,10 @@ export type NeighborhoodSafetyUpsertArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the NeighborhoodSafety
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
   /**
    * The filter to search for the NeighborhoodSafety to update in case it exists.
    */
@@ -1281,6 +1439,10 @@ export type NeighborhoodSafetyDeleteArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the NeighborhoodSafety
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
   /**
    * Filter which NeighborhoodSafety to delete.
    */
@@ -1313,4 +1475,8 @@ export type NeighborhoodSafetyDefaultArgs<ExtArgs extends runtime.Types.Extensio
    * Omit specific fields from the NeighborhoodSafety
    */
   omit?: Prisma.NeighborhoodSafetyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NeighborhoodSafetyInclude<ExtArgs> | null
 }

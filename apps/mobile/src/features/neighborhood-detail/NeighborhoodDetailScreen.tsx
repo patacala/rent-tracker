@@ -41,7 +41,7 @@ export function NeighborhoodDetailScreen(): JSX.Element {
   const [localFavorite, setLocalFavorite] = useState(isFavorite);
 
   const { safety, isLoading: safetyLoading } = useNeighborhoodSafety(
-    detail?.name ?? '',
+    id ?? '',
     detail?.lat ?? 0,
     detail?.lng ?? 0,
   );

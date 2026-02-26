@@ -4,7 +4,7 @@ import { DoorProfitService } from '@infrastructure/external/doorprofit/doorprofi
 import { INeighborhoodSafetyRepository, NEIGHBORHOOD_SAFETY_REPOSITORY } from '@domain/repositories';
 
 export interface GetNeighborhoodSafetyInput {
-  neighborhoodName: string;
+  neighborhoodId: string;
   lat: number;
   lng: number;
 }
@@ -20,27 +20,26 @@ export class GetNeighborhoodSafetyUseCase {
   ) {}
 
   async execute(input: GetNeighborhoodSafetyInput): Promise<NeighborhoodSafetyEntity> {
-    const { neighborhoodName, lat, lng } = input;
+    const { neighborhoodId, lat, lng } = input;
 
-    // 1. Busca en DB por nombre
-    const cached = await this.safetyRepo.findByName(neighborhoodName);
+    const cached = await this.safetyRepo.findByNeighborhoodId(neighborhoodId);
 
     if (cached && !this.safetyRepo.isExpired(cached.cachedAt)) {
-      this.logger.log(`Cache hit for neighborhood "${neighborhoodName}"`);
+      this.logger.log(`Cache hit for neighborhood "${neighborhoodId}"`);
       return cached;
     }
 
-    this.logger.log(`Cache miss for "${neighborhoodName}" — fetching from DoorProfit`);
+    this.logger.log(`Cache miss for "${neighborhoodId}" — fetching from DoorProfit`);
 
     const crimeData = await this.doorProfitService.getCrimeByCoordinates(lat, lng);
 
     const saved = await this.safetyRepo.upsert({
-      neighborhoodName,
+      neighborhoodId,
       ...crimeData,
       cachedAt: new Date(),
     });
 
-    this.logger.log(`Saved safety data for "${neighborhoodName}"`);
+    this.logger.log(`Saved safety data for neighborhood "${neighborhoodId}"`);
     return saved;
   }
 }

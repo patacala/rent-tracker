@@ -41,7 +41,7 @@ export interface GetNeighborhoodSafetyResponse {
 }
 
 export interface GetNeighborhoodSafetyRequest {
-  name: string;
+  neighborhoodId: string;
   lat: number;
   lng: number;
 }
@@ -52,13 +52,13 @@ export const safetyApi = createApi({
   tagTypes: ['Safety'],
   endpoints: (builder) => ({
     getNeighborhoodSafety: builder.query<GetNeighborhoodSafetyResponse, GetNeighborhoodSafetyRequest>({
-      query: ({ name, lat, lng }) => ({
+      query: ({ neighborhoodId, lat, lng }) => ({
         url: `/safety/neighborhood`,
         method: 'GET',
-        params: { name, lat, lng },
+        params: { neighborhoodId, lat, lng },
       }),
-      providesTags: (_result, _error, { name }) => [
-        { type: 'Safety', id: name },
+      providesTags: (_result, _error, { neighborhoodId, }) => [
+        { type: 'Safety', id: neighborhoodId, },
       ],
     }),
   }),

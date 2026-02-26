@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
 import type { NeighborhoodSafetyEntity } from '../../domain/entities/neighborhood-safety.entity';
 import { INeighborhoodSafetyRepository } from '@domain/repositories';
 
@@ -8,9 +7,9 @@ import { INeighborhoodSafetyRepository } from '@domain/repositories';
 export class NeighborhoodSafetyRepository implements INeighborhoodSafetyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByName(neighborhoodName: string): Promise<NeighborhoodSafetyEntity | null> {
+  async findByNeighborhoodId(neighborhoodId: string): Promise<NeighborhoodSafetyEntity | null> {
     const record = await this.prisma.neighborhoodSafety.findUnique({
-      where: { neighborhoodName },
+      where: { neighborhoodId },
     });
     if (!record) return null;
     return this.toEntity(record);
@@ -20,9 +19,9 @@ export class NeighborhoodSafetyRepository implements INeighborhoodSafetyReposito
     data: Omit<NeighborhoodSafetyEntity, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<NeighborhoodSafetyEntity> {
     const record = await this.prisma.neighborhoodSafety.upsert({
-      where: { neighborhoodName: data.neighborhoodName },
+      where: { neighborhoodId: data.neighborhoodId },
       create: {
-        neighborhoodName: data.neighborhoodName,
+        neighborhoodId: data.neighborhoodId,
         crimeScore: data.crimeScore,
         crimeNumeric: data.crimeNumeric,
         crimeDescription: data.crimeDescription,
@@ -52,7 +51,7 @@ export class NeighborhoodSafetyRepository implements INeighborhoodSafetyReposito
   private toEntity(record: any): NeighborhoodSafetyEntity {
     return {
       id: record.id,
-      neighborhoodName: record.neighborhoodName,
+      neighborhoodId: record.neighborhoodId,
       crimeScore: record.crimeScore,
       crimeNumeric: record.crimeNumeric,
       crimeDescription: record.crimeDescription,

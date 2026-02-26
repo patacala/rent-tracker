@@ -9,12 +9,12 @@ export class SafetyController {
   @Get('neighborhood')
   @UseGuards(AuthGuard('jwt'))
   async getNeighborhoodSafety(
-    @Query('name') name: string,
+    @Query('neighborhoodId') neighborhoodId: string,
     @Query('lat') lat: string,
     @Query('lng') lng: string,
   ) {
-    if (!name || !lat || !lng) {
-      throw new BadRequestException('name, lat, and lng are required');
+    if (!neighborhoodId || !lat || !lng) {
+      throw new BadRequestException('neighborhoodId, lat and lng are required');
     }
 
     const latNum = parseFloat(lat);
@@ -25,7 +25,7 @@ export class SafetyController {
     }
 
     const result = await this.getSafetyUseCase.execute({
-      neighborhoodName: name,
+      neighborhoodId,
       lat: latNum,
       lng: lngNum,
     });
