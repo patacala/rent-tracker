@@ -42,12 +42,12 @@ export function ExploreScreen(): JSX.Element {
   const toast = useToast();
   const { isLoggedIn } = useAuth();
   const { data: localOnboarding } = useOnboarding();
-  const { data: neighborhoods, isEmpty, isLoading: apiLoading, searchParams } = useExploreNeighborhoods();
+  const { data: neighborhoods, isEmpty, isLoading: apiLoading, /* searchParams */ } = useExploreNeighborhoods();
   const { setAnalysisResult } = useAnalysis();
+  
+  /* const lastRefreshedParamsRef = useRef<string | null>(null); */
 
-  const lastRefreshedParamsRef = useRef<string | null>(null);
-
-  useEffect(() => {
+  /* useEffect(() => {
     if (!isLoggedIn || !searchParams) return;
 
     const paramsKey = JSON.stringify(searchParams);
@@ -67,7 +67,7 @@ export function ExploreScreen(): JSX.Element {
     };
 
     runBackgroundRefresh();
-  }, [isLoggedIn, searchParams, setAnalysisResult]);
+  }, [isLoggedIn, searchParams, setAnalysisResult]); */
 
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');

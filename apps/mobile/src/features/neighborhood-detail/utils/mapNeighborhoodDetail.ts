@@ -1,7 +1,18 @@
 import type { NeighborhoodDetail } from '../types';
 import type { OnboardingData } from '@features/onboarding/context/OnboardingContext';
 import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
-import { buildLifestyleScore } from '@rent-tracker/utils';
+import { calculateWeightedScore } from '@rent-tracker/utils';
+
+const PRIORITY_CATEGORY_MAP: Record<string, string[]> = {
+  commute: ['transit'],
+  schools: ['school'],
+  safety: ['hospital', 'police'],
+  dining: ['bar', 'restaurant'],
+  parks: ['park'],
+  shopping: ['shop', 'grocery'],
+  healthcare: ['hospital', 'medical'],
+  transit: ['transit', 'bus'],
+};
 
 const CATEGORY_ICON_MAP: Record<string, any> = {
   school: 'school-outline',
@@ -14,6 +25,9 @@ const CATEGORY_ICON_MAP: Record<string, any> = {
   transit: 'bus-outline',
   grocery: 'cart-outline',
   cafe: 'cafe-outline',
+  medical: 'medical-outline',
+  police: 'shield-outline',
+  bus: 'bus-outline',
 };
 
 const CATEGORY_DISPLAY: Record<string, string> = {
@@ -27,6 +41,9 @@ const CATEGORY_DISPLAY: Record<string, string> = {
   transit: 'Transit',
   grocery: 'Grocery',
   cafe: 'Café',
+  medical: 'Medical Center',
+  police: 'Police Station',
+  bus: 'Bus Stop',
 };
 
 const TAGLINES = [
@@ -42,10 +59,7 @@ const TAGLINES = [
   'HISTORIC CHARM',
 ];
 
-function haversineKm(
-  lat1: number, lng1: number,
-  lat2: number, lng2: number,
-): number {
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -63,7 +77,7 @@ function formatDistance(km: number): string {
 }
 
 function walkScoreLabel(score: number): string {
-  if (score >= 90) return 'Walker\'s Paradise';
+  if (score >= 90) return "Walker's Paradise";
   if (score >= 70) return 'Very Walkable';
   if (score >= 50) return 'Walkable';
   if (score >= 25) return 'Car Dependent';
@@ -71,39 +85,75 @@ function walkScoreLabel(score: number): string {
 }
 
 function estimateWalkScore(pois: POIEntity[], centerLat: number, centerLng: number): number {
-  const nearby = pois.filter((p) => haversineKm(centerLat, centerLng, p.latitude, p.longitude) < 1.5);
+  const nearby = pois.filter(
+    (p) => haversineKm(centerLat, centerLng, p.latitude, p.longitude) < 1.5,
+  );
   return Math.min(40 + nearby.length * 3, 99);
+}
+
+function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
+  const categories = pois.map((p) => p.category.toLowerCase());
+
+  const commuteScore = Math.max(0, Math.min(100, 100 - (onboarding.commute - 15) * (50 / 30)));
+
+  const uniqueCategories = new Set(categories).size;
+  const amenitiesScore = Math.min(100, uniqueCategories * 12 + pois.length * 1.5);
+
+  const autoPriorities: string[] = [];
+  if (onboarding.hasChildren === 'yes') autoPriorities.push('school', 'park');
+  if (onboarding.hasPets === 'yes') autoPriorities.push('park');
+
+  const relevantCategories = [
+    ...onboarding.priorities.flatMap((p) => PRIORITY_CATEGORY_MAP[p] ?? []),
+    ...autoPriorities,
+  ];
+
+  const familyPOIs = categories.filter((c) => relevantCategories.includes(c)).length;
+  const familyScore = Math.min(100, familyPOIs * 20);
+
+  return calculateWeightedScore({
+    commute: Math.round(commuteScore),
+    amenities: Math.round(amenitiesScore),
+    family: Math.round(familyScore),
+  });
 }
 
 function buildMatches(pois: POIEntity[], onboarding: OnboardingData): Array<{ label: string; value: number }> {
   const categories = pois.map((p) => p.category.toLowerCase());
-  const hasSchools = categories.filter((c) => c === 'school').length;
-  const hasParks = categories.filter((c) => c === 'park').length;
-  const hasRestaurants = categories.filter((c) => c.includes('restaurant') || c.includes('bar')).length;
   const matches: Array<{ label: string; value: number }> = [];
 
-  // Commute match — based on timeMinutes onboarding
   const commuteScore = Math.max(40, 100 - onboarding.commute);
   matches.push({ label: 'Commute Match', value: commuteScore });
 
-  // Priority-based matches
   if (onboarding.priorities.includes('schools') || onboarding.hasChildren === 'yes') {
-    matches.push({ label: 'School Quality', value: Math.min(50 + hasSchools * 15, 99) });
+    const count = categories.filter((c) => c === 'school').length;
+    matches.push({ label: 'School Quality', value: Math.min(50 + count * 15, 99) });
   }
-  if (onboarding.priorities.includes('parks')) {
-    matches.push({ label: 'Parks & Nature', value: Math.min(50 + hasParks * 12, 99) });
+  if (onboarding.priorities.includes('parks') || onboarding.hasPets === 'yes') {
+    const count = categories.filter((c) => c === 'park').length;
+    matches.push({ label: 'Parks & Greenery', value: Math.min(50 + count * 12, 99) });
   }
-  if (onboarding.priorities.includes('walkability')) {
-    matches.push({ label: 'Walkability', value: estimateWalkScore(pois, 0, 0) });
-  }
-  if (onboarding.priorities.includes('nightlife')) {
-    matches.push({ label: 'Nightlife', value: Math.min(40 + hasRestaurants * 8, 99) });
+  if (onboarding.priorities.includes('dining')) {
+    const count = categories.filter((c) => c.includes('bar') || c.includes('restaurant')).length;
+    matches.push({ label: 'Dining & Bars', value: Math.min(40 + count * 8, 99) });
   }
   if (onboarding.priorities.includes('safety')) {
-    matches.push({ label: 'Safety', value: Math.min(60 + hasSchools * 5, 95) });
+    const count = categories.filter((c) => c === 'hospital' || c === 'police').length;
+    matches.push({ label: 'Safety', value: Math.min(60 + count * 10, 95) });
+  }
+  if (onboarding.priorities.includes('shopping')) {
+    const count = categories.filter((c) => c === 'shop' || c === 'grocery').length;
+    matches.push({ label: 'Shopping', value: Math.min(40 + count * 10, 99) });
+  }
+  if (onboarding.priorities.includes('healthcare')) {
+    const count = categories.filter((c) => c === 'hospital' || c === 'medical').length;
+    matches.push({ label: 'Healthcare', value: Math.min(50 + count * 15, 99) });
+  }
+  if (onboarding.priorities.includes('transit')) {
+    const count = categories.filter((c) => c === 'transit' || c === 'bus').length;
+    matches.push({ label: 'Public Transit', value: Math.min(40 + count * 12, 99) });
   }
 
-  // Always show budget alignment as last
   matches.push({ label: 'Budget Alignment', value: 72 });
 
   return matches.slice(0, 4);
@@ -115,7 +165,8 @@ function buildStats(
   centerLat: number,
   centerLng: number,
 ): Array<{ icon: any; value: string; description: string }> {
-  const schools = pois.filter((p) => p.category.toLowerCase() === 'school').length;
+  const categories = pois.map((p) => p.category.toLowerCase());
+  const schools = categories.filter((c) => c === 'school').length;
   const walkScore = estimateWalkScore(pois, centerLat, centerLng);
 
   return [
@@ -153,7 +204,6 @@ function buildAmenities(
     return da - db;
   });
 
-  // Pick one per category, max 5
   const seen = new Set<string>();
   const result: Array<{ icon: any; name: string; distance: string }> = [];
 
@@ -184,20 +234,12 @@ function buildInsights(
   const categories = pois.map((p) => p.category.toLowerCase());
 
   if (onboarding.hasChildren === 'yes' || onboarding.priorities.includes('schools')) {
-    const schoolCount = categories.filter((c) => c === 'school').length;
-    if (schoolCount > 2) {
-      insights.push({
-        variant: 'success',
-        title: 'Top-tier Education',
-        description: `${schoolCount} schools found nearby, great for your family.`,
-      });
-    } else {
-      insights.push({
-        variant: 'warning',
-        title: 'Limited School Options',
-        description: 'Fewer schools nearby — worth checking district options.',
-      });
-    }
+    const count = categories.filter((c) => c === 'school').length;
+    insights.push(
+      count > 2
+        ? { variant: 'success', title: 'Top-tier Education', description: `${count} schools found nearby, great for your family.` }
+        : { variant: 'warning', title: 'Limited School Options', description: 'Fewer schools nearby — worth checking district options.' },
+    );
   }
 
   if (onboarding.priorities.includes('safety') || onboarding.hasChildren === 'yes') {
@@ -210,7 +252,27 @@ function buildInsights(
     });
   }
 
-  if (onboarding.commute <= 30) {
+  if (onboarding.priorities.includes('dining')) {
+    const count = categories.filter((c) => c.includes('bar') || c.includes('restaurant')).length;
+    insights.push({
+      variant: count > 3 ? 'success' : 'info',
+      title: count > 3 ? 'Great Dining Scene' : 'Moderate Dining Options',
+      description: count > 3
+        ? `${count} dining spots found nearby.`
+        : 'Limited dining options in the immediate area.',
+    });
+  }
+
+  if (onboarding.priorities.includes('transit') || onboarding.priorities.includes('commute')) {
+    const count = categories.filter((c) => c === 'transit' || c === 'bus').length;
+    insights.push({
+      variant: count > 2 ? 'success' : 'info',
+      title: count > 2 ? 'Great Transit Access' : 'Limited Transit',
+      description: count > 2
+        ? `${count} transit options nearby.`
+        : `Expected commute around ${onboarding.commute} mins. May vary during peak hours.`,
+    });
+  } else {
     insights.push({
       variant: 'info',
       title: 'Commute Note',
@@ -218,18 +280,6 @@ function buildInsights(
     });
   }
 
-  if (onboarding.priorities.includes('nightlife')) {
-    const nightlife = categories.filter((c) => c.includes('bar') || c.includes('restaurant')).length;
-    insights.push({
-      variant: nightlife > 3 ? 'success' : 'info',
-      title: nightlife > 3 ? 'Active Nightlife' : 'Moderate Nightlife',
-      description: nightlife > 3
-        ? `${nightlife} bars and restaurants found nearby.`
-        : 'Limited nightlife options in immediate area.',
-    });
-  }
-
-  // Always add a market insight
   insights.push({
     variant: 'info',
     title: 'Growing Area',
@@ -264,21 +314,15 @@ export function mapNeighborhoodDetail(
 ): NeighborhoodDetail {
   const centerLat = neighborhood.centerLat ?? 25.7617;
   const centerLng = neighborhood.centerLng ?? -80.1918;
-  
-  const score = neighborhood.score ?? buildLifestyleScore({
-    commute: Math.max(40, 100 - onboarding.commute),
-    amenities: Math.min(pois.length * 3, 40),
-    family: onboarding.hasChildren === 'yes' ? 30 : 0,
-  }).overall;
 
+  const score = calculateScoreFromPOIs(pois, onboarding);
   const walkScore = estimateWalkScore(pois, centerLat, centerLng);
-
-  console.log('[mapper] neighborhood.score:', neighborhood.score, 'id:', neighborhood.id);
 
   return {
     id: neighborhood.id,
     name: neighborhood.name,
     score,
+    photoUrl: neighborhood.photoUrl ?? null,
     tagline: TAGLINES[index % TAGLINES.length] ?? 'NEIGHBORHOOD',
     matchQuote: buildMatchQuote(onboarding, score),
     matches: buildMatches(pois, onboarding),
@@ -299,6 +343,5 @@ export function mapNeighborhoodDetail(
     crimeYoYValue: 15,
     lat: centerLat,
     lng: centerLng,
-    photoUrl: neighborhood.photoUrl ?? null,
   };
 }

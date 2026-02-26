@@ -244,6 +244,8 @@ export function AuthScreen(): JSX.Element {
       (item) => item.neighborhood.id,
     );
 
+    console.log('Guardo la sesión');
+
     apiClient
       .saveAnalysisSession(token, {
         neighborhoodIds,
@@ -260,6 +262,8 @@ export function AuthScreen(): JSX.Element {
     if ('error' in syncResult) throw new Error('User sync failed');
 
     if (onboardingData.workAddress.trim().length > 0) {
+      console.log('Guardo el onboarding');
+
       const onboardingResult = await saveOnboarding({
         workAddress: onboardingData.workAddress,
         commute: onboardingData.commute,
@@ -331,7 +335,7 @@ export function AuthScreen(): JSX.Element {
         try {
           await syncToBackend();          
           await persistAnalysisSession(); 
-          router.replace('/purchase/purchase');
+          router.push('/purchase/purchase');
           return;
         } catch (error) {
           setServerError('Something went wrong while syncing your account.');
@@ -340,8 +344,8 @@ export function AuthScreen(): JSX.Element {
       }
 
       if (hasOnboarding && !hasLocalOnboarding) {
-        await persistAnalysisSession(); 
-        router.replace('/(tabs)/explore');
+        /* await persistAnalysisSession(); */
+        router.push('/(tabs)/explore');
         return;
       }
 

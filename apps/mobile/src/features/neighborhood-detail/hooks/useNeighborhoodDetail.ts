@@ -23,6 +23,7 @@ export function useNeighborhoodDetail(id: string): UseNeighborhoodDetailReturn {
     if (!id) return null;
 
     const contextSource = analysisResult?.neighborhoods ?? [];
+
     const apiSource = apiNeighborhoods?.neighborhoods ?? [];
     const source = contextSource.length > 0 ? contextSource : apiSource;
 

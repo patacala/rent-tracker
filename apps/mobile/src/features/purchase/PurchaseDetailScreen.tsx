@@ -152,7 +152,7 @@ export function PurchaseDetailScreen(): JSX.Element {
             </View>
 
             {/* Pay button */}
-            <TouchableOpacity style={styles.payBtn} activeOpacity={0.9}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/explore')} style={styles.payBtn} activeOpacity={0.9}>
               <Text style={styles.payBtnText}>Pay {price} Now</Text>
               <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
             </TouchableOpacity>

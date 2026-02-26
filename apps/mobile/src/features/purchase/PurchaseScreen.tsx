@@ -43,9 +43,9 @@ export function PurchaseScreen(): JSX.Element {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+      {/* <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
         <Ionicons name="close" size={18} color={THEME.colors.textSecondary} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <ScrollView
         contentContainerStyle={styles.container}
@@ -139,9 +139,9 @@ export function PurchaseScreen(): JSX.Element {
           <Text style={styles.legalLink}>Privacy Policy</Text>.
         </Text>
 
-        <TouchableOpacity style={styles.restoreBtn}>
+        {/* <TouchableOpacity style={styles.restoreBtn}>
           <Text style={styles.restoreText}>Restore Purchases</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
   );
