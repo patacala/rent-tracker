@@ -13,6 +13,17 @@ const TAGLINES = [
   'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
 ];
 
+const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]> = {
+  healthcare: ['hospital', 'medical'],
+  dining: ['restaurant', 'bar', 'cafe'],
+  schools: ['school'],
+  parks: ['park'],
+  shopping: ['shop', 'supermarket'],
+  transit: ['transit', 'bus'],
+  commute: ['transit'],
+  safety: ['hospital', 'police'],
+};
+
 interface UseExploreNeighborhoodsReturn {
   data: NeighborhoodListItem[];
   isEmpty: boolean;
@@ -91,7 +102,11 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
     const categories = pois.map((p) => p.category.toLowerCase());
     let count = 1; // Commute siempre cuenta
 
-    for (const priority of onboarding.priorities) {
+    const priorities = onboarding.priorities.flatMap(
+      (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
+    );
+
+    for (const priority of priorities) {
       const term = priority.toLowerCase();
       const hasMatch = categories.some((cat) => cat.includes(term) || term.includes(cat));
       if (hasMatch) count++;

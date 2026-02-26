@@ -9,6 +9,17 @@ const TAGLINES = [
   'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
 ];
 
+const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]> = {
+  healthcare: ['hospital', 'medical'],
+  dining: ['restaurant', 'bar', 'cafe'],
+  schools: ['school'],
+  parks: ['park'],
+  shopping: ['shop', 'supermarket'],
+  transit: ['transit', 'bus'],
+  commute: ['transit'],
+  safety: ['hospital', 'police'],
+};
+
 // Solo iconos por categoria real del servidor — se expande según lo que llegue
 const CATEGORY_ICON_MAP: Record<string, string> = {
   school: 'school-outline',
@@ -63,17 +74,6 @@ function estimateWalkScore(pois: POIEntity[], centerLat: number, centerLng: numb
 
 // Términos de búsqueda derivados del onboarding del usuario
 function getUserPriorityTerms(onboarding: OnboardingData): string[] {
-  const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]> = {
-    healthcare: ['hospital', 'medical'],
-    dining: ['restaurant', 'bar', 'cafe'],
-    schools: ['school'],
-    parks: ['park'],
-    shopping: ['shop', 'supermarket'],
-    transit: ['transit', 'bus'],
-    commute: ['transit'],
-    safety: ['hospital', 'police'],
-  };
-
   const terms = onboarding.priorities.flatMap(
     (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
   );
@@ -125,10 +125,14 @@ function buildMatches(pois: POIEntity[], onboarding: OnboardingData): Array<{ la
   const commuteScore = Math.max(40, 100 - onboarding.commute);
   matches.push({ label: 'Commute Match', value: commuteScore });
 
-  // Una entrada por cada priority del usuario basada en POIs reales
-  for (const priority of onboarding.priorities) {
+  const priorities = onboarding.priorities.flatMap(
+    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
+  );
+
+  for (const priority of priorities) {
     const term = priority.toLowerCase();
     const matchingPOIs = categories.filter((cat) => categoryMatchesTerm(cat, term));
+
     if (matchingPOIs.length === 0) continue;
 
     const value = Math.min(50 + matchingPOIs.length * 10, 99);
