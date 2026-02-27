@@ -232,31 +232,6 @@ export function AuthScreen(): JSX.Element {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const persistAnalysisSession = async () => {
-    if (!analysisResult || analysisResult.neighborhoods.length === 0) return;
-    if (!onboardingData.workCoordinates) return;
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    if (!token) return;
-
-    const neighborhoodIds = analysisResult.neighborhoods.map(
-      (item) => item.neighborhood.id,
-    );
-
-    console.log('Guardo la sesión');
-
-    apiClient
-      .saveAnalysisSession(token, {
-        neighborhoodIds,
-        longitude: onboardingData.workCoordinates.longitude,
-        latitude: onboardingData.workCoordinates.latitude,
-        timeMinutes: onboardingData.commute,
-        mode: 'driving',
-      })
-      .catch(() => {});
-  };
-
   const syncToBackend = async () => {
     const syncResult = await syncUser();
     if ('error' in syncResult) throw new Error('User sync failed');
@@ -275,6 +250,31 @@ export function AuthScreen(): JSX.Element {
       });
       if ('error' in onboardingResult) throw new Error('Onboarding save failed');
     }
+  };
+
+  const persistAnalysisSession = async () => {
+    if (!analysisResult || analysisResult.neighborhoods.length === 0) return;
+    if (!onboardingData.workCoordinates) return;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+
+    const neighborhoodIds = analysisResult.neighborhoods.map(
+      (item) => item.neighborhood.id,
+    );
+
+    console.log('Creo la sesión.');
+
+    apiClient
+      .saveAnalysisSession(token, {
+        neighborhoodIds,
+        longitude: onboardingData.workCoordinates.longitude,
+        latitude: onboardingData.workCoordinates.latitude,
+        timeMinutes: onboardingData.commute,
+        mode: 'driving',
+      })
+      .catch(() => {});
   };
 
   const updateToBackend = async () => {
@@ -333,9 +333,9 @@ export function AuthScreen(): JSX.Element {
 
       if (!hasOnboarding && hasLocalOnboarding) {
         try {
-          await syncToBackend();          
-          router.push('/purchase/purchase');
+          await syncToBackend();
           persistAnalysisSession().catch(() => {});
+          router.push('/purchase/purchase');
           return;
         } catch (error) {
           setServerError('Something went wrong while syncing your account.');
@@ -344,8 +344,7 @@ export function AuthScreen(): JSX.Element {
       }
 
       if (hasOnboarding && !hasLocalOnboarding) {
-        /* await persistAnalysisSession(); */
-        router.push('/(tabs)/explore');
+        router.replace('/(tabs)/explore');
         return;
       }
 

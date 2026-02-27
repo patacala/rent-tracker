@@ -96,6 +96,9 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
     skip: !isLoggedIn,
   });
 
+  console.log(analysisResult?.neighborhoods?.length);
+  console.log(apiNeighborhoods?.neighborhoods?.length)
+
   const source = useMemo(() => {
     if (analysisResult?.neighborhoods?.length) return analysisResult.neighborhoods;
     if (isLoggedIn && apiNeighborhoods?.neighborhoods?.length) return apiNeighborhoods.neighborhoods;

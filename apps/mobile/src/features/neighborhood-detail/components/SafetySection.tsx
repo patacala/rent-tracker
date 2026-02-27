@@ -37,7 +37,7 @@ export function SafetySection({ isLoggedIn, isLoading, safety }: SafetySectionPr
           </Text>
           <TouchableOpacity
             style={styles.lockedBtn}
-            onPress={() => router.push('/auth?mode=login')}
+            onPress={() => router.push('/auth?mode=signin')}
             activeOpacity={0.85}
           >
             <Ionicons name="lock-open-outline" size={14} color="#FFFFFF" />
@@ -75,7 +75,7 @@ export function SafetySection({ isLoggedIn, isLoading, safety }: SafetySectionPr
   }
 
   const color = gradeColor(safety.crimeScore);
-  const yoyValue = Math.round(safety.crimeNumeric * 100);
+  /* const yoyValue = safety.crimeNumeric; */
 
   return (
     <View style={styles.section}>
@@ -108,7 +108,7 @@ export function SafetySection({ isLoggedIn, isLoading, safety }: SafetySectionPr
         </View>
 
         {/* Crime numeric bar */}
-        <View style={styles.crimeYoY}>
+        {/* <View style={styles.crimeYoY}>
           <View style={styles.crimeYoYHeader}>
             <Ionicons
               name={safety.crimeNumeric < 0.4 ? 'trending-down-outline' : 'trending-up-outline'}
@@ -132,7 +132,7 @@ export function SafetySection({ isLoggedIn, isLoading, safety }: SafetySectionPr
               }
             ]} />
           </View>
-        </View>
+        </View> */}
       </View>
 
       {/* Recent incidents */}

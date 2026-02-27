@@ -4,7 +4,7 @@ import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/ana
 
 export type { NeighborhoodEntity, POIEntity };
 
-const STORAGE_KEY = '@analysis_result';
+const ANALYSIS_STORAGE_KEY = '@analysis_result';
 
 export interface AnalyzeLocationOutput {
   neighborhoods: Array<{
@@ -27,7 +27,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }): J
 
   // Rehidrata desde AsyncStorage al iniciar
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
+    AsyncStorage.getItem(ANALYSIS_STORAGE_KEY)
       .then((raw) => {
         if (raw) setAnalysisResultState(JSON.parse(raw));
       })
@@ -37,9 +37,9 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }): J
   const setAnalysisResult = useCallback((result: AnalyzeLocationOutput | null) => {
     setAnalysisResultState(result);
     if (result) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(result)).catch(() => {});
+      AsyncStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(result)).catch(() => {});
     } else {
-      AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+      AsyncStorage.removeItem(ANALYSIS_STORAGE_KEY).catch(() => {});
     }
   }, []);
 

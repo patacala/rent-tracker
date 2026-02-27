@@ -68,11 +68,25 @@ export class SearchNeighborhoodsUseCase {
     // Point-in-polygon filter disabled — use all boundaries returned by Overpass (bbox)
     this.logger.log(`Using ${boundaries.length} neighborhoods from Overpass (no isochrone filter)`);
 
+    const limited = input.limit ? boundaries.slice(0, input.limit) : boundaries;
+
     // Step 3: Save OSM results to DB
-    this.logger.log(`Saving ${boundaries.length} neighborhoods to DB`);
+    this.logger.log(`Saving ${limited.length} neighborhoods to DB`);
     const saved = await Promise.all(
-      boundaries.map(b => {
+      limited.map(async b => {
         const center = this.calculateCenter(b.boundary);
+
+        const existing = await this.neighborhoodRepo.findByNameAndCoords(
+          b.name,
+          center.lat,
+          center.lng,
+        );
+
+        if (existing) {
+          this.logger.log(`Reusing existing neighborhood: ${existing.name} (${existing.id})`);
+          return existing;
+        }
+
         return this.neighborhoodRepo.create({
           name: b.name,
           boundary: b.boundary,

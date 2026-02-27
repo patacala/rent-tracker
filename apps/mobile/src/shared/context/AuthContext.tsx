@@ -9,12 +9,14 @@ interface AuthContextValue {
   isLoggedIn: boolean;
   hasClickedCard: boolean;
   isLoading: boolean;
+  justLoggedIn: boolean;
   session: Session | null;
   user: Session['user'] | null;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
   signup: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   markCardClicked: () => Promise<void>;
+  clearJustLoggedIn: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   const [session, setSession] = useState<Session | null>(null);
   const [hasClickedCard, setHasClickedCard] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -49,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
 
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) setJustLoggedIn(true);
     return { error: error?.message ?? null };
   };
 
@@ -66,26 +70,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
 
   const logout = async () => {
     await supabase.auth.signOut();
-    await AsyncStorage.removeItem(CLICKED_KEY);
+    await AsyncStorage.clear();
     setHasClickedCard(false);
+    setJustLoggedIn(false);
   };
 
   const markCardClicked = async () => {
-    await AsyncStorage.setItem(CLICKED_KEY, 'true');
+    await AsyncStorage.clear();
     setHasClickedCard(true);
   };
+
+  const clearJustLoggedIn = () => setJustLoggedIn(false);
 
   return (
     <AuthContext.Provider value={{
       isLoggedIn: !!session,
       hasClickedCard,
       isLoading,
+      justLoggedIn,
       session,
       user: session?.user ?? null,
       login,
       signup,
       logout,
       markCardClicked,
+      clearJustLoggedIn,
     }}>
       {children}
     </AuthContext.Provider>

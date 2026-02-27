@@ -14,6 +14,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { useLocalSearchParams } from 'expo-router';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { supabase } from '@shared/lib/supabase';
+import { apiClient } from '@shared/api/apiClient';
+/* import { useAnalysis } from '@features/analysis/context/AnalysisContext'; */
 
 export function PurchaseDetailScreen(): JSX.Element {
   const router = useRouter();
@@ -21,6 +25,8 @@ export function PurchaseDetailScreen(): JSX.Element {
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
   const [zip, setZip] = useState('');
+  const { data: localOnboarding } = useOnboarding();
+  /* const { setAnalysisResult } = useAnalysis(); */
 
   const { plan, price, period } = useLocalSearchParams<{
     plan: string;
@@ -37,6 +43,36 @@ export function PurchaseDetailScreen(): JSX.Element {
     const digits = value.replace(/\D/g, '').slice(0, 4);
     if (digits.length >= 3) return `${digits.slice(0, 2)} / ${digits.slice(2)}`;
     return digits;
+  };
+
+  const fullAnalysis = async () => {
+    const workAddress = localOnboarding?.workAddress?.trim();
+    const workCoordinates = localOnboarding?.workCoordinates;
+    if (!workAddress || !workCoordinates) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+
+    try {
+      console.log('Ejecutando el analisis completo.');
+      router.push('/(tabs)/explore')
+
+      const result = await apiClient.analyzeLocation(
+        {
+          longitude: workCoordinates.longitude,
+          latitude: workCoordinates.latitude,
+          timeMinutes: localOnboarding.commute,
+          mode: 'driving',
+        },
+        session.access_token,
+      );
+
+      console.log('Resultado de analisis: ');
+      console.log(result);
+      /* setAnalysisResult(result); */
+    } catch {
+      // silencioso — reintentará en próxima sesión
+    }
   };
 
   return (
@@ -152,7 +188,7 @@ export function PurchaseDetailScreen(): JSX.Element {
             </View>
 
             {/* Pay button */}
-            <TouchableOpacity onPress={() => router.push('/(tabs)/explore')} style={styles.payBtn} activeOpacity={0.9}>
+            <TouchableOpacity onPress={fullAnalysis} style={styles.payBtn} activeOpacity={0.9}>
               <Text style={styles.payBtnText}>Pay {price} Now</Text>
               <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
             </TouchableOpacity>

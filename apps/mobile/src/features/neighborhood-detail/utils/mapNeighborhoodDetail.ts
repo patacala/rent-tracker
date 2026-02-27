@@ -452,13 +452,6 @@ export function mapNeighborhoodDetail(
     medianPrice: '$850K',
     walkScore,
     walkScoreLabel: walkScoreLabel(walkScore),
-    safetyGrade: score >= 85 ? 'A+' : score >= 75 ? 'A' : score >= 65 ? 'B+' : 'B',
-    safetyRank: score >= 85 ? 'Top 5% Safest Neighborhoods' : 'Top 15% Safest Neighborhoods',
-    crimeComparison: score >= 80
-      ? 'Crime rate is 64% lower than national average.'
-      : 'Crime rate is 40% lower than national average.',
-    crimeYoY: '-2% incidents',
-    crimeYoYValue: 15,
     lat: centerLat,
     lng: centerLng,
   };

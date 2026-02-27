@@ -9,8 +9,10 @@ import {
   type POIFeature,
 } from '../../domain/services/external-services.interface';
 import {
+  NEIGHBORHOOD_REPOSITORY,
   POI_REPOSITORY,
   SEARCH_SESSION_REPOSITORY,
+  type INeighborhoodRepository,
   type IPOIRepository,
   type ISearchSessionRepository,
 } from '../../domain/repositories';
@@ -61,6 +63,8 @@ export class AnalyzeLocationUseCase {
     private readonly poiRepo: IPOIRepository,
     @Inject(SEARCH_SESSION_REPOSITORY)
     private readonly sessionRepo: ISearchSessionRepository,
+    @Inject(NEIGHBORHOOD_REPOSITORY)
+    private readonly neighborhoodRepo: INeighborhoodRepository,
   ) {}
 
   async execute(input: AnalyzeLocationInput): Promise<AnalyzeLocationOutput> {
@@ -76,7 +80,14 @@ export class AnalyzeLocationUseCase {
       return { neighborhoods: [], isochrone: polygon };
     }
 
-    const results = await this.fetchAndDistributePOIs(polygon, neighborhoods);
+    // Carga sesión anterior si hay usuario logueado
+    const previousSession = input.userId
+      ? await this.sessionRepo.findLatestByUserId(input.userId)
+      : null;
+
+    const previousNeighborhoodIds = previousSession?.neighborhoodIds ?? [];
+
+    const results = await this.fetchAndDistributePOIs(polygon, neighborhoods, previousNeighborhoodIds);
     await this.fetchNeighborhoodPhotos(results);
     this.persistSession(input, results); // fire-and-forget
 
@@ -109,8 +120,52 @@ export class AnalyzeLocationUseCase {
   private async fetchAndDistributePOIs(
     polygon: GeoJSON.Polygon,
     neighborhoods: NeighborhoodEntity[],
+    previousNeighborhoodIds: string[],
   ): Promise<AnalysisResult[]> {
     this.logger.log('Step 3: Fetching all POIs in isochrone area (single Overpass call)');
+
+    // Carga barrios de sesión anterior — SIN cargar POIs
+    const previousResults: AnalysisResult[] = [];
+    if (previousNeighborhoodIds.length > 0) {
+      const previousEntries = await Promise.all(
+        previousNeighborhoodIds.map(async (id) => {
+          const neighborhood = await this.neighborhoodRepo.findById(id);
+          if (!neighborhood) return null;
+          return { neighborhood, pois: [] as POIEntity[] };
+        }),
+      );
+      previousResults.push(
+        ...previousEntries.filter((e): e is AnalysisResult => e !== null),
+      );
+      this.logger.log(`Loaded ${previousResults.length} neighborhoods from previous session`);
+    }
+
+    // Set de claves estables de sesión anterior
+    const previousKeys = new Set(
+      previousResults.map((r) =>
+        `${r.neighborhood.name}|${r.neighborhood.centerLat.toFixed(4)}|${r.neighborhood.centerLng.toFixed(4)}`
+      ),
+    );
+
+    // Filtra barrios nuevos — los que no estaban en la sesión anterior por nombre+coords
+    const seenKeys = new Set(previousKeys);
+    const newNeighborhoods = neighborhoods.filter((n) => {
+      const key = `${n.name}|${n.centerLat.toFixed(4)}|${n.centerLng.toFixed(4)}`;
+      if (seenKeys.has(key)) {
+        this.logger.log(`Skip duplicate (previous session): ${n.name}`);
+        return false;
+      }
+      seenKeys.add(key);
+      return true;
+    });
+
+    this.logger.log(
+      `${previousResults.length} from previous session, ${newNeighborhoods.length} new neighborhoods`,
+    );
+
+    if (newNeighborhoods.length === 0) {
+      return previousResults;
+    }
 
     let allPOIs: POIFeature[] = [];
     try {
@@ -123,13 +178,13 @@ export class AnalyzeLocationUseCase {
       this.logger.warn(`POI fetch failed (${err?.message}), continuing with empty POI list`);
     }
 
-    const centroids = neighborhoods.map((n) => ({
+    const centroids = newNeighborhoods.map((n) => ({
       neighborhood: n,
       ...this.calculateCentroid(n.boundary),
     }));
 
     const poiByNeighborhood = new Map<string, POIFeature[]>(
-      neighborhoods.map((n) => [n.id, []]),
+      newNeighborhoods.map((n) => [n.id, []]),
     );
 
     for (const poi of allPOIs) {
@@ -139,8 +194,8 @@ export class AnalyzeLocationUseCase {
       }
     }
 
-    const results = await Promise.all(
-      neighborhoods.map(async (neighborhood) => {
+    const newResults = await Promise.all(
+      newNeighborhoods.map(async (neighborhood) => {
         const features = poiByNeighborhood.get(neighborhood.id) ?? [];
 
         if (features.length === 0) {
@@ -166,12 +221,15 @@ export class AnalyzeLocationUseCase {
       }),
     );
 
+    // Anteriores primero + nuevos al final
+    const allResults = [...previousResults, ...newResults];
+
     this.logger.log(
-      `Step 3 complete. ${results.length} neighbourhoods, ` +
-        `${results.reduce((s, r) => s + r.pois.length, 0)} total POIs`,
+      `Step 3 complete. ${allResults.length} neighbourhoods total, ` +
+        `${allResults.reduce((s, r) => s + r.pois.length, 0)} total POIs`,
     );
 
-    return results;
+    return allResults;
   }
 
   // ─── Step 4 ───────────────────────────────────────────────────────────────

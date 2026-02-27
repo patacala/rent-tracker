@@ -55,6 +55,7 @@ export interface ISearchSessionRepository {
 export interface INeighborhoodRepository {
   findById(id: string): Promise<NeighborhoodEntity | null>;
   findByName(name: string): Promise<NeighborhoodEntity | null>;
+  findByNameAndCoords(name: string, centerLat: number, centerLng: number): Promise<NeighborhoodEntity | null>;
 
   // Geospatial queries
   findWithinBounds(polygon: GeoJSON.Polygon): Promise<NeighborhoodEntity[]>;

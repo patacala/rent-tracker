@@ -17,7 +17,7 @@ import { ToastProvider } from '@shared/context/ToastContext';
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '');
 
 function RootLayoutContent(): JSX.Element {
-  const { isLoading: authLoading, isLoggedIn } = useAuth();
+  const { isLoading: authLoading, isLoggedIn, justLoggedIn, clearJustLoggedIn } = useAuth();
   const { isLoading: onboardingLoading, data: onboardingData, currentStep } = useOnboarding();
   const router = useRouter();
   const segments = useSegments();
@@ -41,8 +41,20 @@ function RootLayoutContent(): JSX.Element {
     const inOnboardingScreen = currentSegment === 'onboarding';
     const inAuthScreen = currentSegment === 'auth';
     const inWelcomeScreen = currentSegment === 'welcome';
+    const inPurchaseScreen = currentSegment === 'purchase';
 
+    if (justLoggedIn) {
+      // Si ya llegó a la pantalla destino (no auth), limpia la bandera
+      if (!inAuthScreen) clearJustLoggedIn();
+      return;
+    }
+
+    // Si está en purchase no tocar nada
+    if (inPurchaseScreen) return;
+
+    // Sesión restaurada al abrir la app estando en welcome o auth → explore
     if (isLoggedIn && (inWelcomeScreen || inAuthScreen)) {
+      console.log('Envio a explore desde layout');
       router.replace('/(tabs)/explore');
       return;
     }
@@ -51,7 +63,7 @@ function RootLayoutContent(): JSX.Element {
       router.replace(`/onboarding/step${currentStep}` as any);
       return;
     }
-  }, [isLoading, isLoggedIn, onboardingData, currentStep, segments]);
+  }, [isLoading, isLoggedIn, justLoggedIn, onboardingData, currentStep, segments]);
 
   if (isLoading) {
     return (
@@ -72,7 +84,7 @@ function RootLayoutContent(): JSX.Element {
       <Stack.Screen name="map" options={{ gestureEnabled: false }} />
       <Stack.Screen name="neighborhood/[id]" />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="purchase/purchase"  options={{ gestureEnabled: false }} />
+      <Stack.Screen name="purchase/purchase" options={{ gestureEnabled: false }} />
       <Stack.Screen name="purchase/detail" />
     </Stack>
   );

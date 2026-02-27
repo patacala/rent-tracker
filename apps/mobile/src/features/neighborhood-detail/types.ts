@@ -47,11 +47,6 @@ export interface NeighborhoodDetail {
   medianPrice: string;
   walkScore: number;
   walkScoreLabel: string;
-  safetyGrade: string;
-  safetyRank: string;
-  crimeComparison: string;
-  crimeYoY: string;
-  crimeYoYValue: number;
   lat: number;
   lng: number;
   photoUrl?: string | null;

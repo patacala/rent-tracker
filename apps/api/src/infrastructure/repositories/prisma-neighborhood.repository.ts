@@ -162,4 +162,22 @@ export class PrismaNeighborhoodRepository implements INeighborhoodRepository {
 
     return { minLng, minLat, maxLng, maxLat };
   }
+
+  async findByNameAndCoords(
+    name: string,
+    centerLat: number,
+    centerLng: number,
+  ): Promise<NeighborhoodEntity | null> {
+    const TOLERANCE = 0.0001;
+
+    const raw = await this.prisma.neighborhood.findFirst({
+      where: {
+        name,
+        centerLat: { gte: centerLat - TOLERANCE, lte: centerLat + TOLERANCE },
+        centerLng: { gte: centerLng - TOLERANCE, lte: centerLng + TOLERANCE },
+      },
+    });
+
+    return raw ? this.toEntity(raw) : null;
+  }
 }

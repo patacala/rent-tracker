@@ -1,4 +1,4 @@
-import React, { JSX, useState, useEffect, useRef } from 'react';
+import React, { JSX, useState } from 'react';
 import {
   View,
   Text,
@@ -42,33 +42,9 @@ export function ExploreScreen(): JSX.Element {
   const toast = useToast();
   const { isLoggedIn } = useAuth();
   const { data: localOnboarding } = useOnboarding();
-  const { data: neighborhoods, isEmpty, isLoading: apiLoading, /* searchParams */ } = useExploreNeighborhoods();
+  const { data: neighborhoods, isEmpty, isLoading: apiLoading } = useExploreNeighborhoods();
   const { setAnalysisResult } = useAnalysis();
   
-  /* const lastRefreshedParamsRef = useRef<string | null>(null); */
-
-  /* useEffect(() => {
-    if (!isLoggedIn || !searchParams) return;
-
-    const paramsKey = JSON.stringify(searchParams);
-    if (lastRefreshedParamsRef.current === paramsKey) return;
-    lastRefreshedParamsRef.current = paramsKey;
-
-    const runBackgroundRefresh = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
-
-      try {
-        const result = await apiClient.analyzeLocation(searchParams, session.access_token);
-        setAnalysisResult(result);
-      } catch {
-        lastRefreshedParamsRef.current = null;
-      }
-    };
-
-    runBackgroundRefresh();
-  }, [isLoggedIn, searchParams, setAnalysisResult]); */
-
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
   const [prefsOpen, setPrefsOpen] = useState(false);
