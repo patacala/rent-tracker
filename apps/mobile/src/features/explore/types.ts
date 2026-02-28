@@ -7,6 +7,7 @@ export interface NeighborhoodListItem {
   matchCount: number;
   commuteMinutes: number;
   photoUrl: string | null;
+  isFavorite: boolean;
 }
 
 export const EXPLORE_FILTERS = ['Best Match', 'Commute', 'Schools', 'Budget', 'Safety'] as const;

@@ -3,20 +3,24 @@ import {
   SEARCH_SESSION_REPOSITORY,
   NEIGHBORHOOD_REPOSITORY,
   POI_REPOSITORY,
+  FAVORITE_NEIGHBORHOOD_REPOSITORY,
   type ISearchSessionRepository,
   type INeighborhoodRepository,
   type IPOIRepository,
+  type IFavoriteNeighborhoodRepository,
 } from '../../domain/repositories';
 import type { NeighborhoodEntity } from '../../domain/entities/neighborhood.entity';
 import type { POIEntity } from '../../domain/entities/poi.entity';
 
+export interface NeighborhoodResult {
+  neighborhood: NeighborhoodEntity;
+  pois: POIEntity[];
+  isFavorite: boolean;
+}
+
 export interface GetMyAnalysisOutput {
-  neighborhoods: Array<{
-    neighborhood: NeighborhoodEntity;
-    pois: POIEntity[];
-  }>;
+  neighborhoods: NeighborhoodResult[];
   analyzedAt: Date | null;
-  /** Original search params so the client can re-run a full analysis after login */
   searchParams: {
     longitude: number;
     latitude: number;
@@ -36,6 +40,8 @@ export class GetMyAnalysisUseCase {
     private readonly neighborhoodRepo: INeighborhoodRepository,
     @Inject(POI_REPOSITORY)
     private readonly poiRepo: IPOIRepository,
+    @Inject(FAVORITE_NEIGHBORHOOD_REPOSITORY)
+    private readonly favoriteRepo: IFavoriteNeighborhoodRepository,
   ) {}
 
   async execute(userId: string): Promise<GetMyAnalysisOutput> {
@@ -46,6 +52,9 @@ export class GetMyAnalysisUseCase {
       return { neighborhoods: [], analyzedAt: null, searchParams: null };
     }
 
+    const favorites = await this.favoriteRepo.findByUserId(userId);
+    const favoriteIds = new Set(favorites.map((f) => f.neighborhoodId));
+
     this.logger.log(
       `Restoring ${session.neighborhoodIds.length} neighborhoods for user ${userId}`,
     );
@@ -55,14 +64,12 @@ export class GetMyAnalysisUseCase {
         const neighborhood = await this.neighborhoodRepo.findById(id);
         if (!neighborhood) return null;
         const pois = await this.poiRepo.findByNeighborhood(id);
-        return { neighborhood, pois };
+        return { neighborhood, pois, isFavorite: favoriteIds.has(id) };
       }),
     );
 
     return {
-      neighborhoods: entries.filter(
-        (e): e is { neighborhood: NeighborhoodEntity; pois: POIEntity[] } => e !== null,
-      ),
+      neighborhoods: entries.filter((e): e is NeighborhoodResult => e !== null),
       analyzedAt: session.createdAt,
       searchParams: {
         longitude: session.longitude,

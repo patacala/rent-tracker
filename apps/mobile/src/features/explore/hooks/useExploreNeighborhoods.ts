@@ -140,6 +140,7 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
       matchCount: countMatches(item.pois, onboardingResult),
       commuteMinutes: onboardingResult.commute,
       photoUrl: item.neighborhood.photoUrl ?? null,
+      isFavorite: item.isFavorite ?? false,
     }));
   }, [sourceAnalisys, onboardingResult]);
 

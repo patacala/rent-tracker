@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
 import { NeighborhoodCard, Tag } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
-import { useToggleFavoriteMutation, useGetFavoritesQuery } from '@features/saved/store/savedApi';
+import { useToggleFavoriteMutation } from '@features/saved/store/savedApi';
 import { useToast } from '@shared/context/ToastContext';
 import type { NeighborhoodListItem } from '../types';
 
@@ -24,18 +24,14 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
   const { isLoggedIn } = useAuth();
   const toast = useToast();
   const [toggleFavorite, { isLoading: isToggling }] = useToggleFavoriteMutation();
-  const { data: favoritesData } = useGetFavoritesQuery(undefined, {
-    skip: !isLoggedIn,
-  });
 
-  const isFavorite = favoritesData?.neighborhoods?.some((n) => n.id === item.id) ?? false;
-  const [localFavorite, setLocalFavorite] = useState(isFavorite);
+  const [localFavorite, setLocalFavorite] = useState(item.isFavorite);
   const [imageLoaded, setImageLoaded] = useState(false);
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    setLocalFavorite(isFavorite);
-  }, [isFavorite]);
+    setLocalFavorite(item.isFavorite);
+  }, [item.isFavorite]);
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -103,9 +99,7 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
 
         <View style={styles.scoreContainer}>
           {item.score > 0 && (
-            <>
-              <NeighborhoodCard.Score score={item.score} />
-            </>
+            <NeighborhoodCard.Score score={item.score} />
           )}
         </View>
 
@@ -167,11 +161,8 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
 
 const styles = StyleSheet.create({
   card: { width: '100%' },
-
   cardImageContainer: { position: 'relative' },
-
   image: { width: '100%', height: 180 },
-
   imageSkeleton: {
     position: 'absolute',
     top: 0,
@@ -180,7 +171,6 @@ const styles = StyleSheet.create({
     height: 180,
     backgroundColor: THEME.colors.border,
   },
-
   overlay: {
     position: 'absolute',
     top: 0,
@@ -189,13 +179,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
-
   scoreContainer: {
     position: 'absolute',
     top: 12,
     left: 70,
   },
-
   favoriteBtn: {
     position: 'absolute',
     top: 20,
@@ -207,40 +195,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   cardOverlayText: {
     position: 'absolute',
     bottom: THEME.spacing.md,
     left: THEME.spacing.md,
-    width: '100%'
+    width: '100%',
   },
-
   cardName: {
     fontSize: THEME.fontSize.lg,
     fontWeight: THEME.fontWeight.bold,
     color: '#FFFFFF',
     width: '92%',
   },
-
   cardTagline: {
     fontSize: THEME.fontSize.xs,
     color: 'rgba(255,255,255,0.8)',
     letterSpacing: 0.5,
   },
-
   cardBody: {
     paddingHorizontal: THEME.spacing.md,
     paddingTop: THEME.spacing.sm,
   },
-
   matchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: THEME.spacing.sm,
   },
-
   matchAvatars: { flexDirection: 'row' },
-
   avatar: {
     width: 20,
     height: 20,
@@ -248,12 +229,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
-
   matchText: {
     fontSize: THEME.fontSize.xs,
     color: THEME.colors.textSecondary,
   },
-
   detailsLink: {
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.primary,

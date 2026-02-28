@@ -26,6 +26,7 @@ export interface POIEntity {
 export interface NeighborhoodEntry {
   neighborhood: NeighborhoodEntity;
   pois: POIEntity[];
+  isFavorite: boolean;
 }
 
 export interface MyAnalysisResponse {

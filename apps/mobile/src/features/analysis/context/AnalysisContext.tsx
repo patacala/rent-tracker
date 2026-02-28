@@ -10,6 +10,7 @@ export interface AnalyzeLocationOutput {
   neighborhoods: Array<{
     neighborhood: NeighborhoodEntity;
     pois: POIEntity[];
+    isFavorite: boolean;
   }>;
   isochrone?: any;
 }

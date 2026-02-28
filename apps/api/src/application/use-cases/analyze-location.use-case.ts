@@ -12,9 +12,11 @@ import {
   NEIGHBORHOOD_REPOSITORY,
   POI_REPOSITORY,
   SEARCH_SESSION_REPOSITORY,
+  FAVORITE_NEIGHBORHOOD_REPOSITORY,
   type INeighborhoodRepository,
   type IPOIRepository,
   type ISearchSessionRepository,
+  IFavoriteNeighborhoodRepository,
 } from '../../domain/repositories';
 import type { NeighborhoodEntity } from '../../domain/entities/neighborhood.entity';
 import type { POIEntity, POICategory } from '../../domain/entities/poi.entity';
@@ -32,6 +34,7 @@ export interface AnalyzeLocationInput {
 export interface AnalysisResult {
   neighborhood: NeighborhoodEntity;
   pois: POIEntity[];
+  isFavorite: boolean;
 }
 
 export interface AnalyzeLocationOutput {
@@ -65,10 +68,11 @@ export class AnalyzeLocationUseCase {
     private readonly sessionRepo: ISearchSessionRepository,
     @Inject(NEIGHBORHOOD_REPOSITORY)
     private readonly neighborhoodRepo: INeighborhoodRepository,
+    @Inject(FAVORITE_NEIGHBORHOOD_REPOSITORY)
+    private readonly favoriteRepo: IFavoriteNeighborhoodRepository,
   ) {}
 
   async execute(input: AnalyzeLocationInput): Promise<AnalyzeLocationOutput> {
-    // Límite solo para usuarios no logueados (free tier). Con userId no se aplica límite.
     const freeTierLimit = this.configService.get<number>('FREE_TIER_NEIGHBORHOOD_LIMIT', 10);
     const limit = input.userId ? undefined : freeTierLimit;
 
@@ -76,20 +80,26 @@ export class AnalyzeLocationUseCase {
     const neighborhoods = await this.fetchNeighborhoods(polygon, limit);
 
     if (neighborhoods.length === 0) {
-      this.logger.warn('No neighborhoods found — returning empty result');
-      return { neighborhoods: [], isochrone: polygon };
+    this.logger.warn('No neighborhoods found — returning empty result');
+    return { neighborhoods: [], isochrone: polygon };
     }
 
-    // Carga sesión anterior si hay usuario logueado
     const previousSession = input.userId
-      ? await this.sessionRepo.findLatestByUserId(input.userId)
-      : null;
+    ? await this.sessionRepo.findLatestByUserId(input.userId)
+    : null;
 
     const previousNeighborhoodIds = previousSession?.neighborhoodIds ?? [];
 
-    const results = await this.fetchAndDistributePOIs(polygon, neighborhoods, previousNeighborhoodIds);
+    // Carga favoritos una sola vez
+    const favoriteIds = new Set<string>();
+    if (input.userId) {
+    const favorites = await this.favoriteRepo.findByUserId(input.userId);
+    favorites.forEach((f) => favoriteIds.add(f.neighborhoodId));
+    }
+
+    const results = await this.fetchAndDistributePOIs(polygon, neighborhoods, previousNeighborhoodIds, favoriteIds);
     await this.fetchNeighborhoodPhotos(results);
-    this.persistSession(input, results); // fire-and-forget
+    this.persistSession(input, results);
 
     return { neighborhoods: results, isochrone: polygon };
   }
@@ -121,6 +131,7 @@ export class AnalyzeLocationUseCase {
     polygon: GeoJSON.Polygon,
     neighborhoods: NeighborhoodEntity[],
     previousNeighborhoodIds: string[],
+    favoriteIds: Set<string>,
   ): Promise<AnalysisResult[]> {
     this.logger.log('Step 3: Fetching all POIs in isochrone area (single Overpass call)');
 
@@ -133,7 +144,7 @@ export class AnalyzeLocationUseCase {
           if (!neighborhood) return null;
 
           const pois = await this.poiRepo.findByNeighborhood(id);
-          return { neighborhood, pois};
+          return { neighborhood, pois, isFavorite: favoriteIds.has(id) };
         }),
       );
       previousResults.push(
@@ -202,7 +213,7 @@ export class AnalyzeLocationUseCase {
 
         if (features.length === 0) {
           const cached = await this.poiRepo.findByNeighborhood(neighborhood.id);
-          return { neighborhood, pois: cached };
+          return { neighborhood, pois: cached, isFavorite: favoriteIds.has(neighborhood.id) };
         }
 
         await this.poiRepo.deleteByNeighborhood(neighborhood.id);
@@ -219,7 +230,7 @@ export class AnalyzeLocationUseCase {
           })),
         );
 
-        return { neighborhood, pois: saved };
+        return { neighborhood, pois: saved, isFavorite: favoriteIds.has(neighborhood.id) };
       }),
     );
 

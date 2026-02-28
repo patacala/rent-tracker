@@ -56,6 +56,7 @@ export interface AnalyzeLocationResponse {
   neighborhoods: Array<{
     neighborhood: NeighborhoodEntity;
     pois: POIEntity[];
+    isFavorite: boolean;
   }>;
   isochrone?: any;
 }
