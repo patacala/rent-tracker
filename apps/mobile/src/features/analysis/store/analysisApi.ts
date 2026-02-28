@@ -53,14 +53,14 @@ export interface NeighborhoodUIItem {
 export const analysisApi = createApi({
   reducerPath: 'analysisApi',
   baseQuery: authenticatedBaseQuery,
-  tagTypes: ['Neighborhoods'],
+  tagTypes: ['Neighborhoods', 'Favorites'],
   endpoints: (builder) => ({
     getNeighborhoods: builder.query<MyAnalysisResponse, void>({
       query: () => ({
         url: '/neighborhoods/my-analysis',
         method: 'GET',
       }),
-      providesTags: ['Neighborhoods'],
+      providesTags: ['Neighborhoods', 'Favorites'],
     }),
   }),
 });

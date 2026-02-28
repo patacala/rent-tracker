@@ -16,11 +16,14 @@ import { Button, FilterChips, Tag } from '@shared/components';
 import { useAuth } from '@shared/context/AuthContext';
 import { useSavedNeighborhoods } from './hooks/useSavedNeighborhoods';
 import { SORT_OPTIONS, type SortOption } from './types';
+import { useNeighborhoodCache } from '@shared/context/NeighborhoodCacheContext';
 
 export function SavedScreen(): JSX.Element {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const { data: saved, remove, isLoading } = useSavedNeighborhoods();
+  const { data: saved, source, remove, isLoading } = useSavedNeighborhoods();
+  const { set } = useNeighborhoodCache();
+  
   const [activeSort, setActiveSort] = useState<SortOption>('Highest Match');
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
@@ -30,13 +33,19 @@ export function SavedScreen(): JSX.Element {
     );
   };
 
+  const handleCardPress = (id: string) => {
+    const entry = source.find((s) => s.neighborhood.id === id);
+    if (entry) set(id, entry);
+    router.push(`/neighborhood/${id}`);
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.headerTitle}>Saved Neighborhoods</Text>
-            <Text style={styles.headerSubtitle}>{saved.length} locations found</Text>
+            <Text style={styles.headerTitle}>Favorite Neighborhoods</Text>
+            <Text style={styles.headerSubtitle}>{saved.length} Neighborhoods found</Text>
           </View>
           <TouchableOpacity style={styles.filterBtn} hitSlop={8}>
             <Ionicons name="options-outline" size={20} color={THEME.colors.text} />
@@ -87,15 +96,19 @@ export function SavedScreen(): JSX.Element {
                 </View>
 
                 <View style={styles.tagsRow}>
-                  {item.tags.slice(0, 2).map((tag) => (
+                  {item.tags.map((tag) => (
                     <Tag key={tag} variant="neutral">
                       <Tag.Label>{tag}</Tag.Label>
                     </Tag>
                   ))}
                 </View>
 
+                <Text style={styles.matchText}>
+                  {item.matchCount} match your profile
+                </Text>
+
                 <View style={styles.cardFooter}>
-                  <TouchableOpacity onPress={() => router.push(`/neighborhood/${item.id}`)}>
+                  <TouchableOpacity onPress={() => handleCardPress(item.id)}>
                     <Text style={styles.detailsLink}>View details</Text>
                   </TouchableOpacity>
                   <View style={styles.cardActions}>
@@ -336,5 +349,9 @@ const styles = StyleSheet.create({
     borderRadius: THEME.borderRadius.full,
     paddingHorizontal: THEME.spacing.lg,
     ...THEME.shadow.md,
+  },
+  matchText: {
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.textSecondary,
   },
 });

@@ -1,26 +1,26 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { NeighborhoodEntity } from '@shared/api/apiClient';
 import { authenticatedBaseQuery } from '@shared/api/baseQuery';
+import type { NeighborhoodEntry } from '@features/analysis/store/analysisApi';
 
 export interface ToggleFavoriteResponse {
   isFavorite: boolean;
 }
 
 export interface GetFavoritesResponse {
-  neighborhoods: NeighborhoodEntity[];
+  neighborhoods: NeighborhoodEntry[];
 }
 
 export const savedApi = createApi({
   reducerPath: 'savedApi',
   baseQuery: authenticatedBaseQuery,
-  tagTypes: ['Favorites'],
+  tagTypes: ['Favorites', 'Neighborhoods'],
   endpoints: (builder) => ({
     toggleFavorite: builder.mutation<ToggleFavoriteResponse, string>({
       query: (neighborhoodId) => ({
         url: `/favorites/${neighborhoodId}`,
         method: 'POST',
       }),
-      invalidatesTags: ['Favorites'],
+      invalidatesTags: ['Favorites', 'Neighborhoods']
     }),
     getFavorites: builder.query<GetFavoritesResponse, void>({
       query: () => ({

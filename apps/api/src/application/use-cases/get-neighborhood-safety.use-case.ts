@@ -31,15 +31,33 @@ export class GetNeighborhoodSafetyUseCase {
 
     this.logger.log(`Cache miss for "${neighborhoodId}" — fetching from DoorProfit`);
 
-    const crimeData = await this.doorProfitService.getCrimeByCoordinates(lat, lng);
+    try {
+      const crimeData = await this.doorProfitService.getCrimeByCoordinates(lat, lng);
 
-    const saved = await this.safetyRepo.upsert({
-      neighborhoodId,
-      ...crimeData,
-      cachedAt: new Date(),
-    });
+      const saved = await this.safetyRepo.upsert({
+        neighborhoodId,
+        ...crimeData,
+        cachedAt: new Date(),
+      });
 
-    this.logger.log(`Saved safety data for neighborhood "${neighborhoodId}"`);
-    return saved;
+      this.logger.log(`Saved safety data for neighborhood "${neighborhoodId}"`);
+      return saved;
+
+    } catch (err: any) {
+      const is429 = err?.message?.includes('429');
+
+      if (is429) {
+        this.logger.warn(`DoorProfit rate limit hit for "${neighborhoodId}" — returning stale cache or null`);
+      } else {
+        this.logger.error(`DoorProfit error for "${neighborhoodId}": ${err?.message}`);
+      }
+
+      if (cached) {
+        this.logger.log(`Returning stale cache for "${neighborhoodId}"`);
+        return cached;
+      }
+
+      throw err;
+    }
   }
 }

@@ -41,7 +41,7 @@ export function ExploreScreen(): JSX.Element {
   const toast = useToast();
   const { isLoggedIn } = useAuth();
   const { data: onboardingData, hydrateFromServer } = useOnboarding();
-  const { data: neighborhoods, isEmpty, isLoading: apiLoading } = useExploreNeighborhoods();
+  const { data: neighborhoods, source, isEmpty, isLoading: apiLoading } = useExploreNeighborhoods();
   const { setAnalysisResult } = useAnalysis();
   
   const [search, setSearch] = useState('');
@@ -190,12 +190,17 @@ export function ExploreScreen(): JSX.Element {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <NeighborhoodCardItem
-              item={item}
-              onPress={handleCardPress}
-            />
-          )}
+          renderItem={({ item }) => {
+            const entry = source.find((s) => s.neighborhood.id === item.id);
+            if (!entry) return null;
+            return (
+              <NeighborhoodCardItem
+                item={item}
+                entry={entry}
+                onPress={handleCardPress}
+              />
+            );
+          }}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons

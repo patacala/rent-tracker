@@ -18,6 +18,7 @@ export interface AnalyzeLocationOutput {
 interface AnalysisContextValue {
   analysisResult: AnalyzeLocationOutput | null;
   setAnalysisResult: (result: AnalyzeLocationOutput | null) => void;
+  updateFavorite: (neighborhoodId: string, isFavorite: boolean) => void;
   reset: () => void;
 }
 
@@ -48,8 +49,22 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }): J
     setAnalysisResult(null);
   }, [setAnalysisResult]);
 
+  const updateFavorite = useCallback((neighborhoodId: string, isFavorite: boolean) => {
+    setAnalysisResultState((prev) => {
+      if (!prev) return prev;
+      const updated = {
+        ...prev,
+        neighborhoods: prev.neighborhoods.map((n) =>
+          n.neighborhood.id === neighborhoodId ? { ...n, isFavorite } : n
+        ),
+      };
+      AsyncStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  }, []);
+
   return (
-    <AnalysisContext.Provider value={{ analysisResult, setAnalysisResult, reset }}>
+    <AnalysisContext.Provider value={{ analysisResult, setAnalysisResult, updateFavorite, reset }}>
       {children}
     </AnalysisContext.Provider>
   );

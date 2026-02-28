@@ -14,14 +14,18 @@ import { useAuth } from '@shared/context/AuthContext';
 import { useToggleFavoriteMutation } from '@features/saved/store/savedApi';
 import { useToast } from '@shared/context/ToastContext';
 import type { NeighborhoodListItem } from '../types';
+import { NeighborhoodCacheEntry, useNeighborhoodCache } from '@shared/context/NeighborhoodCacheContext';
 
 interface NeighborhoodCardItemProps {
   item: NeighborhoodListItem;
+  entry: NeighborhoodCacheEntry;
   onPress: (id: string) => void;
 }
 
-export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProps): JSX.Element {
+export function NeighborhoodCardItem({ item, entry, onPress }: NeighborhoodCardItemProps): JSX.Element {
   const { isLoggedIn } = useAuth();
+  const { set } = useNeighborhoodCache();
+  
   const toast = useToast();
   const [toggleFavorite, { isLoading: isToggling }] = useToggleFavoriteMutation();
 
@@ -29,8 +33,19 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
   const [imageLoaded, setImageLoaded] = useState(false);
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
+  const handlePress = () => {
+    set(item.id, entry);
+    onPress(item.id);
+  };
+
   useEffect(() => {
     setLocalFavorite(item.isFavorite);
+  }, [item.isFavorite]);
+
+  useEffect(() => {
+    if (entry) {
+      set(item.id, { ...entry, isFavorite: item.isFavorite });
+    }
   }, [item.isFavorite]);
 
   useEffect(() => {
@@ -68,7 +83,7 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
   };
 
   return (
-    <NeighborhoodCard onPress={() => onPress(item.id)} style={styles.card}>
+    <NeighborhoodCard onPress={handlePress} style={styles.card}>
       <View style={styles.cardImageContainer}>
         <Image
           source={
@@ -150,7 +165,7 @@ export function NeighborhoodCardItem({ item, onPress }: NeighborhoodCardItemProp
               {item.matchCount} match your profile
             </Text>
           </View>
-          <TouchableOpacity onPress={() => onPress(item.id)}>
+          <TouchableOpacity onPress={handlePress}>
             <Text style={styles.detailsLink}>Details &rsaquo;</Text>
           </TouchableOpacity>
         </NeighborhoodCard.Footer>

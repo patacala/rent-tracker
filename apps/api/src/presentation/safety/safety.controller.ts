@@ -1,9 +1,11 @@
-import { Controller, Get, Query, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, BadRequestException, NotFoundException, HttpException, UseGuards, Logger } from '@nestjs/common';
 import { GetNeighborhoodSafetyUseCase } from '../../application/use-cases/get-neighborhood-safety.use-case';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('safety')
 export class SafetyController {
+  private readonly logger = new Logger(SafetyController.name);
+
   constructor(private readonly getSafetyUseCase: GetNeighborhoodSafetyUseCase) {}
 
   @Get('neighborhood')
@@ -24,15 +26,28 @@ export class SafetyController {
       throw new BadRequestException('lat and lng must be valid numbers');
     }
 
-    const result = await this.getSafetyUseCase.execute({
-      neighborhoodId,
-      lat: latNum,
-      lng: lngNum,
-    });
+    try {
+      const result = await this.getSafetyUseCase.execute({
+        neighborhoodId,
+        lat: latNum,
+        lng: lngNum,
+      });
 
-    return {
-      success: true,
-      data: result,
-    };
+      return { success: true, data: result };
+
+    } catch (err: any) {
+      const is429 = err?.message?.includes('429');
+
+      if (is429) {
+        this.logger.warn(`Rate limit hit for neighborhood "${neighborhoodId}" — returning 503`);
+        throw new HttpException(
+          { success: false, error: 'Safety data temporarily unavailable, please try again later' },
+          503,
+        );
+      }
+
+      this.logger.error(`Safety fetch failed for "${neighborhoodId}": ${err?.message}`);
+      throw new NotFoundException({ success: false, error: 'Safety data not available for this neighborhood' });
+    }
   }
 }

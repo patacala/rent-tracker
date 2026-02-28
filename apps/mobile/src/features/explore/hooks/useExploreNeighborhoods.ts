@@ -4,7 +4,7 @@ import { useAuth } from '@shared/context/AuthContext';
 import { useGetNeighborhoodsQuery } from '@features/analysis/store/analysisApi';
 import { OnboardingData, useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { calculateWeightedScore } from '@rent-tracker/utils';
-import type { POIEntity } from '@features/analysis/store/analysisApi';
+import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 import type { NeighborhoodListItem } from '../types';
 
 const TAGLINES = [
@@ -26,6 +26,7 @@ const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]> = {
 
 interface UseExploreNeighborhoodsReturn {
   data: NeighborhoodListItem[];
+  source: Array<{ neighborhood: NeighborhoodEntity; pois: POIEntity[]; isFavorite: boolean }>;
   isEmpty: boolean;
   isLoading: boolean;
   searchParams: { longitude: number; latitude: number; timeMinutes: number; mode: 'driving' | 'walking' | 'cycling' } | null;
@@ -140,12 +141,13 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
       matchCount: countMatches(item.pois, onboardingResult),
       commuteMinutes: onboardingResult.commute,
       photoUrl: item.neighborhood.photoUrl ?? null,
-      isFavorite: item.isFavorite ?? false,
+      isFavorite: item.isFavorite,
     }));
   }, [sourceAnalisys, onboardingResult]);
 
   return {
     data,
+    source: sourceAnalisys,
     isEmpty: data.length === 0,
     isLoading,
     searchParams: apiNeighborhoods?.searchParams ?? null,

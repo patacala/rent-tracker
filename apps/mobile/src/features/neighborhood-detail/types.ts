@@ -50,4 +50,5 @@ export interface NeighborhoodDetail {
   lat: number;
   lng: number;
   photoUrl?: string | null;
+  isFavorite?: boolean;
 }

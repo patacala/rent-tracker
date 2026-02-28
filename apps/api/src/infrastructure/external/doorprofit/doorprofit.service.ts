@@ -22,6 +22,11 @@ export class DoorProfitService {
     this.logger.log(`Fetching crime data for lat=${lat} lng=${lng}`);
     
     const response = await fetch(url);
+
+    if (response.status === 429) {
+      throw new Error(`DoorProfit API error: 429`);
+    }
+
     if (!response.ok) {
       throw new Error(`DoorProfit API error: ${response.status}`);
     }

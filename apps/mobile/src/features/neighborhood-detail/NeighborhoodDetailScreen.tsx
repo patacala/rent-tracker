@@ -21,30 +21,30 @@ import { MarketTrendsSection } from './components/MarketTrendsSection';
 import { PriceWalkSection } from './components/PriceWalkSection';
 import { SafetySection } from './components/SafetySection';
 import { useAuth } from '@shared/context/AuthContext';
-import { useToggleFavoriteMutation, useGetFavoritesQuery } from '@features/saved/store/savedApi';
+import { useToggleFavoriteMutation } from '@features/saved/store/savedApi';
 import { useToast } from '@shared/context/ToastContext';
 import { useNeighborhoodSafety } from './hooks/useNeighborhoodSafety';
+import { useNeighborhoodCache } from '@shared/context/NeighborhoodCacheContext';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 
 export function NeighborhoodDetailScreen(): JSX.Element {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: detail } = useNeighborhoodDetail(id ?? '');
-
-  if (!detail) return <View />;
-
+  const { updateFavorite } = useAnalysis();
+  const { get, set } = useNeighborhoodCache();
   const { isLoggedIn } = useAuth();
   const toast = useToast();
   const [toggleFavorite, { isLoading: isToggling }] = useToggleFavoriteMutation();
-  const { data: favoritesData } = useGetFavoritesQuery(undefined, { skip: !isLoggedIn });
-
-  const isFavorite = favoritesData?.neighborhoods?.some((n) => n.id === id) ?? false;
-  const [localFavorite, setLocalFavorite] = useState(isFavorite);
-
   const { safety, isLoading: safetyLoading } = useNeighborhoodSafety(
     id ?? '',
     detail?.lat ?? 0,
     detail?.lng ?? 0,
   );
+
+  const cached = get(id ?? '');
+  const isFavorite = cached?.isFavorite ?? false;
+  const [localFavorite, setLocalFavorite] = useState(isFavorite);
 
   useEffect(() => {
     setLocalFavorite(isFavorite);
@@ -54,14 +54,22 @@ export function NeighborhoodDetailScreen(): JSX.Element {
     if (!isLoggedIn || isToggling) return;
     const next = !localFavorite;
     setLocalFavorite(next);
+
+    if (cached) set(id!, { ...cached, isFavorite: next });
+    updateFavorite(id!, next);
+
     try {
       await toggleFavorite(id!).unwrap();
       toast.success(next ? 'Added to favorites' : 'Removed from favorites');
     } catch {
       setLocalFavorite(!next);
+      if (cached) set(id!, { ...cached, isFavorite: !next });
+      updateFavorite(id!, !next);
       toast.error('Something went wrong, please try again');
     }
   };
+
+  if (!detail) return <View />;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

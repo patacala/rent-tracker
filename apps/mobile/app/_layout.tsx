@@ -13,6 +13,7 @@ import { AnalysisProvider } from '@features/analysis/context/AnalysisContext';
 import { THEME } from '@shared/theme';
 import { supabase } from '@shared/lib/supabase';
 import { ToastProvider } from '@shared/context/ToastContext';
+import { NeighborhoodCacheProvider } from '@shared/context/NeighborhoodCacheContext';
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '');
 
@@ -97,10 +98,12 @@ export default function RootLayout(): JSX.Element {
         <AuthProvider>
           <OnboardingProvider>
             <AnalysisProvider>
-              <ToastProvider>
-                <StatusBar style="dark" />
-                <RootLayoutContent />
-              </ToastProvider>
+              <NeighborhoodCacheProvider>
+                <ToastProvider>
+                  <StatusBar style="dark" />
+                  <RootLayoutContent />
+                </ToastProvider>
+              </NeighborhoodCacheProvider>
             </AnalysisProvider>
           </OnboardingProvider>
         </AuthProvider>
