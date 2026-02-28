@@ -17,6 +17,7 @@ export interface AnalyzeLocationOutput {
 
 interface AnalysisContextValue {
   analysisResult: AnalyzeLocationOutput | null;
+  isHydrated: boolean;
   setAnalysisResult: (result: AnalyzeLocationOutput | null) => void;
   updateFavorite: (neighborhoodId: string, isFavorite: boolean) => void;
   reset: () => void;
@@ -26,14 +27,15 @@ const AnalysisContext = createContext<AnalysisContextValue | null>(null);
 
 export function AnalysisProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const [analysisResult, setAnalysisResultState] = useState<AnalyzeLocationOutput | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Rehidrata desde AsyncStorage al iniciar
   useEffect(() => {
     AsyncStorage.getItem(ANALYSIS_STORAGE_KEY)
       .then((raw) => {
         if (raw) setAnalysisResultState(JSON.parse(raw));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setIsHydrated(true));
   }, []);
 
   const setAnalysisResult = useCallback((result: AnalyzeLocationOutput | null) => {
@@ -44,10 +46,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }): J
       AsyncStorage.removeItem(ANALYSIS_STORAGE_KEY).catch(() => {});
     }
   }, []);
-
-  const reset = useCallback(() => {
-    setAnalysisResult(null);
-  }, [setAnalysisResult]);
 
   const updateFavorite = useCallback((neighborhoodId: string, isFavorite: boolean) => {
     setAnalysisResultState((prev) => {
@@ -63,8 +61,12 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }): J
     });
   }, []);
 
+  const reset = useCallback(() => {
+    setAnalysisResult(null);
+  }, [setAnalysisResult]);
+
   return (
-    <AnalysisContext.Provider value={{ analysisResult, setAnalysisResult, updateFavorite, reset }}>
+    <AnalysisContext.Provider value={{ analysisResult, isHydrated, setAnalysisResult, updateFavorite, reset }}>
       {children}
     </AnalysisContext.Provider>
   );

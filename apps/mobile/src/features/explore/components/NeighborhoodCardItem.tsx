@@ -15,6 +15,7 @@ import { useToggleFavoriteMutation } from '@features/saved/store/savedApi';
 import { useToast } from '@shared/context/ToastContext';
 import type { NeighborhoodListItem } from '../types';
 import { NeighborhoodCacheEntry, useNeighborhoodCache } from '@shared/context/NeighborhoodCacheContext';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 
 interface NeighborhoodCardItemProps {
   item: NeighborhoodListItem;
@@ -25,6 +26,7 @@ interface NeighborhoodCardItemProps {
 export function NeighborhoodCardItem({ item, entry, onPress }: NeighborhoodCardItemProps): JSX.Element {
   const { isLoggedIn } = useAuth();
   const { set } = useNeighborhoodCache();
+  const { updateFavorite } = useAnalysis();
   
   const toast = useToast();
   const [toggleFavorite, { isLoading: isToggling }] = useToggleFavoriteMutation();
@@ -34,7 +36,7 @@ export function NeighborhoodCardItem({ item, entry, onPress }: NeighborhoodCardI
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   const handlePress = () => {
-    set(item.id, entry);
+    set(item.id, { ...entry, isFavorite: item.isFavorite });
     onPress(item.id);
   };
 
@@ -46,7 +48,7 @@ export function NeighborhoodCardItem({ item, entry, onPress }: NeighborhoodCardI
     if (entry) {
       set(item.id, { ...entry, isFavorite: item.isFavorite });
     }
-  }, [item.isFavorite]);
+  }, [item.isFavorite, entry]);
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -69,15 +71,18 @@ export function NeighborhoodCardItem({ item, entry, onPress }: NeighborhoodCardI
 
   const handleToggleFavorite = async () => {
     if (!isLoggedIn || isToggling) return;
-
     const next = !localFavorite;
     setLocalFavorite(next);
+    updateFavorite(item.id, next);          
+    set(item.id, { ...entry, isFavorite: next }); 
 
     try {
       await toggleFavorite(item.id).unwrap();
       toast.success(next ? 'Added to favorites' : 'Removed from favorites');
     } catch {
       setLocalFavorite(!next);
+      updateFavorite(item.id, !next); 
+      set(item.id, { ...entry, isFavorite: !next });
       toast.error('Something went wrong, please try again');
     }
   };

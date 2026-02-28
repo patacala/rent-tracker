@@ -7,6 +7,7 @@ import type { OnboardingData } from '@features/onboarding/context/OnboardingCont
 import type { NeighborhoodListItem } from '@features/explore/types';
 import { useMemo } from 'react';
 import { NeighborhoodCacheEntry } from '@shared/context/NeighborhoodCacheContext';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 
 const TAGLINES = [
   'THE CITY BEAUTIFUL', 'FINANCIAL DISTRICT', 'ARTS DISTRICT',
@@ -100,6 +101,7 @@ export function useSavedNeighborhoods(): UseSavedNeighborhoodsReturn {
   const { data: favoritesData, isLoading } = useGetFavoritesQuery();
   const [toggleFavorite] = useToggleFavoriteMutation();
   const { data: onboarding } = useOnboarding();
+  const { updateFavorite } = useAnalysis();
 
   const data = useMemo(() => {
     if (!favoritesData?.neighborhoods?.length) return [];
@@ -118,10 +120,12 @@ export function useSavedNeighborhoods(): UseSavedNeighborhoodsReturn {
   }, [favoritesData, onboarding]);
 
   const remove = async (id: string) => {
+    updateFavorite(id, false);
     try {
       await toggleFavorite(id).unwrap();
       toast.success('Removed from favorites');
     } catch {
+      updateFavorite(id, true);
       toast.error('Something went wrong, please try again');
     }
   };

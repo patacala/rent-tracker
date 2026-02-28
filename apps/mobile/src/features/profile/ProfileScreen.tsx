@@ -15,6 +15,8 @@ import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { AvatarEditor } from './components/AvatarEditor';
 import { EditNameModal } from './components/EditNameModal';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -25,6 +27,7 @@ interface MenuItem {
 }
 
 export function ProfileScreen(): JSX.Element {
+  const { reset: resetAnalysis } = useAnalysis();
   const { logout, user } = useAuth();
   const { reset } = useOnboarding();
 
@@ -56,6 +59,8 @@ export function ProfileScreen(): JSX.Element {
           onPress: async () => {
             await reset();
             await logout();
+            resetAnalysis();
+            AsyncStorage.clear();
             router.replace('/welcome');
           },
         },
