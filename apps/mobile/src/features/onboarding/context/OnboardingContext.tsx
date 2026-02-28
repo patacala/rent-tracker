@@ -1,18 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, JSX } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OnboardingProfile } from '../store/onboardingApi';
 
 type ChildAgeGroup = '0-5' | '6-12' | '13-18';
 type LifestylePreference = 'suburban' | 'urban';
-type CommuteOption = 15 | 30 | 45;
+type CommuteOption = 15 | 30 | 45 | 60;
+type YesOrNot = 'yes' | 'no';
 
 export interface OnboardingData {
   workAddress: string;
   workCoordinates: { latitude: number; longitude: number } | null;
   commute: CommuteOption;
   priorities: string[];
-  hasChildren: 'yes' | 'no';
+  hasChildren: YesOrNot;
   childAgeGroups: ChildAgeGroup[];
-  hasPets: 'yes' | 'no';
+  hasPets: YesOrNot;
   lifestyle: LifestylePreference | null;
 }
 
@@ -26,6 +28,7 @@ interface OnboardingContextValue {
   setCurrentStep: (step: number) => Promise<void>;
   reset: () => Promise<void>;
   clearData: () => Promise<void>;
+  hydrateFromServer: (profile: OnboardingProfile) => Promise<void>;
 }
 
 const STORAGE_KEY = '@onboarding:data';
@@ -100,6 +103,52 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }):
     setCurrentStepState(0);
   };
 
+  const toCommuteOption = (value: number | string | undefined): CommuteOption => {
+    const num = Number(value);
+    const validOptions: CommuteOption[] = [15, 30, 45, 60];
+
+    if (!isNaN(num) && validOptions.includes(num as CommuteOption)) {
+      return num as CommuteOption;
+    }
+    return 30;
+  };
+
+  const toYesOrNo = (value: string | undefined) => {
+    if (value === 'yes' || value === 'no') {
+      return value;
+    }
+    return 'no';
+  };
+
+  const toChildAgeGroups = (value: unknown): ChildAgeGroup[] => {
+    if (!Array.isArray(value)) return [];
+    return value.filter((v): v is ChildAgeGroup => 
+      v === '0-5' || v === '6-12' || v === '13-18'
+    );
+  };
+
+  const toLifestyle = (value: string | null | undefined): LifestylePreference | null => {
+    if (value === 'suburban' || value === 'urban') {
+      return value;
+    }
+    return null;
+  };
+
+  const hydrateFromServer = async (profile: OnboardingProfile) => {
+    const mapped: OnboardingData = {
+      workAddress: profile.workAddress ?? '',
+      workCoordinates: null,
+      commute: toCommuteOption(profile.commute),
+      priorities: Array.isArray(profile.priorities) ? profile.priorities : [],
+      hasChildren: toYesOrNo(profile.hasChildren),
+      childAgeGroups: toChildAgeGroups(profile.childAgeGroups),
+      hasPets: toYesOrNo(profile.hasPets),
+      lifestyle: toLifestyle(profile.lifestyle),
+    };
+
+    await save(mapped);
+  };
+
   return (
     <OnboardingContext.Provider value={{
       data,
@@ -111,6 +160,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }):
       setCurrentStep,
       reset,
       clearData,
+      hydrateFromServer,
     }}>
       {children}
     </OnboardingContext.Provider>

@@ -124,20 +124,22 @@ export class AnalyzeLocationUseCase {
   ): Promise<AnalysisResult[]> {
     this.logger.log('Step 3: Fetching all POIs in isochrone area (single Overpass call)');
 
-    // Carga barrios de sesión anterior — SIN cargar POIs
+    // Carga barrios de sesión anterior
     const previousResults: AnalysisResult[] = [];
     if (previousNeighborhoodIds.length > 0) {
       const previousEntries = await Promise.all(
         previousNeighborhoodIds.map(async (id) => {
           const neighborhood = await this.neighborhoodRepo.findById(id);
           if (!neighborhood) return null;
-          return { neighborhood, pois: [] as POIEntity[] };
+
+          const pois = await this.poiRepo.findByNeighborhood(id);
+          return { neighborhood, pois};
         }),
       );
       previousResults.push(
         ...previousEntries.filter((e): e is AnalysisResult => e !== null),
       );
-      this.logger.log(`Loaded ${previousResults.length} neighborhoods from previous session`);
+      this.logger.log(`Loaded ${previousResults.length} neighborhoods from previous session with ${previousResults.reduce((s, r) => s + r.pois.length, 0)} POIs`);
     }
 
     // Set de claves estables de sesión anterior

@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import React, { JSX, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,6 @@ import { BottomSheet } from '@shared/components/BottomSheet';
 import { EditPreferencesForm } from './components/EditPreferencesForm';
 import { AuthPromptModal } from './components/AuthPromptModal';
 import {
-  OnboardingProfile,
   SaveOnboardingRequest,
   useGetOnboardingQuery,
   useUpdateOnboardingMutation,
@@ -41,7 +40,7 @@ export function ExploreScreen(): JSX.Element {
   const router = useRouter();
   const toast = useToast();
   const { isLoggedIn } = useAuth();
-  const { data: localOnboarding } = useOnboarding();
+  const { data: onboardingData, hydrateFromServer } = useOnboarding();
   const { data: neighborhoods, isEmpty, isLoading: apiLoading } = useExploreNeighborhoods();
   const { setAnalysisResult } = useAnalysis();
   
@@ -58,21 +57,11 @@ export function ExploreScreen(): JSX.Element {
 
   const [updateOnboarding] = useUpdateOnboardingMutation();
 
-  const formInitialData: OnboardingProfile | null = serverOnboarding
-    ? serverOnboarding
-    : localOnboarding?.workAddress?.trim().length
-    ? {
-        id: '',
-        userId: '',
-        workAddress: localOnboarding.workAddress,
-        commute: localOnboarding.commute,
-        priorities: localOnboarding.priorities,
-        hasChildren: localOnboarding.hasChildren,
-        childAgeGroups: localOnboarding.childAgeGroups,
-        hasPets: localOnboarding.hasPets,
-        lifestyle: localOnboarding.lifestyle ?? undefined,
-      }
-    : null;
+  useEffect(() => {
+    if (serverOnboarding) {
+      hydrateFromServer(serverOnboarding);
+    }
+  }, [serverOnboarding]);
 
   const cityName =
     APP_CONFIG.defaultCity.charAt(0).toUpperCase() +
@@ -100,8 +89,8 @@ export function ExploreScreen(): JSX.Element {
     }
 
     // Only re-analyze if location or commute actually changed
-    const addressChanged = payload.workAddress !== formInitialData?.workAddress;
-    const commuteChanged = payload.commute !== formInitialData?.commute;
+    const addressChanged = payload.workAddress !== onboardingData.workAddress;
+    const commuteChanged = payload.commute !== onboardingData.commute;
     if (!addressChanged && !commuteChanged) return;
 
     const loadingToastId = toast.loading('Analyzing neighborhoods with your new preferences...');
@@ -265,7 +254,6 @@ export function ExploreScreen(): JSX.Element {
       >
         <EditPreferencesForm
           key={formKey}
-          initialData={formInitialData}
           loading={onboardingLoading}
           onSave={() => {}}
           onUpdate={handleUpdate}

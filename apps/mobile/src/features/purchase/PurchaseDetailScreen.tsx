@@ -17,7 +17,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { supabase } from '@shared/lib/supabase';
 import { apiClient } from '@shared/api/apiClient';
-/* import { useAnalysis } from '@features/analysis/context/AnalysisContext'; */
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 
 export function PurchaseDetailScreen(): JSX.Element {
   const router = useRouter();
@@ -26,7 +26,7 @@ export function PurchaseDetailScreen(): JSX.Element {
   const [cvc, setCvc] = useState('');
   const [zip, setZip] = useState('');
   const { data: localOnboarding } = useOnboarding();
-  /* const { setAnalysisResult } = useAnalysis(); */
+  const { setAnalysisResult } = useAnalysis();
 
   const { plan, price, period } = useLocalSearchParams<{
     plan: string;
@@ -69,7 +69,7 @@ export function PurchaseDetailScreen(): JSX.Element {
 
       console.log('Resultado de analisis: ');
       console.log(result);
-      /* setAnalysisResult(result); */
+      setAnalysisResult(result);
     } catch {
       // silencioso — reintentará en próxima sesión
     }

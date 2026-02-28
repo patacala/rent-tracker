@@ -33,7 +33,6 @@ interface UseExploreNeighborhoodsReturn {
 
 function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
   const categories = pois.map((p) => p.category.toLowerCase());
-
   const commuteScore = Math.max(0, Math.min(100, 100 - (onboarding.commute - 15) * (50 / 30)));
 
   const uniqueCategories = new Set(categories).size;
@@ -90,24 +89,21 @@ function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
 export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
   const { isLoggedIn } = useAuth();
   const { analysisResult } = useAnalysis();
-  const { data: onboarding } = useOnboarding();
+  const { data: onboardingResult } = useOnboarding();
 
   const { data: apiNeighborhoods, isLoading } = useGetNeighborhoodsQuery(undefined, {
-    skip: !isLoggedIn,
+    skip: !isLoggedIn || (analysisResult?.neighborhoods?.length ?? 0) > 0
   });
 
-  console.log(analysisResult?.neighborhoods?.length);
-  console.log(apiNeighborhoods?.neighborhoods?.length)
-
-  const source = useMemo(() => {
+  const sourceAnalisys = useMemo(() => {
     if (analysisResult?.neighborhoods?.length) return analysisResult.neighborhoods;
     if (isLoggedIn && apiNeighborhoods?.neighborhoods?.length) return apiNeighborhoods.neighborhoods;
     return [];
   }, [analysisResult, apiNeighborhoods, isLoggedIn]);
 
   function countMatches(pois: POIEntity[], onboarding: OnboardingData): number {
+    let count = 1; 
     const categories = pois.map((p) => p.category.toLowerCase());
-    let count = 1; // Commute siempre cuenta
 
     const priorities = onboarding.priorities.flatMap(
       (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
@@ -133,19 +129,19 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
   }
 
   const data = useMemo(() => {
-    if (source.length === 0) return [];
+    if (sourceAnalisys.length === 0) return [];
 
-    return source.map((item, idx) => ({
+    return sourceAnalisys.map((item, idx) => ({
       id: item.neighborhood.id,
       name: item.neighborhood.name,
-      score: calculateScoreFromPOIs(item.pois, onboarding),
+      score: calculateScoreFromPOIs(item.pois, onboardingResult),
       tagline: TAGLINES[idx % TAGLINES.length] ?? 'NEIGHBORHOOD',
-      tags: buildTags(item.pois, onboarding),
-      matchCount: countMatches(item.pois, onboarding),
-      commuteMinutes: onboarding.commute,
+      tags: buildTags(item.pois, onboardingResult),
+      matchCount: countMatches(item.pois, onboardingResult),
+      commuteMinutes: onboardingResult.commute,
       photoUrl: item.neighborhood.photoUrl ?? null,
     }));
-  }, [source, onboarding]);
+  }, [sourceAnalisys, onboardingResult]);
 
   return {
     data,

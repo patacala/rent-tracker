@@ -237,8 +237,6 @@ export function AuthScreen(): JSX.Element {
     if ('error' in syncResult) throw new Error('User sync failed');
 
     if (onboardingData.workAddress.trim().length > 0) {
-      console.log('Guardo el onboarding');
-
       const onboardingResult = await saveOnboarding({
         workAddress: onboardingData.workAddress,
         commute: onboardingData.commute,
@@ -344,6 +342,7 @@ export function AuthScreen(): JSX.Element {
       }
 
       if (hasOnboarding && !hasLocalOnboarding) {
+        resetAnalysis();
         router.replace('/(tabs)/explore');
         return;
       }

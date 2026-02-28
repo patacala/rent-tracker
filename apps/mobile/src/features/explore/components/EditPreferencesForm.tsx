@@ -14,8 +14,8 @@ import { THEME } from '@shared/theme';
 import { Button } from '@shared/components';
 import {
   SaveOnboardingRequest,
-  OnboardingProfile,
 } from '@features/onboarding/store/onboardingApi';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 
 const PRIORITIES = [
   { id: 'schools', label: 'Schools' },
@@ -31,39 +31,35 @@ const PRIORITIES = [
 type LifestylePreference = 'suburban' | 'urban';
 
 interface EditPreferencesFormProps {
-  initialData: OnboardingProfile | null;
   loading: boolean;
   onSave: () => void;
   onUpdate: (payload: SaveOnboardingRequest) => Promise<void>;
 }
 
 export function EditPreferencesForm({
-  initialData,
   loading,
   onSave,
   onUpdate,
 }: EditPreferencesFormProps): JSX.Element {
-  const [workAddress, setWorkAddress] = useState<string>('');
-  const [commute, setCommute] = useState<number>(30);
-  const [priorities, setPriorities] = useState<string[]>([]);
-  const [lifestyle, setLifestyle] = useState<LifestylePreference | null>(null);
-  const [hasChildren, setHasChildren] = useState<string>('no');
-  const [childAgeGroups, setChildAgeGroups] = useState<string[]>([]);
-  const [hasPets, setHasPets] = useState<string>('no');
+
+  const { data } = useOnboarding();
+
+  const [workAddress, setWorkAddress] = useState<string>(data.workAddress);
+  const [commute, setCommute] = useState<number>(data.commute);
+  const [priorities, setPriorities] = useState<string[]>(data.priorities);
+  const [lifestyle, setLifestyle] = useState<LifestylePreference | null>(data.lifestyle);
+  const [hasChildren, setHasChildren] = useState<string>(data.hasChildren);
+  const [childAgeGroups, setChildAgeGroups] = useState<string[]>(data.childAgeGroups);
+  const [hasPets, setHasPets] = useState<string>(data.hasPets);
+
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setWorkAddress(initialData.workAddress ?? '');
-      setCommute(initialData.commute ?? 30);
-      setPriorities(initialData.priorities ?? []);
-      setLifestyle((initialData.lifestyle as LifestylePreference) ?? null);
-      setHasChildren(initialData.hasChildren ?? 'no');
-      setChildAgeGroups(initialData.childAgeGroups ?? []);
-      setHasPets(initialData.hasPets ?? 'no');
-    }
-  }, [initialData]);
+    setHasChildren(data.hasChildren);
+    setChildAgeGroups(data.childAgeGroups);
+    setHasPets(data.hasPets);
+  }, [data]);
 
   if (loading) {
     return (
@@ -103,7 +99,6 @@ export function EditPreferencesForm({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.container}
       >
-        {/* Work Location */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>WORK LOCATION</Text>
           {isEditingAddress ? (
@@ -140,7 +135,6 @@ export function EditPreferencesForm({
           )}
         </View>
 
-        {/* Max Commute */}
         <View style={styles.section}>
           <View style={styles.sectionRow}>
             <Text style={styles.sectionLabel}>MAX COMMUTE</Text>
@@ -167,11 +161,9 @@ export function EditPreferencesForm({
           </View>
         </View>
 
-        {/* Top Priorities */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>
-            TOP PRIORITIES{' '}
-            <Text style={styles.sectionLabelSub}>(SELECT UP TO 3)</Text>
+            TOP PRIORITIES <Text style={styles.sectionLabelSub}>(SELECT UP TO 3)</Text>
           </Text>
           <View style={styles.chipsWrap}>
             {PRIORITIES.map((p) => {
@@ -191,7 +183,6 @@ export function EditPreferencesForm({
           </View>
         </View>
 
-        {/* Lifestyle */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>DO YOU PREFER A SUBURBAN OR URBAN FEEL?</Text>
           <View style={styles.lifestyleRow}>
@@ -201,11 +192,11 @@ export function EditPreferencesForm({
                 onPress={() => setLifestyle(option)}
                 style={[styles.lifestyleCard, lifestyle === option && styles.lifestyleCardActive]}
               >
-                {lifestyle === option ? (
+                {lifestyle === option && (
                   <View style={styles.lifestyleCheck}>
                     <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                   </View>
-                ) : null}
+                )}
                 <View style={[styles.lifestyleIconWrap, lifestyle === option && styles.lifestyleIconWrapActive]}>
                   <Ionicons
                     name={option === 'suburban' ? 'home-outline' : 'business-outline'}
@@ -240,11 +231,14 @@ export function EditPreferencesForm({
 
 const styles = StyleSheet.create({
   wrapper: { flex: 1 },
+
   container: {
     gap: THEME.spacing.lg,
     paddingBottom: THEME.spacing.sm,
   },
+
   bottomSpacer: { height: 80 },
+
   floatingBtn: {
     position: 'absolute',
     bottom: 0,
@@ -256,27 +250,33 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: THEME.colors.border,
   },
+
   loadingWrapper: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   section: { gap: THEME.spacing.sm },
+
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+
   sectionLabel: {
     fontSize: THEME.fontSize.xs,
     fontWeight: THEME.fontWeight.bold,
     color: THEME.colors.textSecondary,
     letterSpacing: 0.8,
   },
+
   sectionLabelSub: {
     fontWeight: THEME.fontWeight.regular,
     color: THEME.colors.textMuted,
   },
+
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -287,6 +287,7 @@ const styles = StyleSheet.create({
     borderColor: THEME.colors.border,
     padding: THEME.spacing.md,
   },
+
   locationEditRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,23 +298,27 @@ const styles = StyleSheet.create({
     borderColor: THEME.colors.primary,
     padding: THEME.spacing.md,
   },
+
   locationInput: {
     flex: 1,
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.text,
     padding: 0,
   },
+
   doneBtn: {
     paddingHorizontal: THEME.spacing.sm,
     paddingVertical: THEME.spacing.xs,
     backgroundColor: THEME.colors.primaryLight,
     borderRadius: THEME.borderRadius.sm,
   },
+
   doneBtnText: {
     fontSize: THEME.fontSize.xs,
     fontWeight: THEME.fontWeight.semibold,
     color: THEME.colors.primary,
   },
+
   locationIcon: {
     width: 34,
     height: 34,
@@ -322,31 +327,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   locationText: { flex: 1 },
+
   locationAddress: {
     fontSize: THEME.fontSize.sm,
     fontWeight: THEME.fontWeight.semibold,
     color: THEME.colors.text,
   },
+
   locationSub: {
     fontSize: THEME.fontSize.xs,
     color: THEME.colors.textMuted,
   },
+
   editLink: {
     fontSize: THEME.fontSize.sm,
     color: THEME.colors.primary,
     fontWeight: THEME.fontWeight.semibold,
   },
+
   commuteValue: {
     fontSize: THEME.fontSize.sm,
     fontWeight: THEME.fontWeight.bold,
     color: THEME.colors.primary,
   },
+
   chipsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: THEME.spacing.sm,
   },
+
   priorityChip: {
     paddingHorizontal: THEME.spacing.md,
     paddingVertical: THEME.spacing.sm,
@@ -355,20 +367,25 @@ const styles = StyleSheet.create({
     borderColor: THEME.colors.border,
     backgroundColor: THEME.colors.background,
   },
+
   priorityChipActive: {
     borderColor: THEME.colors.primary,
     backgroundColor: THEME.colors.primary,
   },
+
   priorityChipText: {
     fontSize: THEME.fontSize.sm,
     fontWeight: THEME.fontWeight.medium,
     color: THEME.colors.textSecondary,
   },
+
   priorityChipTextActive: { color: '#FFFFFF' },
+
   lifestyleRow: {
     flexDirection: 'row',
     gap: THEME.spacing.md,
   },
+
   lifestyleCard: {
     flex: 1,
     padding: THEME.spacing.md,
@@ -380,10 +397,12 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.xs,
     position: 'relative',
   },
+
   lifestyleCardActive: {
     borderColor: THEME.colors.primary,
     backgroundColor: THEME.colors.primaryLight,
   },
+
   lifestyleCheck: {
     position: 'absolute',
     top: THEME.spacing.xs,
@@ -395,6 +414,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   lifestyleIconWrap: {
     width: 52,
     height: 52,
@@ -403,30 +423,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   lifestyleIconWrapActive: {
     backgroundColor: THEME.colors.primary,
   },
+
   lifestyleTitle: {
     fontSize: THEME.fontSize.base,
     fontWeight: THEME.fontWeight.semibold,
     color: THEME.colors.text,
   },
+
   lifestyleTitleActive: { color: THEME.colors.primary },
+
   lifestyleDesc: {
     fontSize: THEME.fontSize.xs,
     color: THEME.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },
+
   slider: {
     width: '100%',
     height: 40,
   },
+
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: -THEME.spacing.sm,
   },
+
   sliderLabel: {
     fontSize: THEME.fontSize.xs,
     color: THEME.colors.textMuted,
