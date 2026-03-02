@@ -11,11 +11,12 @@ import { THEME } from '../theme';
 
 interface FilterChipsProps<T extends string | number> {
   options: readonly T[];
-  value: T | null;
-  onChange: (value: T | null) => void;
+  value: T | null | T[];
+  onChange: (value: T | null | T[]) => void;
   getLabel?: (option: T) => string;
   activeIndicator?: boolean;
   toggleable?: boolean;
+  multiSelect?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
 }
 
@@ -26,9 +27,26 @@ export function FilterChips<T extends string | number>({
   getLabel,
   activeIndicator = false,
   toggleable = false,
+  multiSelect = false,
   containerStyle,
 }: FilterChipsProps<T>): JSX.Element {
+  const isActive = (option: T): boolean => {
+    if (multiSelect && Array.isArray(value)) {
+      return value.includes(option);
+    }
+    return option === value;
+  };
+
   const handlePress = (option: T) => {
+    if (multiSelect && Array.isArray(value)) {
+      const already = value.includes(option);
+      const next = already
+        ? value.filter((v) => v !== option)
+        : [...value, option];
+      onChange(next.length === 0 ? [] : next);
+      return;
+    }
+
     if (toggleable && value === option) {
       onChange(null);
     } else {
@@ -44,20 +62,20 @@ export function FilterChips<T extends string | number>({
     >
       {options.map((option) => {
         const label = getLabel ? getLabel(option) : String(option);
-        const isActive = option === value;
+        const active = isActive(option);
         return (
           <TouchableOpacity
             key={String(option)}
             onPress={() => handlePress(option)}
-            style={[styles.chip, isActive ? styles.chipActive : styles.chipInactive]}
+            style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
           >
             <Text
               style={[
                 styles.chipText,
-                isActive ? styles.chipTextActive : styles.chipTextInactive,
+                active ? styles.chipTextActive : styles.chipTextInactive,
               ]}
             >
-              {activeIndicator && isActive ? `${label} ▼` : label}
+              {activeIndicator && active ? `${label} ▼` : label}
             </Text>
           </TouchableOpacity>
         );

@@ -7,6 +7,7 @@ export interface NeighborhoodPreview {
   commuteMinutes: number;
   lat: number;
   lng: number;
+  photoUrl: string | null;
 }
 
 export const MAP_FILTERS = ['Commute', 'Safety', 'Schools', 'Budget'] as const;

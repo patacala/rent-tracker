@@ -40,7 +40,7 @@ export function ExploreScreen(): JSX.Element {
   const { setAnalysisResult } = useAnalysis();
 
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
+  const [activeFilters, setActiveFilters] = useState<ExploreFilter[]>(['Best Match']);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [formKey, setFormKey] = useState(0);
@@ -55,30 +55,35 @@ export function ExploreScreen(): JSX.Element {
   }, [serverOnboarding]);
 
   const availableFilters = useMemo(() => {
-    const allTags = neighborhoods.flatMap((n) => n.tags);
-    const uniqueTags = Array.from(new Set(allTags));
-    return ['Best Match', ...uniqueTags];
+  const allTags = neighborhoods.flatMap((n) => n.tags);
+  const uniqueTags = Array.from(new Set(allTags));
+  return ['Best Match', ...uniqueTags] as ExploreFilter[];
   }, [neighborhoods]);
 
   useEffect(() => {
-    if (!availableFilters.includes(activeFilter)) {
-      setActiveFilter('Best Match');
+    const stillValid = activeFilters.filter((f) => availableFilters.includes(f));
+    if (stillValid.length !== activeFilters.length) {
+      setActiveFilters(stillValid.length ? stillValid : ['Best Match']);
     }
   }, [availableFilters]);
 
   const filtered = useMemo(() => {
+    const hasBestMatch = activeFilters.includes('Best Match' as ExploreFilter);
+
     return neighborhoods.filter((item) => {
       const matchesSearch =
         search.trim() === '' ||
         item.name.toLowerCase().includes(search.toLowerCase());
 
       const matchesFilter =
-        activeFilter === 'Best Match' ||
-        item.tags.some((tag) => tag.toLowerCase() === activeFilter.toLowerCase());
+        hasBestMatch ||
+        activeFilters.some((f) =>
+          item.tags.some((tag) => tag.toLowerCase() === f.toLowerCase()),
+        );
 
       return matchesSearch && matchesFilter;
     });
-  }, [neighborhoods, search, activeFilter]);
+  }, [neighborhoods, search, activeFilters]);
 
   const handleCardPress = (id: string) => {
     router.push(`/neighborhood/${id}`);
@@ -136,6 +141,25 @@ export function ExploreScreen(): JSX.Element {
     runAnalysis();
   };
 
+  const handleFilterChange = (v: ExploreFilter | null | ExploreFilter[]) => {
+    const selected = (Array.isArray(v) ? v : [v]).filter(Boolean) as ExploreFilter[];
+
+    // Si quedó vacío → Best Match
+    if (selected.length === 0) {
+      setActiveFilters(['Best Match'] as ExploreFilter[]);
+      return;
+    }
+
+    // Si se activó Best Match → limpia todo lo demás
+    if (selected.includes('Best Match' as ExploreFilter) && !activeFilters.includes('Best Match' as ExploreFilter)) {
+      setActiveFilters(['Best Match'] as ExploreFilter[]);
+      return;
+    }
+
+    // Si se activó otro filtro → quita Best Match
+    setActiveFilters(selected.filter((f) => f !== 'Best Match'));
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -173,8 +197,9 @@ export function ExploreScreen(): JSX.Element {
 
         <FilterChips
           options={availableFilters}
-          value={activeFilter}
-          onChange={(v) => v && setActiveFilter(v)}
+          value={activeFilters}
+          onChange={handleFilterChange}
+          multiSelect
         />
       </View>
 

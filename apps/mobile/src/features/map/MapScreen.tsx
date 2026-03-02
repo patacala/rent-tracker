@@ -1,47 +1,51 @@
-import React, { JSX, useRef, useState } from 'react';
+import React, { JSX, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  Animated,
-  TouchableOpacity,
   StyleSheet,
-  Dimensions,
+  Image,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
-import { Button, FilterChips, HeaderBackButton, ImagePlaceholder, Map, MapPolygon, NeighborhoodMarker, ScoreBadge, Tag } from '@shared/components';
+import {
+  Button,
+  FilterChips,
+  HeaderBackButton,
+  Map,
+  MapPolygon,
+  NeighborhoodMarker,
+  ScoreBadge,
+  Tag,
+} from '@shared/components';
+import { BottomSheet } from '@shared/components/BottomSheet';
 import { useMapNeighborhoods } from './hooks/useMapNeighborhoods';
-import { MAP_FILTERS, type MapFilter, type NeighborhoodPreview } from './types';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_HEIGHT * 0.42;
+import type { MapFilter, NeighborhoodPreview } from './types';
 
 export function MapScreen(): JSX.Element {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data: neighborhoods, isochrone, center } = useMapNeighborhoods();
-  const [activeFilter, setActiveFilter] = useState<MapFilter | null>(null);
+  const [activeFilters, setActiveFilters] = useState<MapFilter[]>([]);
   const [selected, setSelected] = useState<NeighborhoodPreview | null>(null);
-  const sheetAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
 
-  const openSheet = (item: NeighborhoodPreview) => {
-    setSelected(item);
-    Animated.spring(sheetAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 80,
-      friction: 12,
-    }).start();
-  };
+  // Deriva filtros de los tags reales
+  const availableFilters = useMemo(() => {
+    const allTags = neighborhoods.flatMap((n) => n.tags);
+    return Array.from(new Set(allTags)) as MapFilter[];
+  }, [neighborhoods]);
 
-  const closeSheet = () => {
-    Animated.timing(sheetAnim, {
-      toValue: SHEET_HEIGHT,
-      duration: 280,
-      useNativeDriver: true,
-    }).start(() => setSelected(null));
-  };
+  // Filtra neighborhoods por tag activo
+  const filteredNeighborhoods = useMemo(() => {
+    if (selected) return neighborhoods.filter((n) => n.id === selected.id);
+
+    if (activeFilters.length === 0) return neighborhoods;
+    return neighborhoods.filter((n) =>
+      activeFilters.every((f) =>
+        n.tags.some((t) => t.toLowerCase() === f.toLowerCase()),
+      ),
+    );
+  }, [neighborhoods, activeFilters, selected]);
 
   return (
     <View style={styles.container}>
@@ -53,95 +57,99 @@ export function MapScreen(): JSX.Element {
           }}
         />
 
-        {/* Isochrone fill — shows the reachable area from the work address */}
         {isochrone ? (
           <MapPolygon id="isochrone" polygon={isochrone} />
         ) : null}
 
-        {neighborhoods.map((item) => (
+        {filteredNeighborhoods.map((item) => (
           <Map.Marker
             key={item.id}
             id={item.id}
             coordinate={[item.lng, item.lat]}
-            onPress={() => openSheet(item)}
+            onPress={() => setSelected(item)}
           >
             <NeighborhoodMarker score={item.score} size="sm" />
           </Map.Marker>
         ))}
       </Map>
 
+      {/* Top overlay con back + filtros */}
       <SafeAreaView style={styles.topOverlay} edges={['top']}>
         <View style={styles.topRow}>
           <HeaderBackButton onPress={() => router.back()} variant="overlay" />
-          <FilterChips
-            options={MAP_FILTERS}
-            value={activeFilter}
-            onChange={setActiveFilter}
-            toggleable
-          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersScroll}
+          >
+            <FilterChips
+              options={availableFilters}
+              value={activeFilters}
+              onChange={(v) => setActiveFilters(v as MapFilter[])}
+              multiSelect
+            />
+          </ScrollView>
         </View>
       </SafeAreaView>
 
-      {selected ? (
-        <>
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            onPress={closeSheet}
-            activeOpacity={1}
-          />
-          <Animated.View
-            style={[
-              styles.sheet,
-              { bottom: insets.bottom, transform: [{ translateY: sheetAnim }] },
-            ]}
-          >
-            <View style={styles.sheetHandle} />
-
-            <View style={styles.sheetContent}>
-              <View style={styles.sheetHeader}>
-                <View>
-                  <Text style={styles.sheetName}>{selected.name}</Text>
-                  <Text style={styles.sheetCity}>{selected.city}</Text>
-                </View>
-                <View style={styles.sheetScoreBlock}>
-                  <ScoreBadge score={selected.score} size="lg" />
-                  <Text style={styles.sheetScoreLabel}>LIFESTYLE SCORE</Text>
-                </View>
+      {/* BottomSheet del neighborhood seleccionado */}
+      <BottomSheet
+        visible={!!selected}
+        onClose={() => setSelected(null)}
+        snapHeight="37%"
+        title='Neighborhood Details'
+      >
+        {selected ? (
+          <View style={styles.sheetContent}>
+            {/* Header */}
+            <View style={styles.sheetHeader}>
+              <Image
+                source={
+                  (selected as any).photoUrl
+                    ? { uri: (selected as any).photoUrl }
+                    : require('@assets/miami-bg.png')
+                }
+                style={styles.sheetImage}
+                resizeMode="cover"
+              />
+              <View style={styles.sheetOverlay} />
+              <View style={styles.sheetHeaderText}>
+                <Text style={styles.sheetName}>{selected.name}</Text>
               </View>
-
-              <View style={styles.sheetTags}>
-                {selected.tags.map((tag) => (
-                  <Tag key={tag} variant="default">
-                    <Tag.Label>{tag}</Tag.Label>
-                  </Tag>
-                ))}
-                <Tag variant="neutral">
-                  <Tag.Icon name="time-outline" />
-                  <Tag.Label>{`${selected.commuteMinutes}m Commute`}</Tag.Label>
-                </Tag>
+              <View style={styles.sheetScore}>
+                <ScoreBadge score={selected.score} size="lg" />
+                <Text style={styles.sheetScoreLabel}>SCORE</Text>
               </View>
-
-              <View style={styles.thumbnails}>
-                {[0, 1, 2].map((i) => (
-                  <ImagePlaceholder key={i} height={64} style={styles.thumbnail} />
-                ))}
-              </View>
-
-              <Button
-                onPress={() => {
-                  closeSheet();
-                  router.push(`/neighborhood/${selected.id}`);
-                }}
-                size="lg"
-                style={styles.detailsBtn}
-              >
-                <Button.Label>View Full Details</Button.Label>
-                <Button.Icon name="arrow-forward-outline" />
-              </Button>
             </View>
-          </Animated.View>
-        </>
-      ) : null}
+
+            {/* Tags */}
+            <View style={styles.sheetTags}>
+              {selected.tags.map((tag) => (
+                <Tag key={tag} variant="default">
+                  <Tag.Label>{tag}</Tag.Label>
+                </Tag>
+              ))}
+              <Tag variant="neutral">
+                <Tag.Icon name="time-outline" />
+                <Tag.Label>{`${selected.commuteMinutes}m Commute`}</Tag.Label>
+              </Tag>
+            </View>
+
+            {/* CTA */}
+            <Button
+              onPress={() => {
+                setSelected(null);
+                router.push(`/neighborhood/${selected.id}`);
+              }}
+              size="lg"
+              style={styles.detailsBtn}
+            >
+              <Button.Label>View Full Details</Button.Label>
+              <Button.Icon name="arrow-forward-outline" />
+            </Button>
+          </View>
+        ) : null}
+      </BottomSheet>
     </View>
   );
 }
@@ -149,6 +157,7 @@ export function MapScreen(): JSX.Element {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+
   topOverlay: {
     position: 'absolute',
     top: 0,
@@ -162,65 +171,62 @@ const styles = StyleSheet.create({
     paddingHorizontal: THEME.spacing.md,
     paddingVertical: THEME.spacing.sm,
   },
-  sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    backgroundColor: THEME.colors.background,
-    borderTopLeftRadius: THEME.borderRadius.lg,
-    borderTopRightRadius: THEME.borderRadius.lg,
-    ...THEME.shadow.md,
-    minHeight: SHEET_HEIGHT,
+  filtersScroll: {
+    flexGrow: 1,
   },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: THEME.colors.border,
-    borderRadius: THEME.borderRadius.full,
-    alignSelf: 'center',
-    marginTop: THEME.spacing.sm,
-  },
+
   sheetContent: {
-    padding: THEME.spacing.lg,
     gap: THEME.spacing.md,
   },
+
   sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    position: 'relative',
+    borderRadius: THEME.borderRadius.md,
+    overflow: 'hidden',
+    height: 110,
+  },
+  sheetImage: {
+    width: '100%',
+    height: '100%',
+  },
+  sheetOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.10)',
+  },
+  sheetHeaderText: {
+    position: 'absolute',
+    bottom: THEME.spacing.md,
+    left: THEME.spacing.md,
   },
   sheetName: {
-    fontSize: THEME.fontSize.xl,
+    fontSize: THEME.fontSize.lg,
     fontWeight: THEME.fontWeight.bold,
-    color: THEME.colors.text,
+    color: '#FFFFFF',
   },
   sheetCity: {
-    fontSize: THEME.fontSize.sm,
-    color: THEME.colors.textSecondary,
+    fontSize: THEME.fontSize.xs,
+    color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
   },
-  sheetScoreBlock: {
+  sheetScore: {
+    position: 'absolute',
+    top: THEME.spacing.md,
+    right: THEME.spacing.md,
     alignItems: 'center',
     gap: 3,
   },
   sheetScoreLabel: {
     fontSize: THEME.fontSize.xxs,
-    color: THEME.colors.textSecondary,
+    color: '#FFFFFF',
     fontWeight: THEME.fontWeight.semibold,
     letterSpacing: 0.5,
   },
+
   sheetTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: THEME.spacing.xs,
   },
-  thumbnails: {
-    flexDirection: 'row',
-    gap: THEME.spacing.sm,
-  },
-  thumbnail: {
-    flex: 1,
-    borderRadius: THEME.borderRadius.sm,
-  },
-  detailsBtn: { width: '100%' },
+
+  detailsBtn: { width: '100%', marginTop: 10 },
 });

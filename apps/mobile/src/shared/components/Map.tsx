@@ -1,5 +1,5 @@
 import React, { JSX, ReactNode, useMemo } from 'react';
-import { StyleProp, ViewStyle, View } from 'react-native';
+import { StyleProp, ViewStyle, View, TouchableOpacity } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 
 const { MapView, Camera, MarkerView, ShapeSource, FillLayer, LineLayer, UserLocation } = Mapbox as any;
@@ -51,7 +51,6 @@ export interface MapCircleProps {
 
 export interface MapPolygonProps {
   id: string;
-  /** GeoJSON Polygon geometry to render */
   polygon: any;
   fillColor?: string;
   fillOpacity?: number;
@@ -133,8 +132,10 @@ function MapMarker({ id, coordinate, children, onPress }: MapMarkerProps): JSX.E
   const MarkerViewComponent = MarkerView as any;
 
   return (
-    <MarkerViewComponent id={id} coordinate={coordinate} onPress={onPress}>
-      {(children as React.ReactElement) || <View />}
+    <MarkerViewComponent id={id} coordinate={coordinate}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        {(children as React.ReactElement) || <View />}
+      </TouchableOpacity>
     </MarkerViewComponent>
   );
 }
@@ -174,7 +175,6 @@ export function MapPolygon({
   strokeWidth = 2,
   strokeOpacity = 0.8,
 }: MapPolygonProps): JSX.Element {
-  // Memoize so ShapeSource receives a stable reference and doesn't re-mount on every render
   const shape = useMemo(() => ({
     type: 'Feature' as const,
     properties: {},
