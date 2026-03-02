@@ -1,6 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.PRIORITY_MATCH_CONFIG = void 0;
 exports.getScoreLevel = getScoreLevel;
+exports.calculateCommuteScore = calculateCommuteScore;
+exports.calculateAmenitiesScore = calculateAmenitiesScore;
+exports.scoreForPriorityMatch = scoreForPriorityMatch;
+exports.resolvePriorityKey = resolvePriorityKey;
+exports.getEffectivePriorityTerms = getEffectivePriorityTerms;
+exports.categoryMatchesTerm = categoryMatchesTerm;
+exports.isRelevantCategory = isRelevantCategory;
+exports.deriveScoreWeights = deriveScoreWeights;
 exports.calculateWeightedScore = calculateWeightedScore;
 exports.buildLifestyleScore = buildLifestyleScore;
 exports.scoreToColor = scoreToColor;
@@ -9,10 +18,9 @@ exports.distanceKm = distanceKm;
 exports.formatScore = formatScore;
 exports.formatCommuteMinutes = formatCommuteMinutes;
 exports.capitalizeFirst = capitalizeFirst;
-// ─── Score Utilities ─────────────────────────
-/**
- * Derives the ScoreLevel label from a numeric score (0–100)
- */
+const config_1 = require("@rent-tracker/config");
+Object.defineProperty(exports, "PRIORITY_MATCH_CONFIG", { enumerable: true, get: function () { return config_1.PRIORITY_MATCH_CONFIG; } });
+// ─── Score Level ─────────────────────────────
 function getScoreLevel(score) {
     if (score >= 80)
         return 'EXCELLENT';
@@ -22,21 +30,105 @@ function getScoreLevel(score) {
         return 'FAIR';
     return 'POOR';
 }
+// ─── Commute Score ───────────────────────────
 /**
- * Calculates the weighted lifestyle score
- * Commute: 40% | Amenities: 40% | Family: 20%
+ * Score derivado de COMMUTE_OPTIONS min/max — sin magic numbers.
+ * Commute más estricto (15 min) → 100; más flexible (60 min) → 0.
  */
-function calculateWeightedScore(breakdown) {
-    const commute = breakdown.commute * 0.4;
-    const amenities = breakdown.amenities * 0.4;
-    const family = breakdown.family * 0.2;
-    return Math.round(commute + amenities + family);
+function calculateCommuteScore(commuteMinutes, options = config_1.COMMUTE_OPTIONS) {
+    const min = Math.min(...options);
+    const max = Math.max(...options);
+    if (max === min)
+        return 100;
+    const raw = (max - commuteMinutes) / (max - min);
+    return Math.round(Math.max(0, Math.min(1, raw)) * 100);
 }
+// ─── Amenities Score ─────────────────────────
 /**
- * Builds a full LifestyleScore from its parts
+ * Score basado en variedad y densidad de POIs vs categorías conocidas totales.
+ * Reemplaza la fórmula arbitraria `uniqueCategories * 12 + pois.length * 1.5`.
+ * La densidad usa escala log con 20 POIs como referencia de saturación.
  */
-function buildLifestyleScore(breakdown) {
-    const overall = calculateWeightedScore(breakdown);
+function calculateAmenitiesScore(uniqueCategoryCount, totalPOICount, totalKnownCategories) {
+    const varietyScore = totalKnownCategories > 0
+        ? (uniqueCategoryCount / totalKnownCategories) * 100
+        : 0;
+    const densityScore = Math.min((Math.log(1 + totalPOICount) / Math.log(1 + 20)) * 100, 100);
+    return Math.round(0.6 * varietyScore + 0.4 * densityScore);
+}
+// ─── Priority Match Score ────────────────────
+/**
+ * Score de una categoría específica para el match del usuario.
+ * idealCount es dinámico: proporcional al tamaño total del barrio (totalPOIs * idealRatio),
+ * con un piso (minIdealCount) para barrios pequeños.
+ */
+function scoreForPriorityMatch(config, poiCount, totalPOIs) {
+    if (poiCount <= 0)
+        return 0;
+    const dynamicIdeal = Math.max(config.minIdealCount, Math.ceil(totalPOIs * config.idealRatio));
+    const raw = Math.min(poiCount / dynamicIdeal, 1);
+    const boosted = Math.min(raw * config.weight, 1);
+    return Math.round(config.base + boosted * (100 - config.base));
+}
+// ─── Priority Key Resolution ─────────────────
+function resolvePriorityKey(term) {
+    return config_1.PRIORITY_TERM_TO_KEY[term.toLowerCase()] ?? 'default';
+}
+// ─── Priority Terms ──────────────────────────
+/**
+ * Versión sin dependencia de OnboardingData (tipo mobile).
+ * Expande las prioridades del usuario a términos de categorías de POI.
+ */
+function getEffectivePriorityTerms(priorities, hasChildren, hasPets) {
+    const terms = priorities.flatMap((p) => config_1.PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]);
+    if (hasChildren)
+        terms.push('school', 'park');
+    if (hasPets)
+        terms.push('park');
+    return [...new Set(terms)];
+}
+// ─── Category Matching ───────────────────────
+function categoryMatchesTerm(category, term) {
+    return category.includes(term) || term.includes(category);
+}
+function isRelevantCategory(category, priorityTerms) {
+    return priorityTerms.some((term) => categoryMatchesTerm(category, term));
+}
+// ─── Dynamic Score Weights ───────────────────
+/**
+ * Pesos derivados del perfil del usuario:
+ * - Más prioridades seleccionadas → priorityMatch sube
+ * - Commute más estricto (15 min) → commute sube
+ * Los pesos siempre suman 1.0 (normalizados al final).
+ */
+function deriveScoreWeights(priorityCount, commuteMinutes, options = config_1.COMMUTE_OPTIONS) {
+    const min = Math.min(...options);
+    const max = Math.max(...options);
+    const commuteStrictness = max === min ? 1 : (max - commuteMinutes) / (max - min);
+    const commuteWeight = 0.30 + commuteStrictness * 0.15;
+    const priorityWeight = priorityCount > 0
+        ? Math.min(0.25 + priorityCount * 0.05, 0.50)
+        : 0.15;
+    const amenitiesWeight = Math.max(1 - commuteWeight - priorityWeight, 0.05);
+    const total = commuteWeight + priorityWeight + amenitiesWeight;
+    return {
+        commute: commuteWeight / total,
+        priorityMatch: priorityWeight / total,
+        amenities: amenitiesWeight / total,
+    };
+}
+// ─── Weighted Score ──────────────────────────
+/**
+ * Calcula el score total del barrio con pesos dinámicos.
+ * Los pesos deben provenir de deriveScoreWeights().
+ */
+function calculateWeightedScore(breakdown, weights) {
+    return Math.round(breakdown.commute * weights.commute +
+        breakdown.priorityMatch * weights.priorityMatch +
+        breakdown.amenities * weights.amenities);
+}
+function buildLifestyleScore(breakdown, weights) {
+    const overall = calculateWeightedScore(breakdown, weights);
     return {
         overall,
         level: getScoreLevel(overall),
@@ -44,21 +136,15 @@ function buildLifestyleScore(breakdown) {
     };
 }
 // ─── Map Color Utilities ─────────────────────
-/**
- * Returns a hex color for a given score (red → yellow → green)
- */
 function scoreToColor(score) {
     if (score >= 80)
-        return '#22c55e'; // green-500
+        return '#22c55e';
     if (score >= 60)
-        return '#84cc16'; // lime-500
+        return '#84cc16';
     if (score >= 40)
-        return '#f59e0b'; // amber-500
-    return '#ef4444'; // red-500
+        return '#f59e0b';
+    return '#ef4444';
 }
-/**
- * Returns RGBA for map polygon overlays
- */
 function scoreToMapFill(score, opacity = 0.4) {
     if (score >= 80)
         return `rgba(34, 197, 94, ${opacity})`;
@@ -69,9 +155,6 @@ function scoreToMapFill(score, opacity = 0.4) {
     return `rgba(239, 68, 68, ${opacity})`;
 }
 // ─── Geo Utilities ───────────────────────────
-/**
- * Haversine formula — distance in km between two coordinates
- */
 function distanceKm(lat1, lng1, lat2, lng2) {
     const R = 6371;
     const dLat = toRad(lat2 - lat1);

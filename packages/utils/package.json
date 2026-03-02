@@ -19,7 +19,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@rent-tracker/types": "workspace:*"
+    "@rent-tracker/types": "workspace:*",
+    "@rent-tracker/config": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

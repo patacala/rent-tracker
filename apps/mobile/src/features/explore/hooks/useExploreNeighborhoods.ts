@@ -3,7 +3,15 @@ import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 import { useAuth } from '@shared/context/AuthContext';
 import { useGetNeighborhoodsQuery } from '@features/analysis/store/analysisApi';
 import { OnboardingData, useOnboarding } from '@features/onboarding/context/OnboardingContext';
-import { calculateWeightedScore } from '@rent-tracker/utils';
+import {
+  calculateWeightedScore,
+  calculateCommuteScore,
+  calculateAmenitiesScore,
+  getEffectivePriorityTerms,
+  isRelevantCategory,
+  deriveScoreWeights,
+} from '@rent-tracker/utils';
+import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 import type { NeighborhoodListItem } from '../types';
 
@@ -12,17 +20,6 @@ const TAGLINES = [
   'BAYSIDE LIVING', 'CULTURAL HUB', 'DESIGN DISTRICT',
   'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
 ];
-
-const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]> = {
-  healthcare: ['hospital', 'medical'],
-  dining: ['restaurant', 'bar', 'cafe'],
-  schools: ['school'],
-  parks: ['park'],
-  shopping: ['shop', 'supermarket'],
-  transit: ['transit', 'bus'],
-  commute: ['transit'],
-  safety: ['hospital', 'police'],
-};
 
 interface UseExploreNeighborhoodsReturn {
   data: NeighborhoodListItem[];
@@ -34,25 +31,31 @@ interface UseExploreNeighborhoodsReturn {
 
 function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
   const categories = pois.map((p) => p.category.toLowerCase());
-  const commuteScore = Math.max(0, Math.min(100, 100 - (onboarding.commute - 15) * (50 / 30)));
-  const uniqueCategories = new Set(categories).size;
-  const amenitiesScore = Math.min(100, uniqueCategories * 12 + pois.length * 1.5);
-  const autoPriorities: string[] = [];
-  if (onboarding.hasChildren === 'yes') autoPriorities.push('school', 'park');
-  if (onboarding.hasPets === 'yes') autoPriorities.push('park');
-  const userPriorityTerms = [
-    ...onboarding.priorities.map((p) => p.toLowerCase()),
-    ...autoPriorities,
-  ];
-  const familyPOIs = categories.filter((cat) =>
-    userPriorityTerms.some((term) => cat.includes(term) || term.includes(cat))
-  ).length;
-  const familyScore = Math.min(100, familyPOIs * 20);
-  return calculateWeightedScore({
-    commute: Math.round(commuteScore),
-    amenities: Math.round(amenitiesScore),
-    family: Math.round(familyScore),
-  });
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
+  );
+  const totalKnownCategories = new Set(
+    Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
+  ).size;
+
+  const commuteScore     = calculateCommuteScore(onboarding.commute);
+  const amenitiesScore   = calculateAmenitiesScore(
+    new Set(categories).size,
+    pois.length,
+    totalKnownCategories,
+  );
+  const relevantPOIs     = categories.filter((c) => isRelevantCategory(c, priorityTerms)).length;
+  const priorityMatchScore = pois.length > 0
+    ? Math.round((relevantPOIs / pois.length) * 100)
+    : 0;
+
+  const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
+  return calculateWeightedScore(
+    { commute: commuteScore, priorityMatch: priorityMatchScore, amenities: amenitiesScore },
+    weights,
+  );
 }
 
 function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
@@ -62,19 +65,14 @@ function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
     return acc;
   }, {});
   const uniqueCategories = Array.from(new Set(categories));
-  const priorities = onboarding.priorities.flatMap(
-    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
   );
-  const userPriorityTerms = [
-    ...priorities,
-    ...(onboarding.hasChildren === 'yes' ? ['school', 'park'] : []),
-    ...(onboarding.hasPets === 'yes' ? ['park'] : []),
-  ];
-  const matched = uniqueCategories.filter((cat) =>
-    userPriorityTerms.some((term) => cat.includes(term) || term.includes(cat))
-  );
+  const matched = uniqueCategories.filter((cat) => isRelevantCategory(cat, priorityTerms));
   const unmatched = uniqueCategories
-    .filter((cat) => !userPriorityTerms.some((term) => cat.includes(term) || term.includes(cat)))
+    .filter((cat) => !isRelevantCategory(cat, priorityTerms))
     .sort((a, b) => (frequency[b] ?? 0) - (frequency[a] ?? 0));
   return [...matched, ...unmatched]
     .slice(0, 8)
@@ -82,22 +80,16 @@ function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
 }
 
 function countMatches(pois: POIEntity[], onboarding: OnboardingData): number {
-  let count = 1;
   const categories = pois.map((p) => p.category.toLowerCase());
-  const priorities = onboarding.priorities.flatMap(
-    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
   );
-  for (const priority of priorities) {
-    const term = priority.toLowerCase();
-    if (categories.some((cat) => cat.includes(term) || term.includes(cat))) count++;
-  }
-  if (onboarding.hasChildren === 'yes' && !onboarding.priorities.includes('schools')) {
-    if (categories.some((c) => c.includes('school'))) count++;
-  }
-  if (onboarding.hasPets === 'yes' && !onboarding.priorities.includes('parks')) {
-    if (categories.some((c) => c.includes('park'))) count++;
-  }
-  return count;
+  const uniqueMatched = new Set(
+    categories.filter((cat) => isRelevantCategory(cat, priorityTerms)),
+  );
+  return 1 + uniqueMatched.size;
 }
 
 export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {

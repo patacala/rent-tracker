@@ -1,3 +1,4 @@
+import type { PriorityKey, PriorityMatchConfig } from '@rent-tracker/types';
 export declare const APP_CONFIG: {
     readonly name: "Relocation Intelligence";
     readonly version: "0.0.1";
@@ -61,10 +62,8 @@ export declare const MIAMI_CONFIG: {
         readonly lng: -80.13;
     }];
 };
-export declare const SCORE_WEIGHTS: {
-    readonly commute: 0.4;
-    readonly amenities: 0.4;
-    readonly family: 0.2;
-};
-export declare const COMMUTE_OPTIONS: readonly [15, 30, 45];
+export declare const COMMUTE_OPTIONS: readonly [15, 30, 45, 60];
+export declare const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]>;
+export declare const PRIORITY_TERM_TO_KEY: Record<string, PriorityKey>;
+export declare const PRIORITY_MATCH_CONFIG: Record<PriorityKey, PriorityMatchConfig>;
 //# sourceMappingURL=index.d.ts.map
