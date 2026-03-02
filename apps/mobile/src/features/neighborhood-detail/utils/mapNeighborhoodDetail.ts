@@ -1,24 +1,25 @@
 import type { NeighborhoodDetail } from '../types';
 import type { OnboardingData } from '@features/onboarding/context/OnboardingContext';
 import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
-import { calculateWeightedScore } from '@rent-tracker/utils';
+import {
+  calculateWeightedScore,
+  calculateCommuteScore,
+  calculateAmenitiesScore,
+  scoreForPriorityMatch,
+  resolvePriorityKey,
+  getEffectivePriorityTerms,
+  categoryMatchesTerm,
+  isRelevantCategory,
+  deriveScoreWeights,
+  PRIORITY_MATCH_CONFIG,
+} from '@rent-tracker/utils';
+import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 
 const TAGLINES = [
   'THE CITY BEAUTIFUL', 'FINANCIAL DISTRICT', 'ARTS DISTRICT',
   'BAYSIDE LIVING', 'CULTURAL HUB', 'DESIGN DISTRICT',
   'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
 ];
-
-const PRIORITY_TO_POI_CATEGORIES: Record<string, string[]> = {
-  healthcare: ['hospital', 'medical'],
-  dining: ['restaurant', 'bar', 'cafe'],
-  schools: ['school'],
-  parks: ['park'],
-  shopping: ['shop', 'supermarket'],
-  transit: ['transit', 'bus'],
-  commute: ['transit'],
-  safety: ['hospital', 'police'],
-};
 
 // Solo iconos por categoria real del servidor — se expande según lo que llegue
 const CATEGORY_ICON_MAP: Record<string, string> = {
@@ -72,47 +73,35 @@ function estimateWalkScore(pois: POIEntity[], centerLat: number, centerLng: numb
   return Math.min(40 + nearby.length * 3, 99);
 }
 
-// Términos de búsqueda derivados del onboarding del usuario
-function getUserPriorityTerms(onboarding: OnboardingData): string[] {
-  const terms = onboarding.priorities.flatMap(
-    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
-  );
-
-  if (onboarding.hasChildren === 'yes') terms.push('school', 'park');
-  if (onboarding.hasPets === 'yes') terms.push('park');
-
-  return [...new Set(terms)];
-}
-
-// Compara si una categoría de POI es relevante para un término de priority del usuario
-// Ej: 'schools' matchea 'school', 'dining' matchea 'restaurant'/'bar', 'parks' matchea 'park'
-function categoryMatchesTerm(category: string, term: string): boolean {
-  return category.includes(term) || term.includes(category);
-}
-
-function isRelevantCategory(category: string, priorityTerms: string[]): boolean {
-  return priorityTerms.some((term) => categoryMatchesTerm(category, term));
-}
-
 // ─── Score ───────────────────────────────────
 
 function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
   const categories = pois.map((p) => p.category.toLowerCase());
-  const priorityTerms = getUserPriorityTerms(onboarding);
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
+  );
+  const totalKnownCategories = new Set(
+    Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
+  ).size;
 
-  const commuteScore = Math.max(0, Math.min(100, 100 - (onboarding.commute - 15) * (50 / 30)));
+  const commuteScore     = calculateCommuteScore(onboarding.commute);
+  const amenitiesScore   = calculateAmenitiesScore(
+    new Set(categories).size,
+    pois.length,
+    totalKnownCategories,
+  );
+  const relevantPOIs     = categories.filter((c) => isRelevantCategory(c, priorityTerms)).length;
+  const priorityMatchScore = pois.length > 0
+    ? Math.round((relevantPOIs / pois.length) * 100)
+    : 0;
 
-  const uniqueCategories = new Set(categories).size;
-  const amenitiesScore = Math.min(100, uniqueCategories * 12 + pois.length * 1.5);
-
-  const relevantPOIs = categories.filter((cat) => isRelevantCategory(cat, priorityTerms)).length;
-  const familyScore = Math.min(100, relevantPOIs * 20);
-
-  return calculateWeightedScore({
-    commute: Math.round(commuteScore),
-    amenities: Math.round(amenitiesScore),
-    family: Math.round(familyScore),
-  });
+  const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
+  return calculateWeightedScore(
+    { commute: commuteScore, priorityMatch: priorityMatchScore, amenities: amenitiesScore },
+    weights,
+  );
 }
 
 // ─── Matches ─────────────────────────────────
@@ -121,34 +110,44 @@ function buildMatches(pois: POIEntity[], onboarding: OnboardingData): Array<{ la
   const categories = pois.map((p) => p.category.toLowerCase());
   const matches: Array<{ label: string; value: number }> = [];
 
-  // Commute siempre va primero
-  const commuteScore = Math.max(40, 100 - onboarding.commute);
-  matches.push({ label: 'Commute Match', value: commuteScore });
+  matches.push({ label: 'Commute Match', value: calculateCommuteScore(onboarding.commute) });
 
   const priorities = onboarding.priorities.flatMap(
-    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()]
+    (p) => PRIORITY_TO_POI_CATEGORIES[p.toLowerCase()] ?? [p.toLowerCase()],
   );
 
   for (const priority of priorities) {
     const term = priority.toLowerCase();
     const matchingPOIs = categories.filter((cat) => categoryMatchesTerm(cat, term));
-
     if (matchingPOIs.length === 0) continue;
 
-    const value = Math.min(50 + matchingPOIs.length * 10, 99);
-    matches.push({ label: capitalize(priority), value });
+    const config = PRIORITY_MATCH_CONFIG[resolvePriorityKey(term)];
+    matches.push({
+      label: capitalize(priority),
+      value: scoreForPriorityMatch(config, matchingPOIs.length, pois.length),
+    });
   }
 
   // hasChildren → schools
   if (onboarding.hasChildren === 'yes' && !onboarding.priorities.includes('schools')) {
     const count = categories.filter((c) => categoryMatchesTerm(c, 'school')).length;
-    if (count > 0) matches.push({ label: 'Schools Nearby', value: Math.min(50 + count * 15, 99) });
+    if (count > 0) {
+      matches.push({
+        label: 'Schools Nearby',
+        value: scoreForPriorityMatch(PRIORITY_MATCH_CONFIG.schools, count, pois.length),
+      });
+    }
   }
 
   // hasPets → parks
   if (onboarding.hasPets === 'yes' && !onboarding.priorities.includes('parks')) {
     const count = categories.filter((c) => categoryMatchesTerm(c, 'park')).length;
-    if (count > 0) matches.push({ label: 'Parks Nearby', value: Math.min(50 + count * 12, 99) });
+    if (count > 0) {
+      matches.push({
+        label: 'Parks Nearby',
+        value: scoreForPriorityMatch(PRIORITY_MATCH_CONFIG.parks, count, pois.length),
+      });
+    }
   }
 
   return matches;
@@ -164,7 +163,11 @@ function buildStats(
 ): Array<{ icon: any; value: string; description: string }> {
   const categories = pois.map((p) => p.category.toLowerCase());
   const walkScore = estimateWalkScore(pois, centerLat, centerLng);
-  const priorityTerms = getUserPriorityTerms(onboarding);
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
+  );
 
   // Función que calcula la prioridad de una stat según si su categoría matchea el onboarding
   function statPriority(categoryTerms: string[]): number {
@@ -291,7 +294,11 @@ function buildAmenities(
   centerLat: number,
   centerLng: number,
 ): Array<{ icon: any; name: string; distance: string }> {
-  const priorityTerms = getUserPriorityTerms(onboarding);
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
+  );
 
   const sorted = [...pois].sort((a, b) =>
     haversineKm(centerLat, centerLng, a.latitude, a.longitude) -

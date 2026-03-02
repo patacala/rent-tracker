@@ -61,6 +61,31 @@ export interface SearchSession {
   createdAt: Date;
 }
 
+// ─── Priority Scoring ───────────────────────
+
+export type PriorityKey =
+  | 'healthcare'
+  | 'dining'
+  | 'schools'
+  | 'parks'
+  | 'shopping'
+  | 'transit'
+  | 'safety'
+  | 'default';
+
+export interface PriorityMatchConfig {
+  base: number;          // política: score mínimo con al menos 1 POI
+  idealRatio: number;    // dinámico: fracción del total de POIs que sería "ideal"
+  minIdealCount: number; // piso: para barrios con muy pocos POIs en total
+  weight: number;        // política: importancia relativa de la categoría
+}
+
+export interface ScoreWeights {
+  commute: number;
+  priorityMatch: number;
+  amenities: number;
+}
+
 // ─── Lifestyle Scoring ──────────────────────
 
 export interface LifestyleScore {
@@ -70,9 +95,9 @@ export interface LifestyleScore {
 }
 
 export interface ScoreBreakdown {
-  commute: number; // 0–100 (weight: 40%)
-  amenities: number; // 0–100 (weight: 40%)
-  family: number; // 0–100 (weight: 20%)
+  commute: number;       // 0–100
+  priorityMatch: number; // 0–100 — todas las prioridades del usuario (antes "family")
+  amenities: number;     // 0–100
 }
 
 export interface NeighborhoodScore {

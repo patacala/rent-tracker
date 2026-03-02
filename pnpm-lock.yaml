@@ -234,6 +234,10 @@ importers:
         version: 5.9.3
 
   packages/config:
+    dependencies:
+      '@rent-tracker/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       typescript:
         specifier: ^5.4.0
@@ -247,6 +251,9 @@ importers:
 
   packages/utils:
     dependencies:
+      '@rent-tracker/config':
+        specifier: workspace:*
+        version: link:../config
       '@rent-tracker/types':
         specifier: workspace:*
         version: link:../types

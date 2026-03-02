@@ -46,6 +46,18 @@ export interface SearchSession {
     results: NeighborhoodScore[];
     createdAt: Date;
 }
+export type PriorityKey = 'healthcare' | 'dining' | 'schools' | 'parks' | 'shopping' | 'transit' | 'safety' | 'default';
+export interface PriorityMatchConfig {
+    base: number;
+    idealRatio: number;
+    minIdealCount: number;
+    weight: number;
+}
+export interface ScoreWeights {
+    commute: number;
+    priorityMatch: number;
+    amenities: number;
+}
 export interface LifestyleScore {
     overall: number;
     level: ScoreLevel;
@@ -53,8 +65,8 @@ export interface LifestyleScore {
 }
 export interface ScoreBreakdown {
     commute: number;
+    priorityMatch: number;
     amenities: number;
-    family: number;
 }
 export interface NeighborhoodScore {
     neighborhoodId: string;
