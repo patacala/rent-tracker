@@ -126,7 +126,7 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
       commuteMinutes: onboardingResult.commute,
       photoUrl: item.neighborhood.photoUrl ?? null,
       isFavorite: item.isFavorite,
-    }));
+    })).sort((a, b) => b.score - a.score);
   }, [sourceAnalisys, onboardingResult]);
 
   return {
