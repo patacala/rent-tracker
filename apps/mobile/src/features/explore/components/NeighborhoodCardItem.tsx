@@ -142,7 +142,6 @@ export function NeighborhoodCardItem({ item, entry, onPress }: NeighborhoodCardI
           <Text style={styles.cardName} numberOfLines={1} ellipsizeMode="tail">
             {item.name}
           </Text>
-          <Text style={styles.cardTagline}>{item.tagline}</Text>
         </View>
       </View>
 
@@ -197,7 +196,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.10)',
   },
   scoreContainer: {
     position: 'absolute',

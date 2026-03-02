@@ -15,12 +15,6 @@ import {
 } from '@rent-tracker/utils';
 import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 
-const TAGLINES = [
-  'THE CITY BEAUTIFUL', 'FINANCIAL DISTRICT', 'ARTS DISTRICT',
-  'BAYSIDE LIVING', 'CULTURAL HUB', 'DESIGN DISTRICT',
-  'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
-];
-
 // Solo iconos por categoria real del servidor — se expande según lo que llegue
 const CATEGORY_ICON_MAP: Record<string, string> = {
   school: 'school-outline',
@@ -436,7 +430,6 @@ export function mapNeighborhoodDetail(
   neighborhood: NeighborhoodEntity,
   pois: POIEntity[],
   onboarding: OnboardingData,
-  index: number = 0,
 ): NeighborhoodDetail {
   const centerLat = neighborhood.centerLat ?? 25.7617;
   const centerLng = neighborhood.centerLng ?? -80.1918;
@@ -448,7 +441,6 @@ export function mapNeighborhoodDetail(
     name: neighborhood.name,
     score,
     photoUrl: neighborhood.photoUrl ?? null,
-    tagline: TAGLINES[index % TAGLINES.length] ?? 'NEIGHBORHOOD',
     matchQuote: buildMatchQuote(onboarding, score),
     matches: buildMatches(pois, onboarding),
     stats: buildStats(pois, onboarding, centerLat, centerLng),

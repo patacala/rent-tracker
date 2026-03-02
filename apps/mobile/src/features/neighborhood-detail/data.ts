@@ -6,7 +6,6 @@ const NEIGHBORHOOD_DATA: Record<string, NeighborhoodDetail> = {
     id: 'coral-gables',
     name: 'Coral Gables',
     score: 94,
-    tagline: 'The City Beautiful',
     matchQuote: '"Great choice for families looking for peace and proximity."',
     matches: [
       { label: 'Commute Match', value: 95 },
@@ -54,11 +53,6 @@ const NEIGHBORHOOD_DATA: Record<string, NeighborhoodDetail> = {
     medianPrice: '$1.2M',
     walkScore: 88,
     walkScoreLabel: 'High',
-    safetyGrade: 'A+',
-    safetyRank: 'Top 5% Safest Neighborhoods',
-    crimeComparison: 'Crime rate is 64% lower than national average.',
-    crimeYoY: '-2% incidents',
-    crimeYoYValue: 15,
     lat: 25.7215,
     lng: -80.2684,
   },
@@ -66,7 +60,6 @@ const NEIGHBORHOOD_DATA: Record<string, NeighborhoodDetail> = {
 
 const DEFAULT_DETAIL: Omit<NeighborhoodDetail, 'id' | 'name'> = {
   score: 85,
-  tagline: 'Great Place to Live',
   matchQuote: '"This neighborhood aligns well with your lifestyle priorities."',
   matches: [
     { label: 'Commute Match', value: 80 },
@@ -108,11 +101,6 @@ const DEFAULT_DETAIL: Omit<NeighborhoodDetail, 'id' | 'name'> = {
   medianPrice: '$850K',
   walkScore: 75,
   walkScoreLabel: 'Good',
-  safetyGrade: 'B+',
-  safetyRank: 'Top 10% Safest Neighborhoods',
-  crimeComparison: 'Crime rate is 48% lower than national average.',
-  crimeYoY: '-1.5% incidents',
-  crimeYoYValue: 20,
   lat: MIAMI_CONFIG.center.lat,
   lng: MIAMI_CONFIG.center.lng,
 };

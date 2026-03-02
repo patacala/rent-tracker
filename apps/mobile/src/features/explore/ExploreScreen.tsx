@@ -1,4 +1,4 @@
-import React, { JSX, useEffect, useState } from 'react';
+import React, { JSX, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,8 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '@shared/theme';
-import {
-  Button,
-  FilterChips,
-  Input,
-} from '@shared/components';
-import { APP_CONFIG } from '@rent-tracker/config';
+import { Button, FilterChips, Input } from '@shared/components';
 import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
-import { EXPLORE_FILTERS, type ExploreFilter } from './types';
 import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import { BottomSheet } from '@shared/components/BottomSheet';
@@ -35,6 +29,7 @@ import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 import { apiClient } from '@shared/api/apiClient';
 import { supabase } from '@shared/lib/supabase';
 import { geocodeAddress } from '@shared/api/geocodingService';
+import type { ExploreFilter } from './types';
 
 export function ExploreScreen(): JSX.Element {
   const router = useRouter();
@@ -43,18 +38,14 @@ export function ExploreScreen(): JSX.Element {
   const { data: onboardingData, hydrateFromServer } = useOnboarding();
   const { data: neighborhoods, source, isEmpty, isLoading: apiLoading } = useExploreNeighborhoods();
   const { setAnalysisResult } = useAnalysis();
-  
+
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExploreFilter>('Best Match');
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
-  const { data: serverOnboarding, isLoading: onboardingLoading } =
-    useGetOnboardingQuery(undefined, {
-      skip: !isLoggedIn,
-    });
-
+  const { data: serverOnboarding, isLoading: onboardingLoading } = useGetOnboardingQuery(undefined, { skip: !isLoggedIn });
   const [updateOnboarding] = useUpdateOnboardingMutation();
 
   useEffect(() => {
@@ -63,15 +54,31 @@ export function ExploreScreen(): JSX.Element {
     }
   }, [serverOnboarding]);
 
-  const cityName =
-    APP_CONFIG.defaultCity.charAt(0).toUpperCase() +
-    APP_CONFIG.defaultCity.slice(1);
+  const availableFilters = useMemo(() => {
+    const allTags = neighborhoods.flatMap((n) => n.tags);
+    const uniqueTags = Array.from(new Set(allTags));
+    return ['Best Match', ...uniqueTags];
+  }, [neighborhoods]);
 
-  const filtered = neighborhoods.filter(
-    (item) =>
-      search.trim() === '' ||
-      item.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  useEffect(() => {
+    if (!availableFilters.includes(activeFilter)) {
+      setActiveFilter('Best Match');
+    }
+  }, [availableFilters]);
+
+  const filtered = useMemo(() => {
+    return neighborhoods.filter((item) => {
+      const matchesSearch =
+        search.trim() === '' ||
+        item.name.toLowerCase().includes(search.toLowerCase());
+
+      const matchesFilter =
+        activeFilter === 'Best Match' ||
+        item.tags.some((tag) => tag.toLowerCase() === activeFilter.toLowerCase());
+
+      return matchesSearch && matchesFilter;
+    });
+  }, [neighborhoods, search, activeFilter]);
 
   const handleCardPress = (id: string) => {
     router.push(`/neighborhood/${id}`);
@@ -88,7 +95,6 @@ export function ExploreScreen(): JSX.Element {
       return;
     }
 
-    // Only re-analyze if location or commute actually changed
     const addressChanged = payload.workAddress !== onboardingData.workAddress;
     const commuteChanged = payload.commute !== onboardingData.commute;
     if (!addressChanged && !commuteChanged) return;
@@ -135,13 +141,6 @@ export function ExploreScreen(): JSX.Element {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Top Rated for You</Text>
-          <TouchableOpacity style={styles.notifBtn} hitSlop={8}>
-            <Ionicons
-              name="notifications-outline"
-              size={22}
-              color={THEME.colors.text}
-            />
-          </TouchableOpacity>
         </View>
 
         {isLoggedIn && (
@@ -164,7 +163,7 @@ export function ExploreScreen(): JSX.Element {
           <Input.Field>
             <Input.Icon name="search-outline" />
             <Input.TextInput
-              placeholder={`Search neighborhoods in ${cityName}`}
+              placeholder="Search neighborhoods"
               value={search}
               onChangeText={setSearch}
               returnKeyType="search"
@@ -173,7 +172,7 @@ export function ExploreScreen(): JSX.Element {
         </Input>
 
         <FilterChips
-          options={EXPLORE_FILTERS}
+          options={availableFilters}
           value={activeFilter}
           onChange={(v) => v && setActiveFilter(v)}
         />
@@ -301,62 +300,10 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.bold,
     color: THEME.colors.text,
   },
-  notifBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: THEME.borderRadius.full,
-    backgroundColor: THEME.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   list: {
     padding: THEME.spacing.lg,
     paddingBottom: 100,
     gap: THEME.spacing.lg,
-  },
-  card: { width: '100%' },
-  cardImageContainer: { position: 'relative' },
-  image: { width: '100%', height: 180 },
-  cardOverlayText: {
-    position: 'absolute',
-    bottom: THEME.spacing.md,
-    left: THEME.spacing.md,
-  },
-  cardName: {
-    fontSize: THEME.fontSize.lg,
-    fontWeight: THEME.fontWeight.bold,
-    color: '#FFFFFF',
-  },
-  cardTagline: {
-    fontSize: THEME.fontSize.xs,
-    color: 'rgba(255,255,255,0.8)',
-    letterSpacing: 0.5,
-  },
-  cardBody: {
-    paddingHorizontal: THEME.spacing.md,
-    paddingTop: THEME.spacing.sm,
-  },
-  matchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: THEME.spacing.sm,
-  },
-  matchAvatars: { flexDirection: 'row' },
-  avatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  matchText: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.textSecondary,
-  },
-  detailsLink: {
-    fontSize: THEME.fontSize.sm,
-    color: THEME.colors.primary,
-    fontWeight: THEME.fontWeight.semibold,
   },
   empty: {
     alignItems: 'center',

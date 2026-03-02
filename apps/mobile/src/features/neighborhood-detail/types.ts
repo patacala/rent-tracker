@@ -36,7 +36,6 @@ export interface NeighborhoodDetail {
   id: string;
   name: string;
   score: number;
-  tagline: string;
   matchQuote: string;
   matches: NeighborhoodMatch[];
   stats: NeighborhoodStat[];

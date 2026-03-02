@@ -87,6 +87,7 @@ function RootLayoutContent(): JSX.Element {
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="purchase/purchase" options={{ gestureEnabled: false }} />
       <Stack.Screen name="purchase/detail" />
+      <Stack.Screen name="comparison" />
     </Stack>
   );
 }

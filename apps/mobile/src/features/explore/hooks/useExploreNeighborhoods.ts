@@ -15,12 +15,6 @@ import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 import type { NeighborhoodListItem } from '../types';
 
-const TAGLINES = [
-  'THE CITY BEAUTIFUL', 'FINANCIAL DISTRICT', 'ARTS DISTRICT',
-  'BAYSIDE LIVING', 'CULTURAL HUB', 'DESIGN DISTRICT',
-  'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
-];
-
 interface UseExploreNeighborhoodsReturn {
   data: NeighborhoodListItem[];
   source: Array<{ neighborhood: NeighborhoodEntity; pois: POIEntity[]; isFavorite: boolean }>;
@@ -116,11 +110,10 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
 
   const data = useMemo(() => {
     if (sourceAnalisys.length === 0) return [];
-    return sourceAnalisys.map((item, idx) => ({
+    return sourceAnalisys.map((item) => ({
       id: item.neighborhood.id,
       name: item.neighborhood.name,
       score: calculateScoreFromPOIs(item.pois, onboardingResult),
-      tagline: TAGLINES[idx % TAGLINES.length] ?? 'NEIGHBORHOOD',
       tags: buildTags(item.pois, onboardingResult),
       matchCount: countMatches(item.pois, onboardingResult),
       commuteMinutes: onboardingResult.commute,

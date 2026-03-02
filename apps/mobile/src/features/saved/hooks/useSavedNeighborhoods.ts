@@ -17,12 +17,6 @@ import { useMemo } from 'react';
 import { NeighborhoodCacheEntry } from '@shared/context/NeighborhoodCacheContext';
 import { useAnalysis } from '@features/analysis/context/AnalysisContext';
 
-const TAGLINES = [
-  'THE CITY BEAUTIFUL', 'FINANCIAL DISTRICT', 'ARTS DISTRICT',
-  'BAYSIDE LIVING', 'CULTURAL HUB', 'DESIGN DISTRICT',
-  'DOWNTOWN CORE', 'BEACH CITY', 'URBAN OASIS', 'HISTORIC CHARM',
-];
-
 function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
   const categories = pois.map((p) => p.category.toLowerCase());
   const priorityTerms = getEffectivePriorityTerms(
@@ -96,11 +90,10 @@ export function useSavedNeighborhoods(): UseSavedNeighborhoodsReturn {
   const data = useMemo(() => {
     if (!favoritesData?.neighborhoods?.length) return [];
 
-    return favoritesData.neighborhoods.map((entry, idx) => ({
+    return favoritesData.neighborhoods.map((entry) => ({
       id: entry.neighborhood.id,
       name: entry.neighborhood.name,
       score: calculateScoreFromPOIs(entry.pois, onboarding),
-      tagline: TAGLINES[idx % TAGLINES.length] ?? 'NEIGHBORHOOD',
       tags: buildTags(entry.pois, onboarding),
       matchCount: countMatches(entry.pois, onboarding),
       commuteMinutes: onboarding.commute,

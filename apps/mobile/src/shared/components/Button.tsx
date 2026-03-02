@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.9,
   },
   label: {
     fontWeight: THEME.fontWeight.semibold,

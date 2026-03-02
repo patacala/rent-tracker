@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import React, { JSX, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -61,7 +61,6 @@ function SavedCardItem({ item, onPress, onRemove, compareIds, onToggleCompare }:
         <View style={styles.cardTopRow}>
           <View style={styles.cardNameBlock}>
             <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-            <Text style={styles.cardCity}>Miami, FL</Text>
           </View>
           <View style={[styles.matchBadge, { backgroundColor: scoreToColor(item.score) }]}>
             <Text style={[styles.matchBadgeText, { color: '#FFFFFF' }]}>{item.score}</Text>
@@ -116,10 +115,26 @@ export function SavedScreen(): JSX.Element {
   const [activeSort, setActiveSort] = useState<SortOption>('Highest Match');
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
+  const sortedSaved = useMemo(() => {
+    const copy = [...saved];
+    switch (activeSort) {
+      case 'Highest Match':
+        return copy.sort((a, b) => b.score - a.score);
+      case 'Most Matches':
+        return copy.sort((a, b) => b.matchCount - a.matchCount);
+      case 'Shortest Commute':
+        return copy.sort((a, b) => a.commuteMinutes - b.commuteMinutes);
+      default:
+        return copy;
+    }
+  }, [saved, activeSort]);
+
   const toggleCompare = (id: string) => {
-    setCompareIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((i) => i !== id);
+      if (prev.length >= 2) return prev;
+      return [...prev, id];
+    });
   };
 
   const handleCardPress = (id: string) => {
@@ -136,9 +151,6 @@ export function SavedScreen(): JSX.Element {
             <Text style={styles.headerTitle}>Favorite Neighborhoods</Text>
             <Text style={styles.headerSubtitle}>{saved.length} Neighborhoods found</Text>
           </View>
-          <TouchableOpacity style={styles.filterBtn} hitSlop={8}>
-            <Ionicons name="options-outline" size={20} color={THEME.colors.text} />
-          </TouchableOpacity>
         </View>
 
         <FilterChips
@@ -156,7 +168,7 @@ export function SavedScreen(): JSX.Element {
         </View>
       ) : (
         <FlatList
-          data={saved}
+          data={sortedSaved}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -180,9 +192,19 @@ export function SavedScreen(): JSX.Element {
         />
       )}
 
-      <Button onPress={() => {}} style={styles.fab}>
+      <Button
+        onPress={() => {
+          if (compareIds.length === 2) {
+            router.push(`/comparison?ids=${compareIds.join(',')}`);
+          }
+        }}
+        disabled={compareIds.length !== 2}
+        style={styles.fab}
+      >
         <Button.Icon name="git-compare-outline" />
-        <Button.Label>{`Compare (${compareIds.length})`}</Button.Label>
+        <Button.Label>
+          {compareIds.length === 2 ? 'Compare' : `Select ${2 - compareIds.length} more`}
+        </Button.Label>
       </Button>
     </SafeAreaView>
   );

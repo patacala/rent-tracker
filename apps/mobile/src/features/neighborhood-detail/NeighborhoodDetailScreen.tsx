@@ -108,9 +108,6 @@ export function NeighborhoodDetailScreen(): JSX.Element {
 
           <View style={styles.heroContent}>
             <View style={styles.heroTop}>
-              <View style={styles.taglineBadge}>
-                <Text style={styles.taglineText}>{detail.tagline}</Text>
-              </View>
               {isLoggedIn ? (
                 <TouchableOpacity
                   style={styles.favoriteBtn}
@@ -119,7 +116,7 @@ export function NeighborhoodDetailScreen(): JSX.Element {
                 >
                   <Ionicons
                     name={localFavorite ? 'heart' : 'heart-outline'}
-                    size={18}
+                    size={30}
                     color={localFavorite ? THEME.colors.primary : '#FFFFFF'}
                   />
                 </TouchableOpacity>
@@ -221,7 +218,7 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.10)',
   },
   heroContent: {
     ...StyleSheet.absoluteFillObject,
@@ -231,7 +228,7 @@ const styles = StyleSheet.create({
   heroTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
   taglineBadge: {
     backgroundColor: 'rgba(255,255,255,0.18)',
@@ -248,10 +245,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   favoriteBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    width: 38,
+    height: 38,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.50)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
