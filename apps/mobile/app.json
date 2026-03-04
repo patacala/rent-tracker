@@ -19,6 +19,9 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to show your current location on the map",
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.in-app-payments": ["merchant.com.relocationai.mobile"]
       }
     },
     "android": {
@@ -41,6 +44,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.relocationai.mobile"
+        }
+      ],
       [
         "@rnmapbox/maps",
         {

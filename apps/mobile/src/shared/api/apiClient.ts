@@ -61,6 +61,29 @@ export interface AnalyzeLocationResponse {
   isochrone?: any;
 }
 
+async function getWithAuth<T>(endpoint: string, token: string) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error((error as { message?: string }).message ?? `HTTP ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export interface SubscriptionStatus {
+  isPremium: boolean;
+  subscriptionPlan: string | null;
+  subscriptionStatus: string;
+  subscriptionCurrentPeriodEnd: string | null;
+}
+
 export const apiClient = {
   analyzeLocation: (body: AnalyzeLocationRequest, token?: string) =>
     token
@@ -76,4 +99,10 @@ export const apiClient = {
       mode: string;
     },
   ) => postWithAuth<{ ok: boolean }>('/api/neighborhoods/session', body, token),
+  createSubscription: (priceId: string, token: string) =>
+    postWithAuth<{ clientSecret: string; subscriptionId: string }>(
+      '/api/payments/create-subscription', { priceId }, token,
+    ),
+  getSubscriptionStatus: (token: string) =>
+    getWithAuth<SubscriptionStatus>('/api/payments/subscription-status', token),
 };

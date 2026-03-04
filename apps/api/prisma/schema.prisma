@@ -18,6 +18,13 @@ model User {
   onboarding      OnboardingProfile?
   searchSessions  SearchSession[]
   favoriteNeighborhoods FavoriteNeighborhood[]
+
+  // Stripe subscription
+  stripeCustomerId             String?
+  subscriptionId               String?
+  subscriptionStatus           String    @default("none")
+  subscriptionPlan             String?
+  subscriptionCurrentPeriodEnd DateTime?
 }
 
 model SearchSession {

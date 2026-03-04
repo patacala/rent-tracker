@@ -21,12 +21,14 @@ import { FavoritesController } from '@presentation/favorites/favorites.controlle
 import { GetNeighborhoodSafetyUseCase } from '@application/use-cases/get-neighborhood-safety.use-case';
 import { DoorProfitService } from '@infrastructure/external/doorprofit/doorprofit.service';
 import { SafetyController } from '@presentation/safety/safety.controller';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PassportModule,
     InfrastructureModule,
+    PaymentsModule,
   ],
   providers: [
     PrismaService,

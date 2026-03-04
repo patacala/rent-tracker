@@ -23,6 +23,7 @@
     "@rent-tracker/types": "workspace:*",
     "@rent-tracker/utils": "workspace:*",
     "@rnmapbox/maps": "10.2.10",
+    "@stripe/stripe-react-native": "^0.59.2",
     "@supabase/supabase-js": "^2.97.0",
     "expo": "~54.0.33",
     "expo-blur": "^15.0.8",

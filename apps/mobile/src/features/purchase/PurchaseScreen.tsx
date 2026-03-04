@@ -5,13 +5,27 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useStripe } from '@stripe/stripe-react-native';
 import { THEME } from '@shared/theme';
+import { useAuth } from '@shared/context/AuthContext';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { useAnalysis } from '@features/analysis/context/AnalysisContext';
+import { supabase } from '@shared/lib/supabase';
+import { apiClient } from '@shared/api/apiClient';
 
 type PricingPlan = 'weekly' | 'monthly' | 'annual';
+
+const PRICE_IDS: Record<PricingPlan, string> = {
+  weekly:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_WEEKLY!,
+  monthly: process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_MONTHLY!,
+  annual:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_ANNUAL!,
+};
 
 const FEATURES = [
   {
@@ -40,13 +54,82 @@ const PLANS: Record<PricingPlan, { label: string; price: string; sub: string; ba
 export function PurchaseScreen(): JSX.Element {
   const router = useRouter();
   const [selected, setSelected] = useState<PricingPlan>('monthly');
+  const [loading, setLoading] = useState(false);
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const { refreshSubscription } = useAuth();
+  const { data: localOnboarding } = useOnboarding();
+  const { setAnalysisResult } = useAnalysis();
+
+  const fullAnalysis = async (accessToken: string) => {
+    const workAddress = localOnboarding?.workAddress?.trim();
+    const workCoordinates = localOnboarding?.workCoordinates;
+    if (!workAddress || !workCoordinates) return;
+
+    try {
+      router.push('/(tabs)/explore');
+
+      const result = await apiClient.analyzeLocation(
+        {
+          longitude: workCoordinates.longitude,
+          latitude: workCoordinates.latitude,
+          timeMinutes: localOnboarding.commute,
+          mode: 'driving',
+        },
+        accessToken,
+      );
+
+      setAnalysisResult(result);
+    } catch {
+      // silently fail — will retry next session
+    }
+  };
+
+  const handlePayment = async () => {
+    setLoading(true);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.access_token) {
+        Alert.alert('Error', 'Please log in to continue.');
+        return;
+      }
+
+      const { clientSecret } = await apiClient.createSubscription(
+        PRICE_IDS[selected],
+        currentSession.access_token,
+      );
+
+      const { error: initError } = await initPaymentSheet({
+        merchantDisplayName: 'Rent Tracker',
+        paymentIntentClientSecret: clientSecret,
+        applePay: { merchantCountryCode: 'US' },
+        defaultBillingDetails: { email: currentSession.user.email },
+      });
+
+      if (initError) {
+        Alert.alert('Payment Error', initError.message);
+        return;
+      }
+
+      const { error: payError } = await presentPaymentSheet();
+
+      if (payError) {
+        if (payError.code !== 'Canceled') {
+          Alert.alert('Payment Failed', payError.message);
+        }
+        return;
+      }
+
+      await refreshSubscription();
+      await fullAnalysis(currentSession.access_token);
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-        <Ionicons name="close" size={18} color={THEME.colors.textSecondary} />
-      </TouchableOpacity> */}
-
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
@@ -118,19 +201,19 @@ export function PurchaseScreen(): JSX.Element {
 
         {/* CTA */}
         <TouchableOpacity
-            style={styles.ctaBtn}
-            onPress={() => router.push({
-                pathname: '/purchase/detail',
-                params: {
-                    plan: PLANS[selected].label,
-                    price: PLANS[selected].price,
-                    period: PLANS[selected].sub,
-                },
-            })}
-            activeOpacity={0.9}
+          style={[styles.ctaBtn, loading && styles.ctaBtnDisabled]}
+          onPress={handlePayment}
+          activeOpacity={0.9}
+          disabled={loading}
         >
-          <Text style={styles.ctaText}>Secure my new home</Text>
-          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <>
+              <Text style={styles.ctaText}>Secure my new home</Text>
+              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+            </>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.legal}>
@@ -138,33 +221,16 @@ export function PurchaseScreen(): JSX.Element {
           <Text style={styles.legalLink}>Terms</Text> and{' '}
           <Text style={styles.legalLink}>Privacy Policy</Text>.
         </Text>
-
-        {/* <TouchableOpacity style={styles.restoreBtn}>
-          <Text style={styles.restoreText}>Restore Purchases</Text>
-        </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { 
-    flex: 1, 
+  safe: {
+    flex: 1,
     backgroundColor: THEME.colors.background,
-    paddingTop: 15
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 52,
-    right: THEME.spacing.lg,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: THEME.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-    ...THEME.shadow.sm,
+    paddingTop: 15,
   },
   container: {
     padding: THEME.spacing.lg,
@@ -288,6 +354,9 @@ const styles = StyleSheet.create({
     paddingVertical: THEME.spacing.md,
     ...THEME.shadow.md,
   },
+  ctaBtnDisabled: {
+    opacity: 0.7,
+  },
   ctaText: {
     fontSize: THEME.fontSize.base,
     fontWeight: THEME.fontWeight.bold,
@@ -302,14 +371,5 @@ const styles = StyleSheet.create({
   legalLink: {
     color: THEME.colors.primary,
     fontWeight: THEME.fontWeight.medium,
-  },
-  restoreBtn: {
-    alignItems: 'center',
-    paddingVertical: THEME.spacing.xs,
-  },
-  restoreText: {
-    fontSize: THEME.fontSize.sm,
-    fontWeight: THEME.fontWeight.medium,
-    color: THEME.colors.textSecondary,
   },
 });
