@@ -6,6 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import Mapbox from '@rnmapbox/maps';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { store } from '@shared/store';
 import { AuthProvider, useAuth } from '@shared/context/AuthContext';
 import { OnboardingProvider, useOnboarding } from '@features/onboarding/context/OnboardingContext';
@@ -86,7 +87,6 @@ function RootLayoutContent(): JSX.Element {
       <Stack.Screen name="neighborhood/[id]" />
       <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       <Stack.Screen name="purchase/purchase" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="purchase/detail" />
       <Stack.Screen name="comparison" />
     </Stack>
   );
@@ -96,18 +96,23 @@ export default function RootLayout(): JSX.Element {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <OnboardingProvider>
-            <AnalysisProvider>
-              <NeighborhoodCacheProvider>
-                <ToastProvider>
-                  <StatusBar style="dark" />
-                  <RootLayoutContent />
-                </ToastProvider>
-              </NeighborhoodCacheProvider>
-            </AnalysisProvider>
-          </OnboardingProvider>
-        </AuthProvider>
+        <StripeProvider
+          publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+          merchantIdentifier={process.env.EXPO_PUBLIC_STRIPE_MERCHANT_ID}
+        >
+          <AuthProvider>
+            <OnboardingProvider>
+              <AnalysisProvider>
+                <NeighborhoodCacheProvider>
+                  <ToastProvider>
+                    <StatusBar style="dark" />
+                    <RootLayoutContent />
+                  </ToastProvider>
+                </NeighborhoodCacheProvider>
+              </AnalysisProvider>
+            </OnboardingProvider>
+          </AuthProvider>
+        </StripeProvider>
       </SafeAreaProvider>
     </Provider>
   );
