@@ -11,11 +11,12 @@ import {
   RawBodyRequest,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { JwtAuthGuard } from '../infrastructure/auth/jwt-auth.guard';
 import { PaymentsService } from './payments.service';
 
 class CreateSubscriptionDto {
+  @IsNotEmpty({ message: 'priceId es requerido' })
   @IsString()
   priceId!: string;
 }
