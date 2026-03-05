@@ -2,49 +2,16 @@ import { useGetFavoritesQuery, useToggleFavoriteMutation } from '@features/saved
 import { useToast } from '@shared/context/ToastContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import {
-  calculateWeightedScore,
-  calculateCommuteScore,
-  calculateAmenitiesScore,
   getEffectivePriorityTerms,
   isRelevantCategory,
-  deriveScoreWeights,
 } from '@rent-tracker/utils';
-import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 import type { POIEntity } from '@features/analysis/store/analysisApi';
 import type { OnboardingData } from '@features/onboarding/context/OnboardingContext';
 import type { NeighborhoodListItem } from '@features/explore/types';
 import { useMemo } from 'react';
 import { NeighborhoodCacheEntry } from '@shared/context/NeighborhoodCacheContext';
 import { useAnalysis } from '@features/analysis/context/AnalysisContext';
-
-function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
-  const categories = pois.map((p) => p.category.toLowerCase());
-  const priorityTerms = getEffectivePriorityTerms(
-    onboarding.priorities,
-    onboarding.hasChildren === 'yes',
-    onboarding.hasPets === 'yes',
-  );
-  const totalKnownCategories = new Set(
-    Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
-  ).size;
-
-  const commuteScore     = calculateCommuteScore(onboarding.commute);
-  const amenitiesScore   = calculateAmenitiesScore(
-    new Set(categories).size,
-    pois.length,
-    totalKnownCategories,
-  );
-  const relevantPOIs     = categories.filter((c) => isRelevantCategory(c, priorityTerms)).length;
-  const priorityMatchScore = pois.length > 0
-    ? Math.round((relevantPOIs / pois.length) * 100)
-    : 0;
-
-  const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
-  return calculateWeightedScore(
-    { commute: commuteScore, priorityMatch: priorityMatchScore, amenities: amenitiesScore },
-    weights,
-  );
-}
+import { calculateScoreFromPOIs } from '@features/explore/hooks/useExploreNeighborhoods';
 
 function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
   const uniqueCategories = Array.from(new Set(pois.map((p) => p.category.toLowerCase())));

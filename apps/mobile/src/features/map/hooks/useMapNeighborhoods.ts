@@ -1,50 +1,9 @@
 import { useMemo } from 'react';
-import { APP_CONFIG } from '@rent-tracker/config';
-import { useAnalysis } from '@features/analysis/context/AnalysisContext';
-import { useAuth } from '@shared/context/AuthContext';
-import { useGetNeighborhoodsQuery } from '@features/analysis/store/analysisApi';
-import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
-import {
-  calculateWeightedScore,
-  calculateCommuteScore,
-  calculateAmenitiesScore,
-  getEffectivePriorityTerms,
-  isRelevantCategory,
-  deriveScoreWeights,
-} from '@rent-tracker/utils';
-import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
-import type { POIEntity } from '@features/analysis/store/analysisApi';
+import { APP_CONFIG, PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
+import { POIEntity, useAnalysis } from '@features/analysis/context/AnalysisContext';
+import { OnboardingData, useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import type { NeighborhoodPreview } from '../types';
-import { OnboardingData } from '@features/onboarding/context/OnboardingContext';
-
-function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
-  const categories = pois.map((p) => p.category.toLowerCase());
-  const priorityTerms = getEffectivePriorityTerms(
-    onboarding.priorities,
-    onboarding.hasChildren === 'yes',
-    onboarding.hasPets === 'yes',
-  );
-  const totalKnownCategories = new Set(
-    Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
-  ).size;
-
-  const commuteScore = calculateCommuteScore(onboarding.commute);
-  const amenitiesScore = calculateAmenitiesScore(
-    new Set(categories).size,
-    pois.length,
-    totalKnownCategories,
-  );
-  const relevantPOIs = categories.filter((c) => isRelevantCategory(c, priorityTerms)).length;
-  const priorityMatchScore = pois.length > 0
-    ? Math.round((relevantPOIs / pois.length) * 100)
-    : 0;
-
-  const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
-  return calculateWeightedScore(
-    { commute: commuteScore, priorityMatch: priorityMatchScore, amenities: amenitiesScore },
-    weights,
-  );
-}
+import { calculateAmenitiesScore, calculateCommuteScore, calculateWeightedScore, deriveScoreWeights, getEffectivePriorityTerms, isRelevantCategory } from '@rent-tracker/utils';
 
 interface UseMapNeighborhoodsReturn {
   data: NeighborhoodPreview[];
@@ -75,28 +34,70 @@ function computeCenter(
     return [avgLng, avgLat];
   }
 
-  return [APP_CONFIG.defaultCity === 'miami' ? -80.1918 : 0, APP_CONFIG.defaultCity === 'miami' ? 25.7617 : 0];
+  return [
+    APP_CONFIG.defaultCity === 'miami' ? -80.1918 : 0,
+    APP_CONFIG.defaultCity === 'miami' ? 25.7617 : 0,
+  ];
+}
+
+function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
+  const categories = pois.map((p) => p.category.toLowerCase());
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
+  );
+  const totalKnownCategories = new Set(
+    Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
+  ).size;
+
+  const commuteScore   = calculateCommuteScore(onboarding.commute);
+  const amenitiesScore = calculateAmenitiesScore(
+    new Set(categories).size,
+    pois.length,
+    totalKnownCategories,
+  );
+
+  const uniqueRelevantCategories = new Set(
+    categories.filter((c) => isRelevantCategory(c, priorityTerms)),
+  ).size;
+  const totalPriorityCategories = priorityTerms.length > 0 ? priorityTerms.length : 1;
+  const priorityMatchScore = Math.round(
+    (uniqueRelevantCategories / totalPriorityCategories) * 100,
+  );
+
+  const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
+  return calculateWeightedScore(
+    { commute: commuteScore, priorityMatch: priorityMatchScore, amenities: amenitiesScore },
+    weights,
+  );
 }
 
 export function useMapNeighborhoods(): UseMapNeighborhoodsReturn {
   const { analysisResult } = useAnalysis();
-  const { isLoggedIn } = useAuth();
   const { data: onboardingResult } = useOnboarding();
 
-  const { data: apiData } = useGetNeighborhoodsQuery(undefined, {
-    skip: !isLoggedIn,
-  });
-
   const source = useMemo(() => {
-    if (analysisResult?.neighborhoods?.length) return analysisResult.neighborhoods;
-    if (isLoggedIn && apiData?.neighborhoods?.length) return apiData.neighborhoods;
-    return [];
-  }, [analysisResult, apiData, isLoggedIn]);
+    const raw = analysisResult?.neighborhoods ?? [];
+    // Deduplica por id por si acaso
+    const seen = new Set<string>();
+    return raw.filter((item) => {
+      if (seen.has(item.neighborhood.id)) return false;
+      seen.add(item.neighborhood.id);
+      return true;
+    });
+  }, [analysisResult]);
+
+  const isochrone = analysisResult?.isochrone ?? null;
 
   const data = useMemo<NeighborhoodPreview[]>(() =>
     source.map((item) => {
       const uniqueCategories = Array.from(
-        new Set(item.pois.map((p) => p.category.charAt(0).toUpperCase() + p.category.slice(1).toLowerCase())),
+        new Set(
+          item.pois.map(
+            (p) => p.category.charAt(0).toUpperCase() + p.category.slice(1).toLowerCase(),
+          ),
+        ),
       ).slice(0, 3);
 
       return {
@@ -113,7 +114,6 @@ export function useMapNeighborhoods(): UseMapNeighborhoodsReturn {
     }),
   [source, onboardingResult]);
 
-  const isochrone = analysisResult?.isochrone ?? null;
   const center = useMemo(() => computeCenter(isochrone, data), [isochrone, data]);
 
   return { data, isochrone, center };

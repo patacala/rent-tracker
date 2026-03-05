@@ -2,20 +2,19 @@ import type { NeighborhoodDetail } from '../types';
 import type { OnboardingData } from '@features/onboarding/context/OnboardingContext';
 import type { NeighborhoodEntity, POIEntity } from '@features/analysis/store/analysisApi';
 import {
-  calculateWeightedScore,
   calculateCommuteScore,
-  calculateAmenitiesScore,
   scoreForPriorityMatch,
   resolvePriorityKey,
   getEffectivePriorityTerms,
   categoryMatchesTerm,
   isRelevantCategory,
-  deriveScoreWeights,
   PRIORITY_MATCH_CONFIG,
+  calculateAmenitiesScore,
+  deriveScoreWeights,
+  calculateWeightedScore,
 } from '@rent-tracker/utils';
 import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 
-// Solo iconos por categoria real del servidor — se expande según lo que llegue
 const CATEGORY_ICON_MAP: Record<string, string> = {
   school: 'school-outline',
   park: 'leaf-outline',
@@ -67,7 +66,7 @@ function estimateWalkScore(pois: POIEntity[], centerLat: number, centerLng: numb
   return Math.min(40 + nearby.length * 3, 99);
 }
 
-// ─── Score ───────────────────────────────────
+// Score
 
 function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
   const categories = pois.map((p) => p.category.toLowerCase());
@@ -80,16 +79,20 @@ function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): 
     Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
   ).size;
 
-  const commuteScore     = calculateCommuteScore(onboarding.commute);
-  const amenitiesScore   = calculateAmenitiesScore(
+  const commuteScore   = calculateCommuteScore(onboarding.commute);
+  const amenitiesScore = calculateAmenitiesScore(
     new Set(categories).size,
     pois.length,
     totalKnownCategories,
   );
-  const relevantPOIs     = categories.filter((c) => isRelevantCategory(c, priorityTerms)).length;
-  const priorityMatchScore = pois.length > 0
-    ? Math.round((relevantPOIs / pois.length) * 100)
-    : 0;
+
+  const uniqueRelevantCategories = new Set(
+    categories.filter((c) => isRelevantCategory(c, priorityTerms)),
+  ).size;
+  const totalPriorityCategories = priorityTerms.length > 0 ? priorityTerms.length : 1;
+  const priorityMatchScore = Math.round(
+    (uniqueRelevantCategories / totalPriorityCategories) * 100,
+  );
 
   const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
   return calculateWeightedScore(
