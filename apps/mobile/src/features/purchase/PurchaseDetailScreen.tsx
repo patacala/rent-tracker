@@ -54,7 +54,6 @@ export function PurchaseDetailScreen(): JSX.Element {
     if (!session?.access_token) return;
 
     try {
-      console.log('Ejecutando el analisis completo.');
       router.push('/(tabs)/explore')
 
       const result = await apiClient.analyzeLocation(
@@ -67,8 +66,6 @@ export function PurchaseDetailScreen(): JSX.Element {
         session.access_token,
       );
 
-      console.log('Resultado de analisis: ');
-      console.log(result);
       setAnalysisResult(result);
     } catch {
       // silencioso — reintentará en próxima sesión
