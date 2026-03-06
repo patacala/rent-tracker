@@ -5,8 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Share,
+  Image
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +18,26 @@ function scoreToColor(score: number): string {
   if (score >= 60) return THEME.colors.scoreGood;
   if (score >= 40) return THEME.colors.scoreFair;
   return THEME.colors.scorePoor;
+}
+
+function generateMatchInsight(
+  left: { name: string; score: number; tags: string[]; matchCount: number },
+  right: { name: string; score: number; tags: string[]; matchCount: number },
+): string | null {
+  if (left.score === right.score) {
+    if (left.matchCount !== right.matchCount) {
+      const winner = left.matchCount > right.matchCount ? left : right;
+      return `Both score equally, but ${winner.name} covers more of your profile priorities.`;
+    }
+
+    return null;
+  }
+
+  const winner = left.score > right.score ? left : right;
+  const loser  = left.score > right.score ? right : left;
+  const diff   = winner.score - loser.score;
+  const topTag = winner.tags[0] ?? 'amenities';
+  return `${winner.name} scores ${diff} pts higher — stronger ${topTag.toLowerCase()} coverage matches your profile better.`;
 }
 
 interface CompareRowProps {
@@ -53,9 +72,11 @@ export function ComparisonScreen(): JSX.Element {
   const items = compareIds
     .map((id) => saved.find((s) => s.id === id))
     .filter(Boolean) as typeof saved;
+  
+  const sorted = [...items].sort((a, b) => b.score - a.score);
 
-  const left = items[0];
-  const right = items[1];
+  const left  = sorted[0];
+  const right = sorted[1];
 
   if (!left || !right) {
     return (
@@ -70,12 +91,8 @@ export function ComparisonScreen(): JSX.Element {
     );
   }
 
-  /* const handleShare = async () => {
-    await Share.share({
-      message: `Comparing ${left.name} (score: ${left.score}) vs ${right.name} (score: ${right.score})`,
-    });
-  };
- */
+  const insight = generateMatchInsight(left, right);
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header */}
@@ -84,9 +101,6 @@ export function ComparisonScreen(): JSX.Element {
           <Ionicons name="arrow-back" size={22} color={THEME.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Compare Neighborhoods</Text>
-        {/*<TouchableOpacity onPress={handleShare} hitSlop={8}>
-                  <Ionicons name="share-outline" size={22} color={THEME.colors.text} />
-        </TouchableOpacity> */}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -151,6 +165,14 @@ export function ComparisonScreen(): JSX.Element {
             </Text>
           }
         />
+
+        {/* Match insight */}
+        {insight ? (
+          <View style={styles.insightRow}>
+            <Ionicons name="information-circle-outline" size={14} color={THEME.colors.primary} />
+            <Text style={styles.insightText}>{insight}</Text>
+          </View>
+        ) : null}
 
         {/* Tags */}
         <CompareRow
@@ -239,10 +261,6 @@ const styles = StyleSheet.create({
     color: THEME.colors.text,
     textAlign: 'center',
   },
-  neighborhoodCity: {
-    fontSize: THEME.fontSize.xs,
-    color: THEME.colors.textSecondary,
-  },
 
   section: {
     backgroundColor: THEME.colors.surface,
@@ -319,6 +337,23 @@ const styles = StyleSheet.create({
     fontSize: THEME.fontSize.sm,
     fontWeight: THEME.fontWeight.regular,
     color: THEME.colors.textSecondary,
+  },
+
+  insightRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: THEME.spacing.xs,
+    backgroundColor: THEME.colors.primaryLight,
+    borderRadius: THEME.borderRadius.md,
+    padding: THEME.spacing.sm,
+    borderWidth: 1,
+    borderColor: THEME.colors.primary + '30',
+  },
+  insightText: {
+    flex: 1,
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.primary,
+    lineHeight: 18,
   },
 
   tagsContainer: {

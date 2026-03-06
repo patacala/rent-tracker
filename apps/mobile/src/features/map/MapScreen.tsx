@@ -26,26 +26,43 @@ import type { MapFilter, NeighborhoodPreview } from './types';
 export function MapScreen(): JSX.Element {
   const router = useRouter();
   const { data: neighborhoods, isochrone, center } = useMapNeighborhoods();
-  const [activeFilters, setActiveFilters] = useState<MapFilter[]>([]);
+  const [activeFilters, setActiveFilters] = useState<MapFilter[]>(['All']);
   const [selected, setSelected] = useState<NeighborhoodPreview | null>(null);
 
-  // Deriva filtros de los tags reales
   const availableFilters = useMemo(() => {
     const allTags = neighborhoods.flatMap((n) => n.tags);
-    return Array.from(new Set(allTags)) as MapFilter[];
+    const uniqueTags = Array.from(new Set(allTags));
+    return ['All', ...uniqueTags] as MapFilter[];
   }, [neighborhoods]);
 
-  // Filtra neighborhoods por tag activo
   const filteredNeighborhoods = useMemo(() => {
     if (selected) return neighborhoods.filter((n) => n.id === selected.id);
 
-    if (activeFilters.length === 0) return neighborhoods;
+    const hasBestMatch = activeFilters.length === 0 || activeFilters.includes('All' as MapFilter);
+    if (hasBestMatch) return neighborhoods;
+
     return neighborhoods.filter((n) =>
       activeFilters.every((f) =>
         n.tags.some((t) => t.toLowerCase() === f.toLowerCase()),
       ),
     );
   }, [neighborhoods, activeFilters, selected]);
+
+  const handleFilterChange = (v: MapFilter | null | MapFilter[]) => {
+    const selected = (Array.isArray(v) ? v : [v]).filter(Boolean) as MapFilter[];
+
+    if (selected.length === 0) {
+      setActiveFilters(['All'] as MapFilter[]);
+      return;
+    }
+
+    if (selected.includes('All' as MapFilter) && !activeFilters.includes('All' as MapFilter)) {
+      setActiveFilters(['All'] as MapFilter[]);
+      return;
+    }
+
+    setActiveFilters(selected.filter((f) => f !== 'All'));
+  };
 
   return (
     <View style={styles.container}>
@@ -85,7 +102,7 @@ export function MapScreen(): JSX.Element {
             <FilterChips
               options={availableFilters}
               value={activeFilters}
-              onChange={(v) => setActiveFilters(v as MapFilter[])}
+              onChange={handleFilterChange}
               multiSelect
             />
           </ScrollView>
@@ -97,11 +114,10 @@ export function MapScreen(): JSX.Element {
         visible={!!selected}
         onClose={() => setSelected(null)}
         snapHeight="37%"
-        title='Neighborhood Details'
+        title="Neighborhood Details"
       >
         {selected ? (
           <View style={styles.sheetContent}>
-            {/* Header */}
             <View style={styles.sheetHeader}>
               <Image
                 source={
@@ -122,7 +138,6 @@ export function MapScreen(): JSX.Element {
               </View>
             </View>
 
-            {/* Tags */}
             <View style={styles.sheetTags}>
               {selected.tags.map((tag) => (
                 <Tag key={tag} variant="default">
@@ -135,7 +150,6 @@ export function MapScreen(): JSX.Element {
               </Tag>
             </View>
 
-            {/* CTA */}
             <Button
               onPress={() => {
                 setSelected(null);
@@ -157,7 +171,6 @@ export function MapScreen(): JSX.Element {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-
   topOverlay: {
     position: 'absolute',
     top: 0,
@@ -174,11 +187,9 @@ const styles = StyleSheet.create({
   filtersScroll: {
     flexGrow: 1,
   },
-
   sheetContent: {
     gap: THEME.spacing.md,
   },
-
   sheetHeader: {
     position: 'relative',
     borderRadius: THEME.borderRadius.md,
@@ -203,11 +214,6 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.bold,
     color: '#FFFFFF',
   },
-  sheetCity: {
-    fontSize: THEME.fontSize.xs,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 2,
-  },
   sheetScore: {
     position: 'absolute',
     top: THEME.spacing.md,
@@ -221,12 +227,10 @@ const styles = StyleSheet.create({
     fontWeight: THEME.fontWeight.semibold,
     letterSpacing: 0.5,
   },
-
   sheetTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: THEME.spacing.xs,
   },
-
   detailsBtn: { width: '100%', marginTop: 10 },
 });

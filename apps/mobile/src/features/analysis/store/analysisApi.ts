@@ -32,6 +32,7 @@ export interface NeighborhoodEntry {
 export interface MyAnalysisResponse {
   analyzedAt: string | null;
   neighborhoods: NeighborhoodEntry[];
+  isochrone: GeoJSON.Polygon | null;
   searchParams: {
     longitude: number;
     latitude: number;

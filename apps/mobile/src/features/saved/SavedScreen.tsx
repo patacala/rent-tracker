@@ -32,15 +32,18 @@ interface SavedCardItemProps {
   onRemove: (id: string) => void;
   compareIds: string[];
   onToggleCompare: (id: string) => void;
+  onRemoveFromCompare: (id: string) => void;
 }
 
-function SavedCardItem({ item, onPress, onRemove, compareIds, onToggleCompare }: SavedCardItemProps): JSX.Element {
+function SavedCardItem({ item, onPress, onRemove, compareIds, onToggleCompare, onRemoveFromCompare }: SavedCardItemProps): JSX.Element {
   const [localFavorite, setLocalFavorite] = useState(true);
   const { updateFavorite } = useAnalysis();
 
   const handleRemove = async () => {
     setLocalFavorite(false);
     updateFavorite(item.id, false);
+    onRemoveFromCompare(item.id);
+
     try {
       await onRemove(item.id);
     } catch {
@@ -156,7 +159,7 @@ export function SavedScreen(): JSX.Element {
         <FilterChips
           options={SORT_OPTIONS}
           value={activeSort}
-          onChange={(v) => v && setActiveSort(v)}
+          onChange={(v) => v && !Array.isArray(v) && setActiveSort(v)}
           activeIndicator
         />
       </View>
@@ -179,6 +182,7 @@ export function SavedScreen(): JSX.Element {
               onRemove={remove}
               compareIds={compareIds}
               onToggleCompare={toggleCompare}
+              onRemoveFromCompare={(id) => setCompareIds((prev) => prev.filter((i) => i !== id))} // 👈
             />
           )}
           ListEmptyComponent={

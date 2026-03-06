@@ -34,16 +34,20 @@ function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): 
     Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
   ).size;
 
-  const commuteScore     = calculateCommuteScore(onboarding.commute);
-  const amenitiesScore   = calculateAmenitiesScore(
+  const commuteScore   = calculateCommuteScore(onboarding.commute);
+  const amenitiesScore = calculateAmenitiesScore(
     new Set(categories).size,
     pois.length,
     totalKnownCategories,
   );
-  const relevantPOIs     = categories.filter((c) => isRelevantCategory(c, priorityTerms)).length;
-  const priorityMatchScore = pois.length > 0
-    ? Math.round((relevantPOIs / pois.length) * 100)
-    : 0;
+
+  const uniqueRelevantCategories = new Set(
+    categories.filter((c) => isRelevantCategory(c, priorityTerms)),
+  ).size;
+  const totalPriorityCategories = priorityTerms.length > 0 ? priorityTerms.length : 1;
+  const priorityMatchScore = Math.round(
+    (uniqueRelevantCategories / totalPriorityCategories) * 100,
+  );
 
   const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
   return calculateWeightedScore(
@@ -94,13 +98,16 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
   const hasAnalysis = (analysisResult?.neighborhoods?.length ?? 0) > 0;
 
   const { data: apiNeighborhoods, isLoading } = useGetNeighborhoodsQuery(undefined, {
-    skip: !isLoggedIn || !isHydrated || hasAnalysis,
+    skip: !isLoggedIn || !isHydrated,
   });
 
   useEffect(() => {
     if (!isHydrated) return;
-    if (!hasAnalysis && apiNeighborhoods?.neighborhoods?.length) {
-      setAnalysisResult({ neighborhoods: apiNeighborhoods.neighborhoods });
+    if (apiNeighborhoods?.neighborhoods?.length) {
+      setAnalysisResult({
+        neighborhoods: apiNeighborhoods.neighborhoods,
+        isochrone: apiNeighborhoods.isochrone ?? undefined,
+      });
     }
   }, [apiNeighborhoods, isHydrated]);
 

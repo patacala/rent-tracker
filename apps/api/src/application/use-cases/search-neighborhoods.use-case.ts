@@ -65,10 +65,28 @@ export class SearchNeighborhoodsUseCase {
       return { neighborhoods: [] };
     }
 
-    // Point-in-polygon filter disabled — use all boundaries returned by Overpass (bbox)
-    this.logger.log(`Using ${boundaries.length} neighborhoods from Overpass (no isochrone filter)`);
+    // Filtra barrios cuyo centroide O algún vértice del boundary esté dentro del isochrone
+    const insideIsochrone = boundaries.filter((b) => {
+      // Primero verifica el centroide — más rápido
+      const center = this.calculateCenter(b.boundary);
+      if (this.isPointInPolygon(center.lat, center.lng, input.polygon)) return true;
 
-    const limited = input.limit ? boundaries.slice(0, input.limit) : boundaries;
+      // Si el centroide no está dentro, verifica si algún vértice del boundary sí lo está
+      const coords = b.boundary.coordinates[0];
+      return coords.some(([lng, lat]) => this.isPointInPolygon(lat, lng, input.polygon));
+    });
+
+    this.logger.log(
+      `${insideIsochrone.length} of ${boundaries.length} neighborhoods are inside the isochrone`,
+    );
+
+    if (insideIsochrone.length === 0) {
+      this.logger.warn('No neighborhoods inside isochrone after filtering');
+      return { neighborhoods: [] };
+    }
+
+    // El límite se aplica sobre los que ya pasaron el filtro del isochrone
+    const limited = input.limit ? insideIsochrone.slice(0, input.limit) : insideIsochrone;
 
     // Step 3: Save OSM results to DB
     this.logger.log(`Saving ${limited.length} neighborhoods to DB`);
@@ -123,8 +141,8 @@ export class SearchNeighborhoodsUseCase {
   }
 
   /**
-   * Point-in-polygon by ray casting (currently disabled — not used in execute).
-   * Kept for possible re-enable: filter neighborhoods to those whose centroid is inside the isochrone.
+   * Point-in-polygon by ray casting.
+   * Filters neighborhoods to those whose centroid or any boundary vertex is inside the isochrone.
    */
   private isPointInPolygon(lat: number, lng: number, polygon: GeoJSON.Polygon): boolean {
     const ring = polygon.coordinates[0];
@@ -137,7 +155,7 @@ export class SearchNeighborhoodsUseCase {
 
       const spansLat = yi > lat !== yj > lat;
       if (!spansLat) continue;
-      const crossLng = (xj - xi) * (lat - yi) / (yj - yi) + xi; // safe: yj !== yi when spansLat
+      const crossLng = (xj - xi) * (lat - yi) / (yj - yi) + xi;
       if (lng < crossLng) inside = !inside;
     }
 

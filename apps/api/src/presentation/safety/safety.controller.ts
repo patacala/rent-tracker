@@ -39,10 +39,10 @@ export class SafetyController {
       const is429 = err?.message?.includes('429');
 
       if (is429) {
-        this.logger.warn(`Rate limit hit for neighborhood "${neighborhoodId}" — returning 503`);
+        this.logger.warn(`Rate limit hit for neighborhood "${neighborhoodId}" — returning 404`);
         throw new HttpException(
           { success: false, error: 'Safety data temporarily unavailable, please try again later' },
-          503,
+          404,
         );
       }
 

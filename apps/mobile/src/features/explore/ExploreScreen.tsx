@@ -40,7 +40,7 @@ export function ExploreScreen(): JSX.Element {
   const { setAnalysisResult } = useAnalysis();
 
   const [search, setSearch] = useState('');
-  const [activeFilters, setActiveFilters] = useState<ExploreFilter[]>(['Best Match']);
+  const [activeFilters, setActiveFilters] = useState<ExploreFilter[]>(['All']);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [formKey, setFormKey] = useState(0);
@@ -57,18 +57,18 @@ export function ExploreScreen(): JSX.Element {
   const availableFilters = useMemo(() => {
   const allTags = neighborhoods.flatMap((n) => n.tags);
   const uniqueTags = Array.from(new Set(allTags));
-  return ['Best Match', ...uniqueTags] as ExploreFilter[];
+  return ['All', ...uniqueTags] as ExploreFilter[];
   }, [neighborhoods]);
 
   useEffect(() => {
     const stillValid = activeFilters.filter((f) => availableFilters.includes(f));
     if (stillValid.length !== activeFilters.length) {
-      setActiveFilters(stillValid.length ? stillValid : ['Best Match']);
+      setActiveFilters(stillValid.length ? stillValid : ['All']);
     }
   }, [availableFilters]);
 
   const filtered = useMemo(() => {
-    const hasBestMatch = activeFilters.includes('Best Match' as ExploreFilter);
+    const hasBestMatch = activeFilters.includes('All' as ExploreFilter);
 
     return neighborhoods.filter((item) => {
       const matchesSearch =
@@ -146,18 +146,18 @@ export function ExploreScreen(): JSX.Element {
 
     // Si quedó vacío → Best Match
     if (selected.length === 0) {
-      setActiveFilters(['Best Match'] as ExploreFilter[]);
+      setActiveFilters(['All'] as ExploreFilter[]);
       return;
     }
 
     // Si se activó Best Match → limpia todo lo demás
-    if (selected.includes('Best Match' as ExploreFilter) && !activeFilters.includes('Best Match' as ExploreFilter)) {
-      setActiveFilters(['Best Match'] as ExploreFilter[]);
+    if (selected.includes('All' as ExploreFilter) && !activeFilters.includes('All' as ExploreFilter)) {
+      setActiveFilters(['All'] as ExploreFilter[]);
       return;
     }
 
     // Si se activó otro filtro → quita Best Match
-    setActiveFilters(selected.filter((f) => f !== 'Best Match'));
+    setActiveFilters(selected.filter((f) => f !== 'All'));
   };
 
   return (
