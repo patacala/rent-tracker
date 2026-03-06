@@ -115,6 +115,5 @@ export function useMapNeighborhoods(): UseMapNeighborhoodsReturn {
   [source, onboardingResult]);
 
   const center = useMemo(() => computeCenter(isochrone, data), [isochrone, data]);
-
   return { data, isochrone, center };
 }

@@ -2,6 +2,10 @@ import { useGetFavoritesQuery, useToggleFavoriteMutation } from '@features/saved
 import { useToast } from '@shared/context/ToastContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import {
+  calculateAmenitiesScore,
+  calculateCommuteScore,
+  calculateWeightedScore,
+  deriveScoreWeights,
   getEffectivePriorityTerms,
   isRelevantCategory,
 } from '@rent-tracker/utils';
@@ -11,7 +15,7 @@ import type { NeighborhoodListItem } from '@features/explore/types';
 import { useMemo } from 'react';
 import { NeighborhoodCacheEntry } from '@shared/context/NeighborhoodCacheContext';
 import { useAnalysis } from '@features/analysis/context/AnalysisContext';
-import { calculateScoreFromPOIs } from '@features/explore/hooks/useExploreNeighborhoods';
+import { PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 
 function buildTags(pois: POIEntity[], onboarding: OnboardingData): string[] {
   const uniqueCategories = Array.from(new Set(pois.map((p) => p.category.toLowerCase())));
@@ -38,6 +42,39 @@ function countMatches(pois: POIEntity[], onboarding: OnboardingData): number {
     categories.filter((cat) => isRelevantCategory(cat, priorityTerms)),
   );
   return 1 + uniqueMatched.size;
+}
+
+function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): number {
+  const categories = pois.map((p) => p.category.toLowerCase());
+  const priorityTerms = getEffectivePriorityTerms(
+    onboarding.priorities,
+    onboarding.hasChildren === 'yes',
+    onboarding.hasPets === 'yes',
+  );
+  const totalKnownCategories = new Set(
+    Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
+  ).size;
+
+  const commuteScore   = calculateCommuteScore(onboarding.commute);
+  const amenitiesScore = calculateAmenitiesScore(
+    new Set(categories).size,
+    pois.length,
+    totalKnownCategories,
+  );
+
+  const uniqueRelevantCategories = new Set(
+    categories.filter((c) => isRelevantCategory(c, priorityTerms)),
+  ).size;
+  const totalPriorityCategories = priorityTerms.length > 0 ? priorityTerms.length : 1;
+  const priorityMatchScore = Math.round(
+    (uniqueRelevantCategories / totalPriorityCategories) * 100,
+  );
+
+  const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
+  return calculateWeightedScore(
+    { commute: commuteScore, priorityMatch: priorityMatchScore, amenities: amenitiesScore },
+    weights,
+  );
 }
 
 interface UseSavedNeighborhoodsReturn {

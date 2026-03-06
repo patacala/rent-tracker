@@ -98,12 +98,12 @@ export function useExploreNeighborhoods(): UseExploreNeighborhoodsReturn {
   const hasAnalysis = (analysisResult?.neighborhoods?.length ?? 0) > 0;
 
   const { data: apiNeighborhoods, isLoading } = useGetNeighborhoodsQuery(undefined, {
-    skip: !isLoggedIn || !isHydrated || hasAnalysis,
+    skip: !isLoggedIn || !isHydrated,
   });
 
   useEffect(() => {
     if (!isHydrated) return;
-    if (!hasAnalysis && apiNeighborhoods?.neighborhoods?.length) {
+    if (apiNeighborhoods?.neighborhoods?.length) {
       setAnalysisResult({
         neighborhoods: apiNeighborhoods.neighborhoods,
         isochrone: apiNeighborhoods.isochrone ?? undefined,

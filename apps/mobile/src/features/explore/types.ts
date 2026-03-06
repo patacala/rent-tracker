@@ -9,5 +9,5 @@ export interface NeighborhoodListItem {
   isFavorite: boolean;
 }
 
-export const STATIC_FILTERS = ['Best Match'] as const;
+export const STATIC_FILTERS = ['All'] as const;
 export type ExploreFilter = string;
