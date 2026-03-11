@@ -3,12 +3,24 @@ import { APP_CONFIG, PRIORITY_TO_POI_CATEGORIES } from '@rent-tracker/config';
 import { POIEntity, useAnalysis } from '@features/analysis/context/AnalysisContext';
 import { OnboardingData, useOnboarding } from '@features/onboarding/context/OnboardingContext';
 import type { NeighborhoodPreview } from '../types';
-import { calculateAmenitiesScore, calculateCommuteScore, calculateWeightedScore, deriveScoreWeights, getEffectivePriorityTerms, isRelevantCategory } from '@rent-tracker/utils';
+import {
+  calculateAmenitiesScore,
+  calculateCommuteScore,
+  calculateWeightedScore,
+  deriveScoreWeights,
+  getEffectivePriorityTerms,
+  isRelevantCategory,
+} from '@rent-tracker/utils';
 
 interface UseMapNeighborhoodsReturn {
   data: NeighborhoodPreview[];
   isochrone: any | null;
   center: [number, number];
+  source: Array<{
+    neighborhood: any;
+    pois: any[];
+    isFavorite: boolean;
+  }>;
 }
 
 function computeCenter(
@@ -17,8 +29,10 @@ function computeCenter(
 ): [number, number] {
   if (isochrone?.coordinates?.[0]?.length) {
     const ring: number[][] = isochrone.coordinates[0];
-    let minLng = Infinity, maxLng = -Infinity;
-    let minLat = Infinity, maxLat = -Infinity;
+    let minLng = Infinity,
+      maxLng = -Infinity;
+    let minLat = Infinity,
+      maxLat = -Infinity;
     for (const [lng, lat] of ring) {
       if (lng < minLng) minLng = lng;
       if (lng > maxLng) maxLng = lng;
@@ -47,11 +61,9 @@ function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): 
     onboarding.hasChildren === 'yes',
     onboarding.hasPets === 'yes',
   );
-  const totalKnownCategories = new Set(
-    Object.values(PRIORITY_TO_POI_CATEGORIES).flat(),
-  ).size;
+  const totalKnownCategories = new Set(Object.values(PRIORITY_TO_POI_CATEGORIES).flat()).size;
 
-  const commuteScore   = calculateCommuteScore(onboarding.commute);
+  const commuteScore = calculateCommuteScore(onboarding.commute);
   const amenitiesScore = calculateAmenitiesScore(
     new Set(categories).size,
     pois.length,
@@ -62,9 +74,7 @@ function calculateScoreFromPOIs(pois: POIEntity[], onboarding: OnboardingData): 
     categories.filter((c) => isRelevantCategory(c, priorityTerms)),
   ).size;
   const totalPriorityCategories = priorityTerms.length > 0 ? priorityTerms.length : 1;
-  const priorityMatchScore = Math.round(
-    (uniqueRelevantCategories / totalPriorityCategories) * 100,
-  );
+  const priorityMatchScore = Math.round((uniqueRelevantCategories / totalPriorityCategories) * 100);
 
   const weights = deriveScoreWeights(onboarding.priorities.length, onboarding.commute);
   return calculateWeightedScore(
@@ -90,30 +100,32 @@ export function useMapNeighborhoods(): UseMapNeighborhoodsReturn {
 
   const isochrone = analysisResult?.isochrone ?? null;
 
-  const data = useMemo<NeighborhoodPreview[]>(() =>
-    source.map((item) => {
-      const uniqueCategories = Array.from(
-        new Set(
-          item.pois.map(
-            (p) => p.category.charAt(0).toUpperCase() + p.category.slice(1).toLowerCase(),
+  const data = useMemo<NeighborhoodPreview[]>(
+    () =>
+      source.map((item) => {
+        const uniqueCategories = Array.from(
+          new Set(
+            item.pois.map(
+              (p) => p.category.charAt(0).toUpperCase() + p.category.slice(1).toLowerCase(),
+            ),
           ),
-        ),
-      ).slice(0, 3);
+        ).slice(0, 3);
 
-      return {
-        id: item.neighborhood.id,
-        name: item.neighborhood.name,
-        city: APP_CONFIG.defaultCity.charAt(0).toUpperCase() + APP_CONFIG.defaultCity.slice(1),
-        score: calculateScoreFromPOIs(item.pois, onboardingResult),
-        tags: uniqueCategories,
-        commuteMinutes: onboardingResult.commute,
-        lat: (item.neighborhood as any).centerLat ?? 0,
-        lng: (item.neighborhood as any).centerLng ?? 0,
-        photoUrl: item.neighborhood.photoUrl ?? null,
-      };
-    }),
-  [source, onboardingResult]);
+        return {
+          id: item.neighborhood.id,
+          name: item.neighborhood.name,
+          city: APP_CONFIG.defaultCity.charAt(0).toUpperCase() + APP_CONFIG.defaultCity.slice(1),
+          score: calculateScoreFromPOIs(item.pois, onboardingResult),
+          tags: uniqueCategories,
+          commuteMinutes: onboardingResult.commute,
+          lat: (item.neighborhood as any).centerLat ?? 0,
+          lng: (item.neighborhood as any).centerLng ?? 0,
+          photoUrl: item.neighborhood.photoUrl ?? null,
+        };
+      }),
+    [source, onboardingResult],
+  );
 
   const center = useMemo(() => computeCenter(isochrone, data), [isochrone, data]);
-  return { data, isochrone, center };
+  return { data, isochrone, center, source };
 }

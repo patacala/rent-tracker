@@ -1,11 +1,5 @@
 import React, { JSX, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '@shared/theme';
@@ -23,14 +17,16 @@ import { BottomSheet } from '@shared/components/BottomSheet';
 import { useMapNeighborhoods } from './hooks/useMapNeighborhoods';
 import type { MapFilter, NeighborhoodPreview } from './types';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { useNeighborhoodCache } from '@shared/context/NeighborhoodCacheContext';
 import { getEffectivePriorityTerms, isRelevantCategory } from '@rent-tracker/utils';
 
 export function MapScreen(): JSX.Element {
   const router = useRouter();
-  const { data: neighborhoods, isochrone, center } = useMapNeighborhoods();
+  const { data: neighborhoods, isochrone, center, source } = useMapNeighborhoods();
   const [activeFilters, setActiveFilters] = useState<MapFilter[]>(['All']);
   const [selected, setSelected] = useState<NeighborhoodPreview | null>(null);
   const { data: onboardingData } = useOnboarding();
+  const { set } = useNeighborhoodCache();
 
   const availableFilters = useMemo(() => {
     const allTags = neighborhoods.flatMap((n) => n.tags);
@@ -60,9 +56,7 @@ export function MapScreen(): JSX.Element {
     if (hasBestMatch) return neighborhoods;
 
     return neighborhoods.filter((n) =>
-      activeFilters.every((f) =>
-        n.tags.some((t) => t.toLowerCase() === f.toLowerCase()),
-      ),
+      activeFilters.every((f) => n.tags.some((t) => t.toLowerCase() === f.toLowerCase())),
     );
   }, [neighborhoods, activeFilters, selected]);
 
@@ -92,9 +86,7 @@ export function MapScreen(): JSX.Element {
           }}
         />
 
-        {isochrone ? (
-          <MapPolygon id="isochrone" polygon={isochrone} />
-        ) : null}
+        {isochrone ? <MapPolygon id="isochrone" polygon={isochrone} /> : null}
 
         {filteredNeighborhoods.map((item) => (
           <Map.Marker
@@ -170,6 +162,10 @@ export function MapScreen(): JSX.Element {
 
             <Button
               onPress={() => {
+                const entry = source.find((s) => s.neighborhood.id === selected.id);
+                if (entry) {
+                  set(selected.id, entry);
+                }
                 setSelected(null);
                 router.push(`/neighborhood/${selected.id}`);
               }}

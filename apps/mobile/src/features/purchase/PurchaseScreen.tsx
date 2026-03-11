@@ -22,9 +22,9 @@ import { apiClient } from '@shared/api/apiClient';
 type PricingPlan = 'weekly' | 'monthly' | 'annual';
 
 const PRICE_IDS: Record<PricingPlan, string> = {
-  weekly:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_WEEKLY!,
+  weekly: process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_WEEKLY!,
   monthly: process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_MONTHLY!,
-  annual:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_ANNUAL!,
+  annual: process.env.EXPO_PUBLIC_STRIPE_PRICE_ID_ANNUAL!,
 };
 
 const FEATURES = [
@@ -45,9 +45,18 @@ const FEATURES = [
   },
 ];
 
-const PLANS: Record<PricingPlan, { label: string; price: string; sub: string; badge?: string; savings?: string }> = {
+const PLANS: Record<
+  PricingPlan,
+  { label: string; price: string; sub: string; badge?: string; savings?: string }
+> = {
   weekly: { label: 'Weekly', price: '$4.99', sub: '/week' },
-  monthly: { label: 'Pro Searcher', price: '$14.99', sub: '/month', badge: 'MOST POPULAR', savings: 'Save 25%' },
+  monthly: {
+    label: 'Pro Searcher',
+    price: '$14.99',
+    sub: '/month',
+    badge: 'MOST POPULAR',
+    savings: 'Save 25%',
+  },
   annual: { label: 'Annual', price: '$99.99', sub: '/year' },
 };
 
@@ -87,7 +96,9 @@ export function PurchaseScreen(): JSX.Element {
   const handlePayment = async () => {
     setLoading(true);
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
       if (!currentSession?.access_token) {
         Alert.alert('Error', 'Please log in to continue.');
         return;
@@ -97,6 +108,11 @@ export function PurchaseScreen(): JSX.Element {
         PRICE_IDS[selected],
         currentSession.access_token,
       );
+
+      if (!clientSecret) {
+        Alert.alert('Error', 'Unable to initialize payment. Please try again.');
+        return;
+      }
 
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'Rent Tracker',
@@ -130,19 +146,14 @@ export function PurchaseScreen(): JSX.Element {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>
             Don't choose where to{'\n'}
             <Text style={styles.titleAccent}>live based on a photo.</Text>
           </Text>
-          <Text style={styles.subtitle}>
-            Unlock deep insights that real estate listings hide.
-          </Text>
+          <Text style={styles.subtitle}>Unlock deep insights that real estate listings hide.</Text>
         </View>
 
         {/* Features */}
@@ -170,10 +181,7 @@ export function PurchaseScreen(): JSX.Element {
               <TouchableOpacity
                 key={plan}
                 onPress={() => setSelected(plan)}
-                style={[
-                  styles.planCard,
-                  isSelected && styles.planCardSelected,
-                ]}
+                style={[styles.planCard, isSelected && styles.planCardSelected]}
                 activeOpacity={0.85}
               >
                 {p.badge ? (
@@ -188,12 +196,8 @@ export function PurchaseScreen(): JSX.Element {
                 <Text style={[styles.planPrice, isSelected && styles.planPriceSelected]}>
                   {p.price}
                 </Text>
-                <Text style={[styles.planSub, isSelected && styles.planSubSelected]}>
-                  {p.sub}
-                </Text>
-                {p.savings ? (
-                  <Text style={styles.planSavings}>{p.savings}</Text>
-                ) : null}
+                <Text style={[styles.planSub, isSelected && styles.planSubSelected]}>{p.sub}</Text>
+                {p.savings ? <Text style={styles.planSavings}>{p.savings}</Text> : null}
               </TouchableOpacity>
             );
           })}

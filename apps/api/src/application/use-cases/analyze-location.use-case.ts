@@ -44,8 +44,16 @@ export interface AnalyzeLocationOutput {
 }
 
 const POI_CATEGORIES: POICategory[] = [
-  'school', 'park', 'shop', 'transit', 'gym',
-  'hospital', 'restaurant', 'bar', 'cafe', 'supermarket',
+  'school',
+  'park',
+  'shop',
+  'transit',
+  'gym',
+  'hospital',
+  'restaurant',
+  'bar',
+  'cafe',
+  'supermarket',
 ];
 
 /** Max concurrent Google Street View calls to respect API rate limits */
@@ -76,28 +84,54 @@ export class AnalyzeLocationUseCase {
     const freeTierLimit = this.configService.get<number>('FREE_TIER_NEIGHBORHOOD_LIMIT', 10);
     const limit = input.userId ? undefined : freeTierLimit;
 
-    const polygon       = await this.fetchIsochrone(input);
+    const polygon = await this.fetchIsochrone(input);
     const neighborhoods = await this.fetchNeighborhoods(polygon, limit);
 
     if (neighborhoods.length === 0) {
-    this.logger.warn('No neighborhoods found — returning empty result');
-    return { neighborhoods: [], isochrone: polygon };
+      this.logger.warn('No neighborhoods found — returning empty result');
+      return { neighborhoods: [], isochrone: polygon };
     }
-
-    const previousSession = input.userId
-    ? await this.sessionRepo.findLatestByUserId(input.userId)
-    : null;
-
-    const previousNeighborhoodIds = previousSession?.neighborhoodIds ?? [];
 
     // Carga favoritos una sola vez
     const favoriteIds = new Set<string>();
     if (input.userId) {
-    const favorites = await this.favoriteRepo.findByUserId(input.userId);
-    favorites.forEach((f) => favoriteIds.add(f.neighborhoodId));
+      const favorites = await this.favoriteRepo.findByUserId(input.userId);
+      favorites.forEach((f) => favoriteIds.add(f.neighborhoodId));
     }
 
-    const results = await this.fetchAndDistributePOIs(polygon, neighborhoods, previousNeighborhoodIds, favoriteIds);
+    // Determinar si debemos preservar los barrios de la sesión anterior
+    let shouldPreservePrevious = false;
+
+    if (input.userId) {
+      const previousSession = await this.sessionRepo.findLatestByUserId(input.userId);
+
+      if (previousSession) {
+        // Es la misma búsqueda si:
+        // 1. Las coordenadas son muy cercanas (~100 metros)
+        // 2. El tiempo de commute es el mismo
+        const latDiff = Math.abs(previousSession.latitude - input.latitude);
+        const lngDiff = Math.abs(previousSession.longitude - input.longitude);
+        // ~100 metros en grados (~0.001)
+        const isSameLocation = latDiff < 0.001 && lngDiff < 0.001;
+        const isSameCommute = previousSession.timeMinutes === input.timeMinutes;
+
+        shouldPreservePrevious = isSameLocation && isSameCommute;
+
+        this.logger.log(
+          `Previous session found. Same location: ${isSameLocation}, Same commute: ${isSameCommute}. Preserve: ${shouldPreservePrevious}`,
+        );
+      } else {
+        this.logger.log('No previous session found - first analysis for this user');
+      }
+    }
+
+    const results = await this.fetchAndDistributePOIs(
+      input.userId,
+      polygon,
+      neighborhoods,
+      shouldPreservePrevious,
+      favoriteIds,
+    );
     await this.fetchNeighborhoodPhotos(results);
     this.persistSession(input, results);
 
@@ -116,7 +150,10 @@ export class AnalyzeLocationUseCase {
 
   // ─── Step 2 ───────────────────────────────────────────────────────────────
 
-  private async fetchNeighborhoods(polygon: GeoJSON.Polygon, limit?: number): Promise<NeighborhoodEntity[]> {
+  private async fetchNeighborhoods(
+    polygon: GeoJSON.Polygon,
+    limit?: number,
+  ): Promise<NeighborhoodEntity[]> {
     this.logger.log(
       `Step 2: Searching neighborhoods within isochrone${limit ? ` (free tier, limit=${limit})` : ''}`,
     );
@@ -128,35 +165,57 @@ export class AnalyzeLocationUseCase {
   // ─── Step 3 ───────────────────────────────────────────────────────────────
 
   private async fetchAndDistributePOIs(
+    userId: string | undefined,
     polygon: GeoJSON.Polygon,
     neighborhoods: NeighborhoodEntity[],
-    previousNeighborhoodIds: string[],
+    shouldPreservePrevious: boolean,
     favoriteIds: Set<string>,
   ): Promise<AnalysisResult[]> {
     this.logger.log('Step 3: Fetching all POIs in isochrone area (single Overpass call)');
 
-    // Carga barrios de sesión anterior
+    // Carga barrios de sesión anterior solo si debemos preservar
     const previousResults: AnalysisResult[] = [];
-    if (previousNeighborhoodIds.length > 0) {
-      const previousEntries = await Promise.all(
+    let previousNeighborhoodIds: string[] = [];
+
+    if (shouldPreservePrevious && userId) {
+      const previousSession = await this.sessionRepo.findLatestByUserId(userId);
+      previousNeighborhoodIds = previousSession?.neighborhoodIds ?? [];
+    }
+
+    if (shouldPreservePrevious && previousNeighborhoodIds.length > 0) {
+      // Carga los barrios anteriores Y verifica que estén dentro del nuevo isócrono
+      const allPreviousEntries = await Promise.all(
         previousNeighborhoodIds.map(async (id) => {
           const neighborhood = await this.neighborhoodRepo.findById(id);
           if (!neighborhood) return null;
+
+          // Verificar si el centroide está dentro del nuevo isócrono
+          const centerLat = neighborhood.centerLat;
+          const centerLng = neighborhood.centerLng;
+          if (!this.isPointInPolygon(centerLat, centerLng, polygon)) {
+            this.logger.log(
+              `Excluding previous neighborhood ${neighborhood.name} - outside new isochrone`,
+            );
+            return null;
+          }
 
           const pois = await this.poiRepo.findByNeighborhood(id);
           return { neighborhood, pois, isFavorite: favoriteIds.has(id) };
         }),
       );
-      previousResults.push(
-        ...previousEntries.filter((e): e is AnalysisResult => e !== null),
+      previousResults.push(...allPreviousEntries.filter((e): e is AnalysisResult => e !== null));
+      this.logger.log(
+        `Preserved ${previousResults.length} neighborhoods from previous session within new isochrone`,
       );
-      this.logger.log(`Loaded ${previousResults.length} neighborhoods from previous session with ${previousResults.reduce((s, r) => s + r.pois.length, 0)} POIs`);
+    } else if (!shouldPreservePrevious) {
+      this.logger.log('New search - not preserving previous session neighborhoods');
     }
 
     // Set de claves estables de sesión anterior
     const previousKeys = new Set(
-      previousResults.map((r) =>
-        `${r.neighborhood.name}|${r.neighborhood.centerLat.toFixed(4)}|${r.neighborhood.centerLng.toFixed(4)}`
+      previousResults.map(
+        (r) =>
+          `${r.neighborhood.name}|${r.neighborhood.centerLat.toFixed(4)}|${r.neighborhood.centerLng.toFixed(4)}`,
       ),
     );
 
@@ -292,16 +351,15 @@ export class AnalyzeLocationUseCase {
         mode: input.mode,
         neighborhoodIds,
       })
-      .catch((err) =>
-        this.logger.warn(`Failed to save search session: ${err?.message}`),
-      );
+      .catch((err) => this.logger.warn(`Failed to save search session: ${err?.message}`));
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   private calculateCentroid(polygon: GeoJSON.Polygon): { lat: number; lng: number } {
     const coords = polygon.coordinates[0];
-    let sumLat = 0, sumLng = 0;
+    let sumLat = 0,
+      sumLng = 0;
     for (const [lng, lat] of coords) {
       sumLat += lat;
       sumLng += lng;
@@ -331,5 +389,28 @@ export class AnalyzeLocationUseCase {
     }
 
     return best;
+  }
+
+  /**
+   * Point-in-polygon by ray casting.
+   */
+  private isPointInPolygon(lat: number, lng: number, polygon: GeoJSON.Polygon): boolean {
+    const ring = polygon.coordinates[0];
+    if (!ring || ring.length < 3) return false;
+
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0],
+        yi = ring[i][1];
+      const xj = ring[j][0],
+        yj = ring[j][1];
+
+      const spansLat = yi > lat !== yj > lat;
+      if (!spansLat) continue;
+      const crossLng = ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+      if (lng < crossLng) inside = !inside;
+    }
+
+    return inside;
   }
 }

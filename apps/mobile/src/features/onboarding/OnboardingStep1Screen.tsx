@@ -7,16 +7,23 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { THEME } from '@shared/theme';
-import { Button, HeaderBackButton, Input, Map, StepIndicator, ToggleGroup } from '@shared/components';
+import {
+  Button,
+  HeaderBackButton,
+  Input,
+  Map,
+  StepIndicator,
+  ToggleGroup,
+} from '@shared/components';
 import { useOnboarding } from './context/OnboardingContext';
 import { MIAMI_CONFIG } from '@rent-tracker/config';
 import { geocodeAddress } from '@shared/api/geocodingService';
 
-type CommuteOption = 15 | 30 | 45;
+type CommuteOption = 15 | 30 | 45 | 60;
 
 const step1Schema = z.object({
   workAddress: z.string().min(3, 'Please enter a valid work address'),
-  commute: z.union([z.literal(15), z.literal(30), z.literal(45)]),
+  commute: z.union([z.literal(15), z.literal(30), z.literal(45), z.literal(60)]),
 });
 
 type Step1FormData = z.infer<typeof step1Schema>;
@@ -34,7 +41,12 @@ export function OnboardingStep1Screen(): JSX.Element {
   const { data, setStep1, setCurrentStep } = useOnboarding();
   const [isGeocoding, setIsGeocoding] = useState(false);
 
-  const { control, handleSubmit, watch, formState: { errors, isValid } } = useForm<Step1FormData>({
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
     mode: 'onChange',
     defaultValues: {
@@ -50,8 +62,8 @@ export function OnboardingStep1Screen(): JSX.Element {
   useEffect(() => {
     const subscription = watch((values) => {
       if (values.workAddress && values.workAddress.length >= 3) {
-        setStep1({ 
-          workAddress: values.workAddress, 
+        setStep1({
+          workAddress: values.workAddress,
           commute: values.commute as CommuteOption,
           workCoordinates: data.workCoordinates,
         });
@@ -127,9 +139,7 @@ export function OnboardingStep1Screen(): JSX.Element {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ideal commute time?</Text>
-          <Text style={styles.sectionSubtitle}>
-            What's your maximum daily travel comfort zone?
-          </Text>
+          <Text style={styles.sectionSubtitle}>What's your maximum daily travel comfort zone?</Text>
           <Controller
             control={control}
             name="commute"
@@ -144,8 +154,8 @@ export function OnboardingStep1Screen(): JSX.Element {
           <View style={styles.commuteHint}>
             <Ionicons name="information-circle-outline" size={14} color={THEME.colors.primary} />
             <Text style={styles.commuteHintText}>
-              We use this to calculate your daily routine efficiency and suggest
-              neighborhoods with the best transit scores.
+              We use this to calculate your daily routine efficiency and suggest neighborhoods with
+              the best transit scores.
             </Text>
           </View>
         </View>
@@ -184,7 +194,11 @@ export function OnboardingStep1Screen(): JSX.Element {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button onPress={handleSubmit(onNext)} disabled={!isValid || isGeocoding} style={styles.cta}>
+        <Button
+          onPress={handleSubmit(onNext)}
+          disabled={!isValid || isGeocoding}
+          style={styles.cta}
+        >
           <Button.Label>{isGeocoding ? 'Locating...' : 'Next: My Priorities'}</Button.Label>
           {!isGeocoding && <Button.Icon name="arrow-forward-outline" />}
         </Button>
@@ -195,46 +209,46 @@ export function OnboardingStep1Screen(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  safe: { 
-    flex: 1, 
-    backgroundColor: THEME.colors.background 
+  safe: {
+    flex: 1,
+    backgroundColor: THEME.colors.background,
   },
-  scroll: { 
-    flex: 1 
+  scroll: {
+    flex: 1,
   },
-  content: { 
-    padding: THEME.spacing.lg, 
-    paddingBottom: THEME.spacing.xl, 
-    gap: THEME.spacing.xl 
+  content: {
+    padding: THEME.spacing.lg,
+    paddingBottom: THEME.spacing.xl,
+    gap: THEME.spacing.xl,
   },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: THEME.spacing.md, 
-    marginLeft: 20 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: THEME.spacing.md,
+    marginLeft: 20,
   },
-  brandName: { 
-    fontSize: THEME.fontSize.md, 
-    fontWeight: THEME.fontWeight.bold, 
-    color: THEME.colors.text 
+  brandName: {
+    fontSize: THEME.fontSize.md,
+    fontWeight: THEME.fontWeight.bold,
+    color: THEME.colors.text,
   },
-  section: { 
-    gap: THEME.spacing.sm 
+  section: {
+    gap: THEME.spacing.sm,
   },
-  sectionTitle: { 
-    fontSize: THEME.fontSize.lg, 
-    fontWeight: THEME.fontWeight.bold, 
-    color: THEME.colors.text 
+  sectionTitle: {
+    fontSize: THEME.fontSize.lg,
+    fontWeight: THEME.fontWeight.bold,
+    color: THEME.colors.text,
   },
-  sectionSubtitle: { 
-    fontSize: THEME.fontSize.sm, 
-    color: THEME.colors.textSecondary, 
-    lineHeight: 19 
+  sectionSubtitle: {
+    fontSize: THEME.fontSize.sm,
+    color: THEME.colors.textSecondary,
+    lineHeight: 19,
   },
-  errorText: { 
-    fontSize: THEME.fontSize.xs, 
-    color: THEME.colors.error, 
-    marginTop: 2 
+  errorText: {
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.error,
+    marginTop: 2,
   },
   commuteHint: {
     flexDirection: 'row',
@@ -244,15 +258,15 @@ const styles = StyleSheet.create({
     borderRadius: THEME.borderRadius.sm,
     marginTop: THEME.spacing.xs,
   },
-  commuteHintText: { 
-    flex: 1, 
-    fontSize: THEME.fontSize.xs, 
-    color: THEME.colors.primary, 
-    lineHeight: 17 
+  commuteHintText: {
+    flex: 1,
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.primary,
+    lineHeight: 17,
   },
-  mapPreview: { 
-    height: 170, 
-    borderRadius: THEME.borderRadius.lg 
+  mapPreview: {
+    height: 170,
+    borderRadius: THEME.borderRadius.lg,
   },
   mapPreviewLabel: {
     flexDirection: 'row',
@@ -261,10 +275,10 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.xs,
     marginTop: -THEME.spacing.md,
   },
-  mapPreviewText: { 
-    fontSize: THEME.fontSize.xs, 
-    color: THEME.colors.primary, 
-    fontWeight: THEME.fontWeight.medium 
+  mapPreviewText: {
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.primary,
+    fontWeight: THEME.fontWeight.medium,
   },
   footer: {
     padding: THEME.spacing.lg,
@@ -275,9 +289,9 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.colors.background,
   },
   cta: { width: '100%' },
-  stepLabel: { 
-    fontSize: THEME.fontSize.xs, 
-    color: THEME.colors.textMuted, 
-    textAlign: 'center' 
+  stepLabel: {
+    fontSize: THEME.fontSize.xs,
+    color: THEME.colors.textMuted,
+    textAlign: 'center',
   },
 });

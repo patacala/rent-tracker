@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@shared/lib/supabase';
 import { apiClient } from '@shared/api/apiClient';
+import { analysisApi } from '@features/analysis/store/analysisApi';
+import { store } from '@shared/store';
 
 const CLICKED_KEY = '@auth:hasClickedCard';
 
@@ -49,7 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   useEffect(() => {
     const init = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const {
+          data: { session: currentSession },
+        } = await supabase.auth.getSession();
         setSession(currentSession);
 
         const clicked = await AsyncStorage.getItem(CLICKED_KEY);
@@ -66,7 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       if (newSession?.access_token) {
         loadSubscription(newSession.access_token);
@@ -81,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   }, []);
 
   const login = async (email: string, password: string) => {
+    store.dispatch(analysisApi.util.invalidateTags(['Neighborhoods', 'Favorites']));
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) setJustLoggedIn(true);
     return { error: error?.message ?? null };
@@ -99,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   };
 
   const logout = async () => {
+    store.dispatch(analysisApi.util.invalidateTags(['Neighborhoods', 'Favorites']));
     await supabase.auth.signOut();
     await AsyncStorage.clear();
     setHasClickedCard(false);
@@ -116,30 +124,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   const clearJustLoggedIn = () => setJustLoggedIn(false);
 
   const refreshSubscription = async () => {
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
     if (currentSession?.access_token) {
       await loadSubscription(currentSession.access_token);
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      isLoggedIn: !!session,
-      hasClickedCard,
-      isLoading,
-      justLoggedIn,
-      session,
-      user: session?.user ?? null,
-      isPremium,
-      subscriptionPlan,
-      subscriptionStatus,
-      login,
-      signup,
-      logout,
-      markCardClicked,
-      clearJustLoggedIn,
-      refreshSubscription,
-    }}>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn: !!session,
+        hasClickedCard,
+        isLoading,
+        justLoggedIn,
+        session,
+        user: session?.user ?? null,
+        isPremium,
+        subscriptionPlan,
+        subscriptionStatus,
+        login,
+        signup,
+        logout,
+        markCardClicked,
+        clearJustLoggedIn,
+        refreshSubscription,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

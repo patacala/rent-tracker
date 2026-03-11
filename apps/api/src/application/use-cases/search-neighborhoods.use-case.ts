@@ -1,9 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { GeoJSON } from 'geojson';
-import {
-  NEIGHBORHOOD_REPOSITORY,
-  type INeighborhoodRepository,
-} from '../../domain/repositories';
+import { NEIGHBORHOOD_REPOSITORY, type INeighborhoodRepository } from '../../domain/repositories';
 import {
   MAPBOX_SERVICE,
   type IMapboxService,
@@ -38,7 +35,7 @@ export class SearchNeighborhoodsUseCase {
     if (useCache) {
       this.logger.log('Checking DB cache for neighborhoods');
       const cached = await this.neighborhoodRepo.findWithinBounds(input.polygon);
-      const validCached = cached.filter(n => n.isCacheValid(7));
+      const validCached = cached.filter((n) => n.isCacheValid(7));
 
       if (validCached.length > 0) {
         this.logger.log(`Cache hit: ${validCached.length} neighborhoods in bbox`);
@@ -65,15 +62,11 @@ export class SearchNeighborhoodsUseCase {
       return { neighborhoods: [] };
     }
 
-    // Filtra barrios cuyo centroide O algún vértice del boundary esté dentro del isochrone
+    // Filtra barrios cuyo centroide esté dentro del isochrone
+    // Requisito más estricto: el centroide debe estar dentro del polígono
     const insideIsochrone = boundaries.filter((b) => {
-      // Primero verifica el centroide — más rápido
       const center = this.calculateCenter(b.boundary);
-      if (this.isPointInPolygon(center.lat, center.lng, input.polygon)) return true;
-
-      // Si el centroide no está dentro, verifica si algún vértice del boundary sí lo está
-      const coords = b.boundary.coordinates[0];
-      return coords.some(([lng, lat]) => this.isPointInPolygon(lat, lng, input.polygon));
+      return this.isPointInPolygon(center.lat, center.lng, input.polygon);
     });
 
     this.logger.log(
@@ -91,7 +84,7 @@ export class SearchNeighborhoodsUseCase {
     // Step 3: Save OSM results to DB
     this.logger.log(`Saving ${limited.length} neighborhoods to DB`);
     const saved = await Promise.all(
-      limited.map(async b => {
+      limited.map(async (b) => {
         const center = this.calculateCenter(b.boundary);
 
         const existing = await this.neighborhoodRepo.findByNameAndCoords(
@@ -128,7 +121,8 @@ export class SearchNeighborhoodsUseCase {
       return { lat: 0, lng: 0 };
     }
 
-    let sumLat = 0, sumLng = 0;
+    let sumLat = 0,
+      sumLng = 0;
     for (const [lng, lat] of coordinates) {
       sumLat += lat;
       sumLng += lng;
@@ -150,12 +144,14 @@ export class SearchNeighborhoodsUseCase {
 
     let inside = false;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const xi = ring[i][0], yi = ring[i][1]; // [lng, lat]
-      const xj = ring[j][0], yj = ring[j][1];
+      const xi = ring[i][0],
+        yi = ring[i][1]; // [lng, lat]
+      const xj = ring[j][0],
+        yj = ring[j][1];
 
       const spansLat = yi > lat !== yj > lat;
       if (!spansLat) continue;
-      const crossLng = (xj - xi) * (lat - yi) / (yj - yi) + xi;
+      const crossLng = ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
       if (lng < crossLng) inside = !inside;
     }
 

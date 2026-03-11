@@ -18,12 +18,7 @@ export function useNeighborhoodDetail(id: string): UseNeighborhoodDetailReturn {
     const cached = get(id);
     if (!cached) return null;
 
-    return mapNeighborhoodDetail(
-      cached.neighborhood,
-      cached.pois,
-      onboarding,
-      0,
-    );
+    return mapNeighborhoodDetail(cached.neighborhood, cached.pois, onboarding);
   }, [id, onboarding]);
 
   return { data };
