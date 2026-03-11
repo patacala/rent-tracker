@@ -15,6 +15,7 @@ import { Button, FilterChips, Input } from '@shared/components';
 import { useExploreNeighborhoods } from './hooks/useExploreNeighborhoods';
 import { useAuth } from '@shared/context/AuthContext';
 import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { getEffectivePriorityTerms, isRelevantCategory } from '@rent-tracker/utils';
 import { BottomSheet } from '@shared/components/BottomSheet';
 import { EditPreferencesForm } from './components/EditPreferencesForm';
 import { AuthPromptModal } from './components/AuthPromptModal';
@@ -55,10 +56,25 @@ export function ExploreScreen(): JSX.Element {
   }, [serverOnboarding]);
 
   const availableFilters = useMemo(() => {
-  const allTags = neighborhoods.flatMap((n) => n.tags);
-  const uniqueTags = Array.from(new Set(allTags));
-  return ['All', ...uniqueTags] as ExploreFilter[];
-  }, [neighborhoods]);
+    const allTags = neighborhoods.flatMap((n) => n.tags);
+    const uniqueTags = Array.from(new Set(allTags));
+
+    const priorityTerms = getEffectivePriorityTerms(
+      onboardingData.priorities,
+      onboardingData.hasChildren === 'yes',
+      onboardingData.hasPets === 'yes',
+    );
+
+    const matched = uniqueTags
+      .filter((tag) => isRelevantCategory(tag.toLowerCase(), priorityTerms))
+      .sort((a, b) => a.localeCompare(b));
+
+    const unmatched = uniqueTags
+      .filter((tag) => !isRelevantCategory(tag.toLowerCase(), priorityTerms))
+      .sort((a, b) => a.localeCompare(b));
+
+    return ['All', ...matched, ...unmatched] as ExploreFilter[];
+  }, [neighborhoods, onboardingData]);
 
   useEffect(() => {
     const stillValid = activeFilters.filter((f) => availableFilters.includes(f));

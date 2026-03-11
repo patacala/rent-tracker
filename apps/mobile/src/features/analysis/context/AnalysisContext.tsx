@@ -39,12 +39,33 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }): J
   }, []);
 
   const setAnalysisResult = useCallback((result: AnalyzeLocationOutput | null) => {
-    setAnalysisResultState(result);
-    if (result) {
-      AsyncStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(result)).catch(() => {});
-    } else {
-      AsyncStorage.removeItem(ANALYSIS_STORAGE_KEY).catch(() => {});
-    }
+    setAnalysisResultState((prev) => {
+      if (!result) {
+        AsyncStorage.removeItem(ANALYSIS_STORAGE_KEY).catch(() => {});
+        return null;
+      }
+
+      const merged: AnalyzeLocationOutput = prev
+        ? {
+            ...result,
+            neighborhoods: result.neighborhoods.map((next) => {
+              const previous = prev.neighborhoods.find(
+                (n) => n.neighborhood.id === next.neighborhood.id,
+              );
+
+              if (!previous) return next;
+
+              return {
+                ...next,
+                isFavorite: next.isFavorite || previous.isFavorite,
+              };
+            }),
+          }
+        : result;
+
+      AsyncStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(merged)).catch(() => {});
+      return merged;
+    });
   }, []);
 
   const updateFavorite = useCallback((neighborhoodId: string, isFavorite: boolean) => {

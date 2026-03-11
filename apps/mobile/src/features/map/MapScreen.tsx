@@ -22,18 +22,36 @@ import {
 import { BottomSheet } from '@shared/components/BottomSheet';
 import { useMapNeighborhoods } from './hooks/useMapNeighborhoods';
 import type { MapFilter, NeighborhoodPreview } from './types';
+import { useOnboarding } from '@features/onboarding/context/OnboardingContext';
+import { getEffectivePriorityTerms, isRelevantCategory } from '@rent-tracker/utils';
 
 export function MapScreen(): JSX.Element {
   const router = useRouter();
   const { data: neighborhoods, isochrone, center } = useMapNeighborhoods();
   const [activeFilters, setActiveFilters] = useState<MapFilter[]>(['All']);
   const [selected, setSelected] = useState<NeighborhoodPreview | null>(null);
+  const { data: onboardingData } = useOnboarding();
 
   const availableFilters = useMemo(() => {
     const allTags = neighborhoods.flatMap((n) => n.tags);
     const uniqueTags = Array.from(new Set(allTags));
-    return ['All', ...uniqueTags] as MapFilter[];
-  }, [neighborhoods]);
+
+    const priorityTerms = getEffectivePriorityTerms(
+      onboardingData.priorities,
+      onboardingData.hasChildren === 'yes',
+      onboardingData.hasPets === 'yes',
+    );
+
+    const matched = uniqueTags
+      .filter((tag) => isRelevantCategory(tag.toLowerCase(), priorityTerms))
+      .sort((a, b) => a.localeCompare(b));
+
+    const unmatched = uniqueTags
+      .filter((tag) => !isRelevantCategory(tag.toLowerCase(), priorityTerms))
+      .sort((a, b) => a.localeCompare(b));
+
+    return ['All', ...matched, ...unmatched] as MapFilter[];
+  }, [neighborhoods, onboardingData]);
 
   const filteredNeighborhoods = useMemo(() => {
     if (selected) return neighborhoods.filter((n) => n.id === selected.id);
